@@ -1,0 +1,8 @@
+Persistence nereye baðlý olacak. ben domain e baðladým.
+API hem persistence  hem applicaiton a baðlý.
+Infrastructure kullanýlmadý.
+mesela user null olabilir mi falan bunu deðiþtirebilirsin.
+
+her þeyi Task ile async yap.
+
+tüm endpointleri ekle
