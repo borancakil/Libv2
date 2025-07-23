@@ -1,0 +1,121 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <!-- Header -->
+    <div class="auth-header">
+      <div class="logo">
+        <i class="fas fa-book-open"></i>
+        <h1>LibraryApp</h1>
+      </div>
+      <h2>{{ 'LOGIN_TITLE' | translate }}</h2>
+      <p>{{ 'LOGIN_SUBTITLE' | translate }}</p>
+    </div>
+
+    <!-- Login Form -->
+    <form (ngSubmit)="login()" class="auth-form" #loginForm="ngForm">
+      <!-- Email Field -->
+      <div class="form-group">
+        <label for="email">{{ 'LOGIN_EMAIL_LABEL' | translate }}</label>
+        <div class="input-wrapper">
+          <i class="fas fa-envelope input-icon"></i>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            [(ngModel)]="email"
+            required
+            email
+            [placeholder]="'LOGIN_EMAIL_PLACEHOLDER' | translate"
+            class="form-input"
+            [class.error]="emailField.invalid && emailField.touched"
+            #emailField="ngModel"
+          />
+        </div>
+        <!-- Email Validation -->
+        <div *ngIf="emailField.invalid && emailField.touched" class="field-error">
+          <small *ngIf="emailField.errors?.['required']">
+            {{ 'VALIDATION_EMAIL_REQUIRED' | translate }}
+          </small>
+          <small *ngIf="emailField.errors?.['email']">
+            {{ 'VALIDATION_EMAIL_INVALID' | translate }}
+          </small>
+        </div>
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <label for="password">{{ 'LOGIN_PASSWORD_LABEL' | translate }}</label>
+        <div class="input-wrapper">
+          <i class="fas fa-lock input-icon"></i>
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="password"
+            name="password"
+            [(ngModel)]="password"
+            required
+            minlength="6"
+            [placeholder]="'LOGIN_PASSWORD_PLACEHOLDER' | translate"
+            class="form-input"
+            [class.error]="passwordField.invalid && passwordField.touched"
+            #passwordField="ngModel"
+          />
+          <button
+            type="button"
+            class="password-toggle"
+            (click)="togglePassword()"
+          >
+            <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+          </button>
+        </div>
+        <!-- Password Validation -->
+        <div *ngIf="passwordField.invalid && passwordField.touched" class="field-error">
+          <small *ngIf="passwordField.errors?.['required']">
+            {{ 'VALIDATION_PASSWORD_REQUIRED' | translate }}
+          </small>
+          <small *ngIf="passwordField.errors?.['minlength']">
+            {{ 'VALIDATION_PASSWORD_MIN' | translate }}
+          </small>
+        </div>
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="error" class="error-message">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>{{ error }}</span>
+      </div>
+
+      <!-- Success Message -->
+      <div *ngIf="successMessage" class="success-message">
+        <i class="fas fa-check-circle"></i>
+        <span>{{ successMessage }}</span>
+      </div>
+
+      <!-- Submit Button -->
+      <button
+        type="submit"
+        class="submit-btn"
+        [disabled]="loginForm.invalid || isLoading"
+        [class.loading]="isLoading"
+      >
+        <span *ngIf="!isLoading">
+          <i class="fas fa-sign-in-alt"></i>
+          {{ 'LOGIN_BUTTON' | translate }}
+        </span>
+        <span *ngIf="isLoading">
+          <i class="fas fa-spinner fa-spin"></i>
+          {{ 'LOGIN_LOADING' | translate }}
+        </span>
+      </button>
+    </form>
+
+    <!-- Footer Links -->
+    <div class="auth-footer">
+      <p>
+        {{ 'LOGIN_NO_ACCOUNT' | translate }}
+        <a [routerLink]="['/', translate.currentLang, 'register']" class="link">
+          {{ 'LOGIN_REGISTER_LINK' | translate }}
+        </a>
+      </p>
+      <a href="#" class="forgot-link">{{ 'LOGIN_FORGOT_PASSWORD' | translate }}</a>
+    </div>
+  </div>
+</div>

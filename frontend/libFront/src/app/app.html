@@ -1,0 +1,198 @@
+<div class="app-container">
+  <!-- Modern Navigation Header -->
+  <header class="main-header">
+    <div class="header-content">
+      <!-- Logo / Brand -->
+      <a [routerLink]="['/', currentLang]" class="logo">
+        <i class="fas fa-book-open"></i>
+        <span>LibraryApp</span>
+      </a>
+
+      <!-- Mobile Menu Toggle -->
+      <button class="mobile-menu-toggle" (click)="toggleMobileMenu()">
+        <i class="fas fa-bars"></i>
+      </button>
+
+      <!-- Main Navigation -->
+      <nav class="main-nav" [class.mobile-open]="isMobileMenuOpen">
+        <a [routerLink]="['/', currentLang]" class="nav-link" (click)="closeMobileMenu()">
+          <i class="fas fa-home"></i>
+          <span>{{ 'NAV_HOME' | translate }}</span>
+        </a>
+        <a [routerLink]="['/', currentLang, 'books']" class="nav-link" (click)="closeMobileMenu()">
+          <i class="fas fa-book"></i>
+          <span>{{ 'NAV_BOOKS' | translate }}</span>
+        </a>
+        <a [routerLink]="['/', currentLang, 'categories']" class="nav-link" (click)="closeMobileMenu()">
+          <i class="fas fa-layer-group"></i>
+          <span>{{ 'NAV_CATEGORIES' | translate }}</span>
+        </a>
+        <a [routerLink]="['/', currentLang, 'authors']" class="nav-link" (click)="closeMobileMenu()">
+          <i class="fas fa-users"></i>
+          <span>{{ 'NAV_AUTHORS' | translate }}</span>
+        </a>
+      </nav>
+
+      <!-- Header Actions -->
+      <div class="header-actions">
+        <!-- Language Selector -->
+        <div class="language-selector">
+          <button class="lang-btn" (click)="toggleLanguageDropdown()">
+            <i class="fas fa-globe"></i>
+            <span>{{ currentLang.toUpperCase() }}</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="lang-dropdown" [class.show]="isLanguageDropdownOpen">
+            <button class="lang-option" [class.active]="currentLang === 'tr'" (click)="switchLanguage('tr')">
+              🇹🇷 {{ 'LANG_TURKISH' | translate }}
+            </button>
+            <button class="lang-option" [class.active]="currentLang === 'en'" (click)="switchLanguage('en')">
+              🇺🇸 {{ 'LANG_ENGLISH' | translate }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Authentication Actions -->
+        <div class="auth-actions">
+          <ng-container *ngIf="!isLoggedIn(); else loggedInBlock">
+            <a [routerLink]="['/', currentLang, 'login']" class="btn btn-outline">
+              <i class="fas fa-sign-in-alt"></i>
+              <span>{{ "HEADER_LOGIN" | translate }}</span>
+            </a>
+            <a [routerLink]="['/', currentLang, 'register']" class="btn btn-primary">
+              <i class="fas fa-user-plus"></i>
+              <span>{{ "HEADER_REGISTER" | translate }}</span>
+            </a>
+          </ng-container>
+
+          <!-- Logged In User Menu -->
+          <ng-template #loggedInBlock>
+            <div class="user-menu">
+              <button class="user-menu-trigger">
+                <i class="fas fa-user-circle"></i>
+                {{ 'USER_MENU' | translate }}
+                <i class="fas fa-chevron-down"></i>
+              </button>
+              <div class="user-menu-dropdown">
+                <a [routerLink]="['/', currentLang, 'profile']" class="dropdown-item">
+                  <i class="fas fa-user"></i>
+                  {{ "HEADER_MY_ACCOUNT" | translate }}
+                </a>
+                <a [routerLink]="['/', currentLang, 'favorites']" class="dropdown-item">
+                  <i class="fas fa-heart"></i>
+                  {{ "USER_FAVORITES" | translate }}
+                </a>
+                <a [routerLink]="['/', currentLang, 'borrowed']" class="dropdown-item">
+                  <i class="fas fa-book-reader"></i>
+                  {{ "USER_BORROWED" | translate }}
+                </a>
+                <hr class="dropdown-divider">
+                <button (click)="logout()" class="dropdown-item logout-btn">
+                  <i class="fas fa-sign-out-alt"></i>
+                  {{ "USER_LOGOUT" | translate }}
+                </button>
+              </div>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Modern Footer -->
+  <footer class="main-footer">
+    <div class="footer-content">
+      <div class="footer-grid">
+        <!-- About Section -->
+        <div class="footer-section">
+          <h3>{{ 'FOOTER_ABOUT' | translate }}</h3>
+          <p>{{ 'FOOTER_ABOUT_TEXT' | translate }}</p>
+          <div class="contact-info">
+            <p>
+              <i class="fas fa-map-marker-alt"></i>
+              {{ 'FOOTER_ADDRESS' | translate }}
+            </p>
+            <p>
+              <i class="fas fa-envelope"></i>
+              {{ 'FOOTER_EMAIL' | translate }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="footer-section">
+          <h3>{{ 'FOOTER_QUICK_LINKS' | translate }}</h3>
+          <ul class="footer-links">
+            <li><a [routerLink]="['/', currentLang, 'books']">{{ 'NAV_BOOKS' | translate }}</a></li>
+            <li><a [routerLink]="['/', currentLang, 'categories']">{{ 'NAV_CATEGORIES' | translate }}</a></li>
+            <li><a [routerLink]="['/', currentLang, 'authors']">{{ 'NAV_AUTHORS' | translate }}</a></li>
+            <li><a href="#contact">{{ 'FOOTER_CONTACT' | translate }}</a></li>
+          </ul>
+        </div>
+
+        <!-- Hours -->
+        <div class="footer-section">
+          <h3>{{ 'FOOTER_HOURS' | translate }}</h3>
+          <div class="hours-info">
+            <p>{{ 'FOOTER_HOURS_WEEKDAY' | translate }}</p>
+            <p>{{ 'FOOTER_HOURS_WEEKEND' | translate }}</p>
+          </div>
+        </div>
+
+        <!-- Social & Language -->
+        <div class="footer-section">
+          <h3>{{ 'FOOTER_FOLLOW_US' | translate }}</h3>
+          <div class="social-links">
+            <a href="#" class="social-link">
+              <i class="fab fa-facebook"></i>
+            </a>
+            <a href="#" class="social-link">
+              <i class="fab fa-twitter"></i>
+            </a>
+            <a href="#" class="social-link">
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="#" class="social-link">
+              <i class="fab fa-linkedin"></i>
+            </a>
+          </div>
+
+          <div class="footer-language">
+            <h4>{{ 'FOOTER_LANGUAGE' | translate }}</h4>
+            <div class="language-switcher">
+              <button 
+                (click)="switchLanguage('tr')" 
+                [class.active]="currentLang === 'tr'"
+                class="lang-option">
+                🇹🇷 TR
+              </button>
+              <button 
+                (click)="switchLanguage('en')" 
+                [class.active]="currentLang === 'en'"
+                class="lang-option">
+                🇺🇸 EN
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Bottom -->
+      <div class="footer-bottom">
+        <div class="footer-bottom-content">
+          <p>{{ 'FOOTER_COPYRIGHT' | translate }}</p>
+          <div class="footer-bottom-links">
+            <a href="#privacy">{{ 'FOOTER_PRIVACY' | translate }}</a>
+            <a href="#terms">{{ 'FOOTER_TERMS' | translate }}</a>
+            <a href="#help">{{ 'FOOTER_HELP' | translate }}</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+</div>

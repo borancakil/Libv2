@@ -1,0 +1,151 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <!-- Header -->
+    <div class="auth-header">
+      <div class="logo">
+        <i class="fas fa-book-open"></i>
+        <h1>LibraryApp</h1>
+      </div>
+      <h2>{{ 'REGISTER_TITLE' | translate }}</h2>
+      <p>{{ 'REGISTER_SUBTITLE' | translate }}</p>
+    </div>
+
+    <!-- Register Form -->
+    <form (ngSubmit)="register()" class="auth-form" #registerForm="ngForm">
+      <!-- Name Field -->
+      <div class="form-group">
+        <label for="name">{{ 'REGISTER_NAME_LABEL' | translate }}</label>
+        <div class="input-wrapper">
+          <i class="fas fa-user input-icon"></i>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            [(ngModel)]="name"
+            required
+            minlength="2"
+            [placeholder]="'REGISTER_NAME_PLACEHOLDER' | translate"
+            class="form-input"
+            [class.error]="nameField.invalid && nameField.touched"
+            #nameField="ngModel"
+          />
+        </div>
+        <!-- Name Validation -->
+        <div *ngIf="nameField.invalid && nameField.touched" class="field-error">
+          <small *ngIf="nameField.errors?.['required']">
+            {{ 'VALIDATION_NAME_REQUIRED' | translate }}
+          </small>
+          <small *ngIf="nameField.errors?.['minlength']">
+            {{ 'VALIDATION_NAME_MIN' | translate }}
+          </small>
+        </div>
+      </div>
+
+      <!-- Email Field -->
+      <div class="form-group">
+        <label for="email">{{ 'REGISTER_EMAIL_LABEL' | translate }}</label>
+        <div class="input-wrapper">
+          <i class="fas fa-envelope input-icon"></i>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            [(ngModel)]="email"
+            required
+            email
+            [placeholder]="'REGISTER_EMAIL_PLACEHOLDER' | translate"
+            class="form-input"
+            [class.error]="emailField.invalid && emailField.touched"
+            #emailField="ngModel"
+          />
+        </div>
+        <!-- Email Validation -->
+        <div *ngIf="emailField.invalid && emailField.touched" class="field-error">
+          <small *ngIf="emailField.errors?.['required']">
+            {{ 'VALIDATION_EMAIL_REQUIRED' | translate }}
+          </small>
+          <small *ngIf="emailField.errors?.['email']">
+            {{ 'VALIDATION_EMAIL_INVALID' | translate }}
+          </small>
+        </div>
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <label for="password">{{ 'REGISTER_PASSWORD_LABEL' | translate }}</label>
+        <div class="input-wrapper">
+          <i class="fas fa-lock input-icon"></i>
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="password"
+            name="password"
+            [(ngModel)]="password"
+            required
+            minlength="6"
+            [placeholder]="'REGISTER_PASSWORD_PLACEHOLDER' | translate"
+            class="form-input"
+            [class.error]="passwordField.invalid && passwordField.touched"
+            #passwordField="ngModel"
+          />
+          <button
+            type="button"
+            class="password-toggle"
+            (click)="togglePassword()"
+          >
+            <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+          </button>
+        </div>
+        <!-- Password Validation -->
+        <div *ngIf="passwordField.invalid && passwordField.touched" class="field-error">
+          <small *ngIf="passwordField.errors?.['required']">
+            {{ 'VALIDATION_PASSWORD_REQUIRED' | translate }}
+          </small>
+          <small *ngIf="passwordField.errors?.['minlength']">
+            {{ 'VALIDATION_PASSWORD_MIN' | translate }}
+          </small>
+        </div>
+      </div>
+
+      <!-- General Error Messages -->
+      <div *ngIf="validationErrors.length > 0" class="error-message">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div>
+          <div *ngFor="let error of validationErrors">{{ error }}</div>
+        </div>
+      </div>
+
+      <!-- Success Message -->
+      <div *ngIf="successMessage" class="success-message">
+        <i class="fas fa-check-circle"></i>
+        <span>{{ successMessage }}</span>
+      </div>
+
+      <!-- Submit Button -->
+      <button
+        type="submit"
+        class="submit-btn"
+        [disabled]="registerForm.invalid || isLoading"
+        [class.loading]="isLoading"
+      >
+        <span *ngIf="!isLoading">
+          <i class="fas fa-user-plus"></i>
+          {{ 'REGISTER_BUTTON' | translate }}
+        </span>
+        <span *ngIf="isLoading">
+          <i class="fas fa-spinner fa-spin"></i>
+          {{ 'REGISTER_LOADING' | translate }}
+        </span>
+      </button>
+    </form>
+
+    <!-- Footer Links -->
+    <div class="auth-footer">
+      <p>
+        {{ 'REGISTER_HAVE_ACCOUNT' | translate }}
+        <a [routerLink]="['/', translate.currentLang, 'login']" class="link">
+          {{ 'REGISTER_LOGIN_LINK' | translate }}
+        </a>
+      </p>
+    </div>
+  </div>
+</div>

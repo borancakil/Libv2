@@ -1,0 +1,50 @@
+<div class="book-list-container">
+  <div class="header">
+    <h1>{{ 'BOOK_LIST_TITLE' | translate }}</h1>
+    <button class="btn btn-primary" (click)="retry()" *ngIf="error">
+      {{ 'RETRY' | translate }}
+    </button>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>{{ 'LOADING' | translate }}</p>
+  </div>
+
+  <div class="error" *ngIf="error && !isLoading">
+    <p>{{ error }}</p>
+  </div>
+
+  <div class="books-grid" *ngIf="!isLoading && !error">
+    <div class="book-card" *ngFor="let book of books" (click)="goToBookDetail(book.bookId)">
+      <div class="book-info">
+        <h3>{{ book.title }}</h3>
+        
+        <div class="book-details">
+          <p *ngIf="book.publicationYear" class="publication-year">
+            {{ 'PUBLICATION_YEAR' | translate }}: {{ book.publicationYear }}
+          </p>
+          
+          <p *ngIf="book.authorName" class="author">
+            {{ 'AUTHOR' | translate }}: 
+            <a class="author-link" (click)="goToAuthorDetail(book.authorId); $event.stopPropagation()">
+              {{ book.authorName }}
+            </a>
+          </p>
+          
+          <p *ngIf="book.publisherName" class="publisher">
+            {{ 'PUBLISHER' | translate }}: {{ book.publisherName }}
+          </p>
+        </div>
+        
+        <div class="availability" [class.available]="book.isAvailable" [class.unavailable]="!book.isAvailable">
+          {{ book.isAvailable ? ('AVAILABLE' | translate) : ('UNAVAILABLE' | translate) }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="no-books" *ngIf="!isLoading && !error && books.length === 0">
+    <p>{{ 'NO_BOOKS_FOUND' | translate }}</p>
+  </div>
+</div>

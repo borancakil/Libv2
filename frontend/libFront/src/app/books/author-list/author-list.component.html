@@ -1,0 +1,43 @@
+<div class="author-list-container">
+  <div class="header">
+    <h1>{{ 'AUTHOR_LIST_TITLE' | translate }}</h1>
+    <button class="btn btn-primary" (click)="retry()" *ngIf="error">
+      {{ 'RETRY' | translate }}
+    </button>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>{{ 'LOADING' | translate }}</p>
+  </div>
+
+  <div class="error" *ngIf="error && !isLoading">
+    <p>{{ error }}</p>
+  </div>
+
+  <div class="authors-grid" *ngIf="!isLoading && !error">
+    <div class="author-card" *ngFor="let author of authors" (click)="goToAuthorDetail(author.authorId)">
+      <div class="author-info">
+        <h3>{{ author.name }}</h3>
+        <p *ngIf="author.biography" class="biography">
+          {{ author.biography.length > 100 ? (author.biography | slice:0:100) + '...' : author.biography }}
+        </p>
+        <div class="author-details">
+          <span *ngIf="author.birthDate" class="birth-date">
+            {{ 'BIRTH_DATE' | translate }}: {{ author.birthDate | date }}
+          </span>
+          <span *ngIf="author.deathDate" class="death-date">
+            {{ 'DEATH_DATE' | translate }}: {{ author.deathDate | date }}
+          </span>
+        </div>
+        <div class="books-count" *ngIf="author.books">
+          {{ 'BOOKS_COUNT' | translate }}: {{ author.books.length }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="no-authors" *ngIf="!isLoading && !error && authors.length === 0">
+    <p>{{ 'NO_AUTHORS_FOUND' | translate }}</p>
+  </div>
+</div> 

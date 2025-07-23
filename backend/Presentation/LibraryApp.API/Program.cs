@@ -1,111 +1,129 @@
-// These are the using statements you already have
 using FluentValidation;
-using LibraryApp.Application.Common.Mappings;
-using LibraryApp.Application.Features.Books.Commands.CreateBook;
-using LibraryApp.Application.Features.Users.Commands.Register;
+using FluentValidation.AspNetCore;
+using LibraryApp.API.Middleware;
+using LibraryApp.Application.Interfaces;
+using LibraryApp.Application.Services;
+using LibraryApp.Application.Validators.Book;
+using LibraryApp.Application.Validators.User;
+using LibraryApp.Application.Validators.Author;
+using LibraryApp.Application.Validators.Publisher;
 using LibraryApp.Domain.Interfaces;
 using LibraryApp.Persistence.Data;
 using LibraryApp.Persistence.Repositories;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
-
-// --- Add these using statements for JWT ---
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.OpenApi.Models;
-using System.Reflection; // Required for Swagger JWT configuration
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- START: Add services to the container ---
-
-// 1. Configure DbContext
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<LibraryDbContext>(options =>
-    options.UseSqlServer(connectionString));
-
-// 2. Configure Repositories
-builder.Services.AddScoped<IBookRepository, BookRepository>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-
-// 3. Configure Application Layer Services
-builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
-builder.Services.AddMediatR(typeof(CreateBookCommand).Assembly);
-builder.Services.AddValidatorsFromAssembly(typeof(UserRegisterCommand).Assembly);
-
-
-// --- JWT AUTHENTICATION/AUTHORIZATION CONFIGURATION START ---
-
-// 4. Configure Authentication
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-
-        ValidateAudience = true,
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-
-        ValidateLifetime = true,
-
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-    };
-});
-
-// 5. Add Authorization services (this is often implicitly added but it's good to be explicit)
-builder.Services.AddAuthorization();
-
-// --- JWT AUTHENTICATION/AUTHORIZATION CONFIGURATION END ---
-
-
+// Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
 
-// --- SWAGGER JWT CONFIGURATION START ---
-// This part enables you to test protected endpoints by adding a JWT token in the Swagger UI.
-builder.Services.AddSwaggerGen(options =>
-{
-    // Add a security definition for JWT Bearer tokens
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+// Add Entity Framework
+builder.Services.AddDbContext<LibraryDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// JWT Authentication
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer("Bearer", options =>
     {
-        In = ParameterLocation.Header,
-        Description = "Please enter a valid token",
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        BearerFormat = "JWT",
-        Scheme = "Bearer"
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
+                System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? ""))
+        };
     });
 
-    // Make sure Swagger uses the security definition
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+builder.Services.AddAuthorization();
+
+// Add FluentValidation
+builder.Services.AddFluentValidationAutoValidation()
+                .AddFluentValidationClientsideAdapters();
+
+// Register validators
+builder.Services.AddValidatorsFromAssemblyContaining<CreateBookDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<AddUserDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateAuthorDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreatePublisherDtoValidator>();
+
+// Register repositories (Domain interfaces in Infrastructure layer)
+builder.Services.AddScoped<IBookRepository, BookRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ILoanRepository, LoanRepository>();
+builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
+builder.Services.AddScoped<IPublisherRepository, PublisherRepository>();
+
+// Register services (Application layer)
+builder.Services.AddScoped<IBookService, BookService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<AuthorService>();
+builder.Services.AddScoped<PublisherService>();
+
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = "LibraryApp API", Version = "v1" });
+    
+    // Add JWT Authentication to Swagger
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Enter 'Bearer' [space] and then your valid token.\r\n\r\nExample: \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\""
+    });
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
     {
         {
-            new OpenApiSecurityScheme
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
                 {
-                    Type = ReferenceType.SecurityScheme,
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
                     Id = "Bearer"
                 }
             },
-            new string[]{}
+            Array.Empty<string>()
         }
     });
+    
+    // Add XML comments if available
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
 });
-// --- SWAGGER JWT CONFIGURATION END ---
 
+// Add CORS policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+
+// Global Exception Middleware (should be first)
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -114,12 +132,24 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// --- ENABLE AUTHENTICATION/AUTHORIZATION MIDDLEWARE ---
-// The order is crucial here. UseAuthentication must come before UseAuthorization.
+// Add CORS
+app.UseCors("AllowAll");
+
+// Authentication & Authorization
 app.UseAuthentication();
-app.UseAuthorization(); // This was already here, but now it has a configured authentication scheme to work with.
-// ---
+app.UseAuthorization();
 
 app.MapControllers();
+
+// Ensure database is created and seeded in development
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<LibraryDbContext>();
+    context.Database.EnsureCreated();
+    
+    // Seed test data
+    LibraryApp.Persistence.Data.SeedData.Initialize(context);
+}
 
 app.Run();

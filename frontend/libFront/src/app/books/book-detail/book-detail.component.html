@@ -1,0 +1,144 @@
+<div class="book-detail-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+    </div>
+    <p>{{ 'BOOK_DETAIL_LOADING' | translate }}</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !isLoading" class="error-state">
+    <div class="error-icon">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h2>{{ 'BOOK_DETAIL_ERROR_TITLE' | translate }}</h2>
+    <p>{{ error }}</p>
+    <div class="error-actions">
+      <button class="btn btn-primary" (click)="retry()">
+        <i class="fas fa-redo"></i>
+        {{ 'RETRY' | translate }}
+      </button>
+      <button class="btn btn-outline" (click)="goBack()">
+        <i class="fas fa-arrow-left"></i>
+        {{ 'BOOK_DETAIL_GO_BACK' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Book Detail Content -->
+  <div *ngIf="book && !isLoading && !error" class="book-detail-content">
+    <!-- Breadcrumb / Back Button -->
+    <div class="breadcrumb-section">
+      <button class="back-btn" (click)="goBack()">
+        <i class="fas fa-arrow-left"></i>
+        <span>{{ 'BOOK_DETAIL_BACK_TO_BOOKS' | translate }}</span>
+      </button>
+    </div>
+
+    <!-- Book Hero Section -->
+    <div class="book-hero">
+      <div class="book-cover">
+        <!-- Placeholder for book cover image -->
+        <div class="cover-placeholder">
+          <i class="fas fa-book"></i>
+        </div>
+      </div>
+      
+      <div class="book-info">
+        <h1 class="book-title">{{ book.title }}</h1>
+        
+        <!-- Availability Status -->
+        <div class="availability-status" [class.available]="book.isAvailable" [class.unavailable]="!book.isAvailable">
+          <i [class]="book.isAvailable ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+          <span>{{ book.isAvailable ? ('AVAILABLE' | translate) : ('UNAVAILABLE' | translate) }}</span>
+        </div>
+
+        <!-- Book ID for reference -->
+        <div class="book-meta">
+          <span class="meta-label">{{ 'BOOK_DETAIL_ID' | translate }}:</span>
+          <span class="meta-value">#{{ book.bookId }}</span>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="book-actions">
+          <button 
+            class="btn btn-primary" 
+            [disabled]="!book.isAvailable"
+            [title]="book.isAvailable ? ('BOOK_DETAIL_BORROW' | translate) : ('BOOK_DETAIL_NOT_AVAILABLE' | translate)"
+            (click)="borrowBook()"
+          >
+            <i class="fas fa-book-reader"></i>
+            {{ 'BOOK_DETAIL_BORROW' | translate }}
+          </button>
+          
+          <button class="btn btn-outline">
+            <i class="fas fa-heart"></i>
+            {{ 'BOOK_DETAIL_ADD_FAVORITES' | translate }}
+          </button>
+          
+          <button class="btn btn-outline">
+            <i class="fas fa-share"></i>
+            {{ 'BOOK_DETAIL_SHARE' | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Book Details Section -->
+    <div class="book-details">
+      <div class="detail-card">
+        <h3>{{ 'BOOK_DETAIL_ABOUT' | translate }}</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">{{ 'BOOK_DETAIL_TITLE' | translate }}:</span>
+            <span class="detail-value">{{ book.title }}</span>
+          </div>
+          
+          <div class="detail-item" *ngIf="book.publicationYear">
+            <span class="detail-label">{{ 'PUBLICATION_YEAR' | translate }}:</span>
+            <span class="detail-value">{{ book.publicationYear }}</span>
+          </div>
+          
+          <div class="detail-item" *ngIf="book.authorName">
+            <span class="detail-label">{{ 'AUTHOR' | translate }}:</span>
+            <span class="detail-value">
+              <a class="author-link" (click)="goToAuthorDetail(book.authorId)">
+                {{ book.authorName }}
+              </a>
+            </span>
+          </div>
+          
+          <div class="detail-item" *ngIf="book.publisherName">
+            <span class="detail-label">{{ 'PUBLISHER' | translate }}:</span>
+            <span class="detail-value">
+              <a class="publisher-link" (click)="goToPublisherDetail(book.publisherId)">
+                {{ book.publisherName }}
+              </a>
+            </span>
+          </div>
+          
+          <div class="detail-item">
+            <span class="detail-label">{{ 'BOOK_DETAIL_STATUS' | translate }}:</span>
+            <span class="detail-value" [class.text-success]="book.isAvailable" [class.text-danger]="!book.isAvailable">
+              {{ book.isAvailable ? ('AVAILABLE' | translate) : ('UNAVAILABLE' | translate) }}
+            </span>
+          </div>
+          
+          <div class="detail-item">
+            <span class="detail-label">{{ 'BOOK_DETAIL_BOOK_ID' | translate }}:</span>
+            <span class="detail-value">#{{ book.bookId }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Related Books Section (Placeholder) -->
+    <div class="related-books">
+      <h3>{{ 'BOOK_DETAIL_RELATED_BOOKS' | translate }}</h3>
+      <div class="related-books-placeholder">
+        <p>{{ 'BOOK_DETAIL_NO_RELATED_BOOKS' | translate }}</p>
+      </div>
+    </div>
+  </div>
+</div> 

@@ -1,0 +1,93 @@
+<!-- Basit Hero Section -->
+<section class="hero-section">
+  <div class="container">
+    <div class="hero-content">
+      <h1>{{ 'HERO_TITLE' | translate }}</h1>
+      <p>{{ 'HERO_SUBTITLE' | translate }}</p>
+      
+      <!-- Basit Arama Formu -->
+      <form (ngSubmit)="search()" class="search-form">
+        <input 
+          type="text" 
+          [(ngModel)]="searchQuery" 
+          name="searchQuery"
+          [placeholder]="'HERO_SEARCH_PLACEHOLDER' | translate"
+          class="search-input">
+        <button type="submit" class="search-button">
+          {{ 'HERO_SEARCH_BUTTON' | translate }}
+        </button>
+      </form>
+
+      <!-- Basit İstatistikler -->
+      <div class="stats">
+        <div class="stat">
+          <span class="number">{{ totalBooks }}</span>
+          <span class="label">{{ 'STATS_BOOKS' | translate }}</span>
+        </div>
+        <div class="stat">
+          <span class="number">100+</span>
+          <span class="label">{{ 'STATS_USERS' | translate }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Kitaplar Listesi -->
+<section class="books-section">
+  <div class="container">
+    <h2>{{ 'AVAILABLE_BOOKS_TITLE' | translate }}</h2>
+    
+    <!-- Loading durumu -->
+    <div *ngIf="isLoading" class="loading">
+      <p>{{ 'LOADING_BOOKS' | translate }}</p>
+    </div>
+
+    <!-- Hata durumu -->
+    <div *ngIf="error && !isLoading" class="error">
+      <p>{{ error }}</p>
+      <button (click)="loadPopularBooks()">{{ 'RETRY' | translate }}</button>
+    </div>
+    
+    <!-- Kitaplar -->
+    <div *ngIf="!isLoading && !error && popularBooks.length > 0" class="books-list">
+      <div *ngFor="let book of popularBooks" class="book-item">
+        <h3>{{ book.title }}</h3>
+        <p>
+          <span [class]="book.isAvailable ? 'available' : 'unavailable'">
+            {{ book.isAvailable ? ('AVAILABLE' | translate) : ('UNAVAILABLE' | translate) }}
+          </span>
+        </p>
+        <button (click)="viewBookDetails(book.bookId)" class="view-btn">
+          Detay Gör
+        </button>
+      </div>
+    </div>
+
+    <!-- Boş durum -->
+    <div *ngIf="!isLoading && !error && popularBooks.length === 0" class="empty">
+      <p>{{ 'NO_BOOKS_FOUND' | translate }}</p>
+    </div>
+  </div>
+</section>
+
+<!-- Quick Actions Section -->
+<section class="quick-actions">
+  <div class="container">
+    <h2>{{ 'QUICK_ACTIONS_TITLE' | translate }}</h2>
+    <div class="actions-grid">
+      <div class="action-card" (click)="goToBooks()">
+        <h3>{{ 'ACTION_BROWSE_BOOKS' | translate }}</h3>
+        <p>{{ 'ACTION_BROWSE_BOOKS_DESC' | translate }}</p>
+      </div>
+      <div class="action-card" (click)="goToAuthors()">
+        <h3>{{ 'ACTION_AUTHORS' | translate }}</h3>
+        <p>{{ 'ACTION_AUTHORS_DESC' | translate }}</p>
+      </div>
+      <div class="action-card" (click)="goToPublishers()">
+        <h3>{{ 'ACTION_PUBLISHERS' | translate }}</h3>
+        <p>{{ 'ACTION_PUBLISHERS_DESC' | translate }}</p>
+      </div>
+    </div>
+  </div>
+</section>

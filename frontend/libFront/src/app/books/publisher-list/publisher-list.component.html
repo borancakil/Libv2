@@ -1,0 +1,43 @@
+<div class="publisher-list-container">
+  <div class="header">
+    <h1>{{ 'PUBLISHER_LIST_TITLE' | translate }}</h1>
+    <button class="btn btn-primary" (click)="retry()" *ngIf="error">
+      {{ 'RETRY' | translate }}
+    </button>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>{{ 'LOADING' | translate }}</p>
+  </div>
+
+  <div class="error" *ngIf="error && !isLoading">
+    <p>{{ error }}</p>
+  </div>
+
+  <div class="publishers-grid" *ngIf="!isLoading && !error">
+    <div class="publisher-card" *ngFor="let publisher of publishers" (click)="goToPublisherDetail(publisher.publisherId)">
+      <div class="publisher-info">
+        <h3>{{ publisher.name }}</h3>
+        <div class="publisher-details">
+          <p *ngIf="publisher.address" class="address">
+            {{ 'ADDRESS' | translate }}: {{ publisher.address }}
+          </p>
+          <p *ngIf="publisher.phone" class="phone">
+            {{ 'PHONE' | translate }}: {{ publisher.phone }}
+          </p>
+          <p *ngIf="publisher.email" class="email">
+            {{ 'EMAIL' | translate }}: {{ publisher.email }}
+          </p>
+        </div>
+        <div class="books-count" *ngIf="publisher.books">
+          {{ 'BOOKS_COUNT' | translate }}: {{ publisher.books.length }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="no-publishers" *ngIf="!isLoading && !error && publishers.length === 0">
+    <p>{{ 'NO_PUBLISHERS_FOUND' | translate }}</p>
+  </div>
+</div> 

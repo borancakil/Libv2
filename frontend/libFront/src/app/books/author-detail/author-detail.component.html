@@ -1,0 +1,64 @@
+<div class="author-detail-container">
+  <div class="header">
+    <button class="btn btn-back" (click)="goBack()">
+      ← {{ 'BACK' | translate }}
+    </button>
+    <button class="btn btn-primary" (click)="retry()" *ngIf="error">
+      {{ 'RETRY' | translate }}
+    </button>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>{{ 'LOADING' | translate }}</p>
+  </div>
+
+  <div class="error" *ngIf="error && !isLoading">
+    <h2>{{ 'ERROR' | translate }}</h2>
+    <p>{{ error }}</p>
+  </div>
+
+  <div class="author-content" *ngIf="author && !isLoading">
+    <div class="author-header">
+      <h1>{{ author.name }}</h1>
+    </div>
+
+    <div class="author-info">
+      <div class="info-section" *ngIf="author.biography">
+        <h3>{{ 'BIOGRAPHY' | translate }}</h3>
+        <p>{{ author.biography }}</p>
+      </div>
+
+      <div class="info-section" *ngIf="author.birthDate || author.deathDate">
+        <h3>{{ 'LIFE_DATES' | translate }}</h3>
+        <div class="life-dates">
+          <span *ngIf="author.birthDate" class="birth-date">
+            {{ 'BIRTH_DATE' | translate }}: {{ author.birthDate | date }}
+          </span>
+          <span *ngIf="author.deathDate" class="death-date">
+            {{ 'DEATH_DATE' | translate }}: {{ author.deathDate | date }}
+          </span>
+        </div>
+      </div>
+
+      <div class="info-section" *ngIf="author.books && author.books.length > 0">
+        <h3>{{ 'BOOKS_BY_AUTHOR' | translate }}</h3>
+        <div class="books-grid">
+          <div class="book-card" *ngFor="let book of author.books" (click)="goToBookDetail(book.bookId)">
+            <div class="book-info">
+              <h4>{{ book.title }}</h4>
+              <p class="publication-year">{{ 'PUBLICATION_YEAR' | translate }}: {{ book.publicationYear }}</p>
+              <p class="availability" [class.available]="book.isAvailable" [class.unavailable]="!book.isAvailable">
+                {{ book.isAvailable ? ('AVAILABLE' | translate) : ('UNAVAILABLE' | translate) }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="no-books" *ngIf="!author.books || author.books.length === 0">
+        <p>{{ 'NO_BOOKS_FOUND' | translate }}</p>
+      </div>
+    </div>
+  </div>
+</div> 
