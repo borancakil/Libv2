@@ -1,10 +1,16 @@
+import { Book } from './book.model';
+
 export interface Publisher {
   publisherId: number;
   name: string;
   address?: string;
   phone?: string;
   email?: string;
+  description?: string;
+  foundedYear?: number;
+  location?: string;
   books?: Book[];
+  hasProfileImage?: boolean;
 }
 
 export interface CreatePublisherDto {
@@ -12,6 +18,9 @@ export interface CreatePublisherDto {
   address?: string;
   phone?: string;
   email?: string;
+  description?: string;
+  foundedYear?: number;
+  location?: string;
 }
 
 export interface UpdatePublisherDto {
@@ -19,6 +28,7 @@ export interface UpdatePublisherDto {
   address?: string;
   phone?: string;
   email?: string;
-}
-
-import { Book } from './book.model'; 
+  description?: string;
+  foundedYear?: number;
+  location?: string;
+} 

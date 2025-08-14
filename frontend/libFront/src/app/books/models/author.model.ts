@@ -5,6 +5,7 @@ export interface Author {
   birthDate?: string;
   deathDate?: string;
   books?: Book[];
+  hasProfileImage?: boolean;
 }
 
 export interface CreateAuthorDto {
@@ -12,6 +13,7 @@ export interface CreateAuthorDto {
   biography?: string;
   birthDate?: string;
   deathDate?: string;
+  profileImage?: File;
 }
 
 export interface UpdateAuthorDto {
@@ -19,6 +21,7 @@ export interface UpdateAuthorDto {
   biography?: string;
   birthDate?: string;
   deathDate?: string;
+  profileImage?: File;
 }
 
 import { Book } from './book.model'; 

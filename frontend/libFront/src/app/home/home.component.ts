@@ -66,7 +66,7 @@ export class HomeComponent implements OnInit {
     this.isLoading = true;
     this.error = null;
 
-    this.bookApiService.getAll(true).subscribe({
+    this.bookApiService.getAll("", true).subscribe({
       next: (books) => {
         // Toplam kitap sayısını kaydet
         this.totalBooks = books.length;
@@ -79,7 +79,7 @@ export class HomeComponent implements OnInit {
         this.error = 'Kitaplar yüklenirken bir hata oluştu.';
         this.isLoading = false;
         this.popularBooks = [];
-      }
+      },
     });
   }
 
@@ -113,5 +113,37 @@ export class HomeComponent implements OnInit {
   goToPublishers(): void {
     const lang = this.translate.currentLang || 'tr';
     this.router.navigate(['/', lang, 'publishers']);
+  }
+
+  /**
+   * Kitap kapağı URL'sini alır
+   */
+  getBookCoverUrl(bookId: number): string {
+    return `http://localhost:7209/api/Books/${bookId}/cover`;
+  }
+
+  /**
+   * Resim yüklenemediğinde placeholder gösterir
+   */
+  hideImage(event: Event): void {
+    const imgElement = event.target as HTMLImageElement;
+    imgElement.style.display = 'none';
+    const parent = imgElement.closest('.book-cover');
+    if (parent) {
+      const placeholder = parent.querySelector('.cover-placeholder') as HTMLElement;
+      if (placeholder) {
+        placeholder.style.display = 'flex';
+      }
+    }
+  }
+
+  /**
+   * Kitap ödünç alma işlemi
+   */
+  borrowBook(bookId: number): void {
+    // TODO: Implement borrow functionality
+    console.log('Borrowing book:', bookId);
+    // For now, just navigate to book details
+    this.viewBookDetails(bookId);
   }
 }

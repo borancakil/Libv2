@@ -1,64 +1,199 @@
 <div class="publisher-detail-container">
-  <div class="header">
-    <button class="btn btn-back" (click)="goBack()">
-      ← {{ 'BACK' | translate }}
-    </button>
-    <button class="btn btn-primary" (click)="retry()" *ngIf="error">
-      {{ 'RETRY' | translate }}
-    </button>
-  </div>
-
-  <div class="loading" *ngIf="isLoading">
-    <div class="spinner"></div>
-    <p>{{ 'LOADING' | translate }}</p>
-  </div>
-
-  <div class="error" *ngIf="error && !isLoading">
-    <h2>{{ 'ERROR' | translate }}</h2>
-    <p>{{ error }}</p>
-  </div>
-
-  <div class="publisher-content" *ngIf="publisher && !isLoading">
-    <div class="publisher-header">
-      <h1>{{ publisher.name }}</h1>
-    </div>
-
-    <div class="publisher-info">
-      <div class="info-section" *ngIf="publisher.address || publisher.phone || publisher.email">
-        <h3>{{ 'CONTACT_INFO' | translate }}</h3>
-        <div class="contact-details">
-          <p *ngIf="publisher.address" class="address">
-            <strong>{{ 'ADDRESS' | translate }}:</strong> {{ publisher.address }}
-          </p>
-          <p *ngIf="publisher.phone" class="phone">
-            <strong>{{ 'PHONE' | translate }}:</strong> {{ publisher.phone }}
-          </p>
-          <p *ngIf="publisher.email" class="email">
-            <strong>{{ 'EMAIL' | translate }}:</strong> {{ publisher.email }}
-          </p>
-        </div>
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-actions">
+        <button class="btn btn-back" (click)="goBack()">
+          ← {{ 'BACK' | translate }}
+        </button>
+        <button class="btn btn-secondary" (click)="retry()" *ngIf="error">
+          {{ 'RETRY' | translate }}
+        </button>
       </div>
+      <div class="page-title">
+        <h1>{{ 'PUBLISHER_DETAIL_TITLE' | translate }}</h1>
+        <p class="page-subtitle">{{ 'PUBLISHER_DETAIL_DESCRIPTION' | translate }}</p>
+      </div>
+    </div>
+  </div>
 
-      <div class="info-section" *ngIf="publisher.books && publisher.books.length > 0">
-        <h3>{{ 'BOOKS_BY_PUBLISHER' | translate }}</h3>
-        <div class="books-grid">
-          <div class="book-card" *ngFor="let book of publisher.books" (click)="goToBookDetail(book.bookId)">
-            <div class="book-info">
-              <h4>{{ book.title }}</h4>
-              <p class="publication-year">{{ 'PUBLICATION_YEAR' | translate }}: {{ book.publicationYear }}</p>
-              <p class="author" *ngIf="book.author">
-                {{ 'AUTHOR' | translate }}: {{ book.author.name }}
-              </p>
-              <p class="availability" [class.available]="book.isAvailable" [class.unavailable]="!book.isAvailable">
-                {{ book.isAvailable ? ('AVAILABLE' | translate) : ('UNAVAILABLE' | translate) }}
-              </p>
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <p>{{ 'LOADING' | translate }}</p>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-state" *ngIf="error && !isLoading">
+    <div class="error-content">
+      <div class="error-icon">⚠️</div>
+      <h3>{{ 'ERROR' | translate }}</h3>
+      <p>{{ error }}</p>
+      <button class="btn btn-primary" (click)="retry()">
+        {{ 'RETRY' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content" *ngIf="publisher && !isLoading">
+    <!-- Publisher Profile Section -->
+    <div class="publisher-profile-section">
+      <div class="publisher-profile-card">
+        <div class="publisher-photo-section">
+          <div class="publisher-photo" *ngIf="publisherPhoto">
+            <img 
+              [src]="publisherPhoto" 
+              [alt]="publisher.name"
+              class="publisher-image"
+              (error)="onImageError($event)"
+            >
+          </div>
+          <div class="photo-loading" *ngIf="isPhotoLoading">
+            <div class="loading-spinner"></div>
+          </div>
+          <div class="photo-placeholder" *ngIf="!publisherPhoto && !isPhotoLoading">
+            📚
+          </div>
+        </div>
+        <div class="publisher-info">
+          <div class="publisher-header">
+            <h2 class="publisher-name">{{ publisher.name }}</h2>
+            <div class="publisher-status" *ngIf="books.length > 0">
+              <span class="status-badge">{{ 'ACTIVE' | translate }}</span>
+            </div>
+          </div>
+          <div class="publisher-meta">
+            <div class="meta-item" *ngIf="publisher.address">
+              <span class="meta-icon">📍</span>
+              <span class="meta-label">{{ 'ADDRESS' | translate }}:</span>
+              <span class="meta-value">{{ publisher.address }}</span>
+            </div>
+            <div class="meta-item" *ngIf="publisher.phone">
+              <span class="meta-icon">📞</span>
+              <span class="meta-label">{{ 'PHONE' | translate }}:</span>
+              <span class="meta-value">{{ publisher.phone }}</span>
+            </div>
+            <div class="meta-item" *ngIf="publisher.email">
+              <span class="meta-icon">✉️</span>
+              <span class="meta-label">{{ 'EMAIL' | translate }}:</span>
+              <span class="meta-value">{{ publisher.email }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-icon">📖</span>
+              <span class="meta-label">{{ 'BOOKS_COUNT' | translate }}:</span>
+              <span class="meta-value">{{ books.length }}</span>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="no-books" *ngIf="!publisher.books || publisher.books.length === 0">
-        <p>{{ 'NO_BOOKS_FOUND' | translate }}</p>
+    <!-- Books Section -->
+    <div class="books-section">
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">
+            <h3>{{ 'BOOKS_BY_PUBLISHER' | translate }}</h3>
+            <div class="section-stats">
+              <div class="stats-item">
+                <span class="stats-icon">📚</span>
+                <span class="stats-number">{{ books.length }}</span>
+                <span class="stats-label">{{ 'TOTAL_BOOKS' | translate }}</span>
+              </div>
+              <div class="stats-item">
+                <span class="stats-icon">✅</span>
+                <span class="stats-number">{{ getAvailableBooksCount() }}</span>
+                <span class="stats-label">{{ 'AVAILABLE_BOOKS' | translate }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-content">
+          <!-- Loading Books -->
+          <div class="loading-state" *ngIf="isLoadingBooks">
+            <div class="loading-content">
+              <div class="loading-spinner"></div>
+              <p>{{ 'LOADING_BOOKS' | translate }}</p>
+            </div>
+          </div>
+
+          <!-- Books Content -->
+          <div *ngIf="!isLoadingBooks">
+            <!-- Search Section (visual only) -->
+            <div class="search-filter-section" *ngIf="books.length > 0">
+              <div class="search-container">
+                <div class="search-input-group">
+                  <input type="text" class="search-input" placeholder="Ara...">
+                  <button class="search-button">🔍</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Books Grid -->
+            <div class="books-grid" *ngIf="filteredBooks.length > 0">
+              <div class="book-card" *ngFor="let book of filteredBooks" (click)="goToBookDetail(book.bookId)">
+                <div class="book-photo-section">
+                  <div class="book-photo" *ngIf="book.hasCoverImage">
+                    <img 
+                      [src]="'https://localhost:7209/api/Books/' + book.bookId + '/cover'" 
+                      [alt]="book.title"
+                      class="book-image"
+                      (error)="onBookImageError($event)"
+                    >
+                  </div>
+                  <div class="photo-placeholder" *ngIf="!book.hasCoverImage">
+                    📖
+                  </div>
+                </div>
+                <div class="book-info">
+                  <div class="book-header">
+                    <h4 class="book-title">{{ book.title }}</h4>
+                    <div class="book-status" [class.available]="book.isAvailable" [class.unavailable]="!book.isAvailable">
+                      <span class="status-badge">
+                        {{ book.isAvailable ? ('AVAILABLE' | translate) : ('UNAVAILABLE' | translate) }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="book-meta">
+                    <div class="meta-item" *ngIf="book.publicationYear">
+                      <span class="meta-icon">📅</span>
+                      <span class="meta-label">{{ 'PUBLICATION_YEAR' | translate }}:</span>
+                      <span class="meta-value">{{ book.publicationYear }}</span>
+                    </div>
+                    <div class="meta-item" *ngIf="book.author">
+                      <span class="meta-icon">✍️</span>
+                      <span class="meta-label">{{ 'AUTHOR' | translate }}:</span>
+                      <span class="meta-value">{{ book.author.name }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" *ngIf="filteredBooks.length === 0">
+              <div class="empty-content">
+                <div class="empty-icon">📚</div>
+                <h3>{{ 'NO_FILTERED_BOOKS_FOUND' | translate }}</h3>
+                <p>{{ 'NO_FILTERED_BOOKS_DESCRIPTION' | translate }}</p>
+            
+              </div>
+            </div>
+          </div>
+
+          <!-- No Books State -->
+          <div class="empty-state" *ngIf="!isLoadingBooks && books.length === 0">
+            <div class="empty-content">
+              <div class="empty-icon">📚</div>
+              <h3>{{ 'NO_BOOKS_FOUND' | translate }}</h3>
+              <p>{{ 'NO_BOOKS_DESCRIPTION' | translate }}</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

@@ -1,0 +1,79 @@
+<div class="borrowed-books-container">
+  <div class="header">
+    <button class="btn btn-back" (click)="goBack()">
+      ← {{ 'BACK' | translate }}
+    </button>
+    <button class="btn btn-primary" (click)="retry()" *ngIf="error">
+      {{ 'RETRY' | translate }}
+    </button>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>{{ 'LOADING' | translate }}</p>
+  </div>
+
+  <div class="error" *ngIf="error && !isLoading">
+    <h2>{{ 'ERROR' | translate }}</h2>
+    <p>{{ error }}</p>
+  </div>
+
+  <div class="content" *ngIf="!isLoading && !error">
+    <div class="page-header">
+      <h1>{{ 'USER_BORROWED' | translate }}</h1>
+      <p class="subtitle">{{ 'BORROWED_BOOKS_DESCRIPTION' | translate }}</p>
+    </div>
+
+    <div class="books-section">
+      <div class="books-grid" *ngIf="borrowedBooks.length > 0">
+        <div class="book-card" *ngFor="let book of borrowedBooks" (click)="goToBookDetail(book.bookId)">
+          <div class="book-info">
+            <h3 class="book-title">{{ book.title }}</h3>
+            <p class="book-author" *ngIf="book.authorName">
+              {{ 'AUTHOR' | translate }}: {{ book.authorName }}
+            </p>
+            <p class="book-publisher" *ngIf="book.publisherName">
+              {{ 'PUBLISHER' | translate }}: {{ book.publisherName }}
+            </p>
+            <p class="publication-year" *ngIf="book.publicationYear">
+              {{ 'PUBLICATION_YEAR' | translate }}: {{ book.publicationYear }}
+            </p>
+            <div class="book-status">
+              <span class="status-badge borrowed">
+                {{ 'BORROWED' | translate }}
+              </span>
+            </div>
+
+            <!-- Return Date Information -->
+            <div *ngIf="book.returnDate" class="return-info">
+              <div class="return-date">
+                <i class="fas fa-calendar-alt"></i>
+                <span>{{ 'RETURN_DATE' | translate }}: {{ book.returnDate | date:'dd/MM/yyyy' }}</span>
+              </div>
+              <div class="remaining-time" [class.overdue]="book.isOverdue" [class.warning]="!book.isOverdue && book.remainingDays && book.remainingDays <= 3">
+                <i class="fas fa-clock"></i>
+                <span *ngIf="book.isOverdue && book.remainingDays !== undefined" class="overdue-text">
+                  {{ 'OVERDUE' | translate }} {{ -book.remainingDays }} {{ 'DAYS_AGO' | translate }}
+                </span>
+                <span *ngIf="!book.isOverdue && book.remainingDays !== undefined" class="remaining-text">
+                  {{ 'REMAINING_DAYS' | translate }}: {{ book.remainingDays }} {{ 'DAYS' | translate }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="no-books" *ngIf="borrowedBooks.length === 0">
+        <div class="empty-state">
+          <i class="fas fa-book-open"></i>
+          <h3>{{ 'NO_BORROWED_BOOKS' | translate }}</h3>
+          <p>{{ 'NO_BORROWED_BOOKS_DESCRIPTION' | translate }}</p>
+          <button class="btn btn-primary" (click)="goBack()">
+            {{ 'BROWSE_BOOKS' | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

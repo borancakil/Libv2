@@ -56,9 +56,11 @@ export class RegisterComponent implements OnDestroy {
       email: this.email,
     };
 
+    console.log('Attempting registration with:', user);
+
     this.apiSub = this.userApi.register(user).subscribe({
       next: (res) => {
-        console.log('Registration successful', res);
+        console.log('Registration response received:', res);
         this.isLoading = false;
 
         this.translate
@@ -73,15 +75,51 @@ export class RegisterComponent implements OnDestroy {
         }, 2000);
       },
       error: (err) => {
-        console.error('Registration failed', err);
+        console.error('Registration failed with error:', err);
+        console.error('Error status:', err.status);
+        console.error('Error message:', err.message);
+        console.error('Error response:', err.error);
         this.isLoading = false;
         
-        if (err.status === 400 && err.error?.errors) {
-          const errorObj = err.error.errors;
-          this.validationErrors = Object.values(errorObj)
-            .flat()
-            .map((error) => String(error));
+        // Detaylı hata mesajları
+        if (err.status === 400) {
+          if (err.error?.errors) {
+            // Validation errors
+            const errorObj = err.error.errors;
+            this.validationErrors = Object.values(errorObj)
+              .flat()
+              .map((error) => String(error));
+          } else if (err.error?.message) {
+            // Backend'den gelen hata mesajı
+            this.validationErrors = [err.error.message];
+          } else {
+            // Genel 400 hatası
+            this.translate
+              .get('REGISTER_ERROR_BAD_REQUEST')
+              .subscribe((msg: string) => {
+                this.validationErrors = [msg];
+              });
+          }
+        } else if (err.status === 409) {
+          // Conflict - Email zaten kayıtlı
+          this.translate
+            .get('REGISTER_ERROR_EMAIL_EXISTS')
+            .subscribe((msg: string) => {
+              this.validationErrors = [msg];
+            });
+        } else if (err.status === 422) {
+          // Unprocessable Entity - Validation hatası
+          if (err.error?.message) {
+            this.validationErrors = [err.error.message];
+          } else {
+            this.translate
+              .get('REGISTER_ERROR_VALIDATION')
+              .subscribe((msg: string) => {
+                this.validationErrors = [msg];
+              });
+          }
         } else {
+          // Genel hata
           this.translate
             .get('REGISTER_ERROR_GENERAL')
             .subscribe((msg: string) => {

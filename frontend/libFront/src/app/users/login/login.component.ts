@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { UserApiService } from '../services/user-api';
+import { AppComponent } from '../../app';
 
 @Component({
   selector: 'app-login',
@@ -26,6 +27,7 @@ export class LoginComponent {
     private userApi: UserApiService,
     public translate: TranslateService,
     private router: Router,
+    private appComponent: AppComponent,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
@@ -49,14 +51,48 @@ export class LoginComponent {
       password: this.password,
     };
 
+    console.log('Attempting login with:', credentials);
+
     this.userApi.login(credentials).subscribe({
       next: (res) => {
-        console.log('Login successful', res);
+        console.log('Login response received:', res);
         this.isLoading = false;
 
-        // Token'ı sessionStorage'a kaydet
+        // Session'ı ayarla
         if (this.isBrowser) {
-          sessionStorage.setItem('auth_token', res.token);
+          // Backend'den JWE token geliyor - decrypt etmeye çalışma
+          // Token'ı olduğu gibi sakla, backend her API çağrısında decrypt edecek
+          try {
+            console.log('JWE Token received:', res.token);
+            
+            // JWE token'dan user bilgilerini çıkaramayız, backend'den almalıyız
+            // Şimdilik basit user bilgisi kullan
+            const userInfo = {
+              userId: 1, // Backend'den alınacak
+              email: credentials.email,
+              name: 'User'
+            };
+            
+            console.log('Using fallback user info for JWE token');
+            
+            // Session yönetimi ile kaydet (JWE token'ı olduğu gibi)
+            this.appComponent.setSession(res.token, userInfo);
+            console.log('Session set with JWE token');
+            
+            // TODO: Backend'den user bilgilerini al
+            this.loadUserInfo(credentials.email);
+            
+          } catch (error) {
+            console.error('Error handling JWE token:', error);
+            // Fallback: basit user bilgisi
+            const userInfo = {
+              userId: 1,
+              email: credentials.email,
+              name: 'User'
+            };
+            this.appComponent.setSession(res.token, userInfo);
+            console.log('Fallback session set due to JWE handling error');
+          }
         }
 
         // Başarı mesajı göster
@@ -71,7 +107,10 @@ export class LoginComponent {
         }, 1000);
       },
       error: (err) => {
-        console.error('Login failed', err);
+        console.error('Login failed with error:', err);
+        console.error('Error status:', err.status);
+        console.error('Error message:', err.message);
+        console.error('Error response:', err.error);
         this.isLoading = false;
         
         // Hata mesajını çeviri ile göster
@@ -85,6 +124,21 @@ export class LoginComponent {
           });
         }
       },
+    });
+  }
+
+  // Backend'den user bilgilerini al
+  private loadUserInfo(email: string): void {
+    this.userApi.getCurrentUserInfo().subscribe({
+      next: (userInfo) => {
+        console.log('User info received from backend:', userInfo);
+        // User bilgilerini güncelle
+        this.appComponent.updateUserInfo(userInfo);
+      },
+      error: (err) => {
+        console.error('Error loading user info:', err);
+        // Fallback user info kullan
+      }
     });
   }
 }

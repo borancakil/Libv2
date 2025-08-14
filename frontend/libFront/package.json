@@ -7,7 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:libFront": "node dist/libFront/server/server.mjs"
+    "build:ssr": "ng build && ng run libFront:server",
+    "serve:ssr": "npm run build:ssr && node dist/libFront/server/server.mjs"
   },
   "prettier": {
     "overrides": [

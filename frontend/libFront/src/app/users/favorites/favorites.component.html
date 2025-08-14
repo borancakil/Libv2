@@ -1,0 +1,70 @@
+<div class="favorites-container">
+  <div class="header">
+    <button class="btn btn-back" (click)="goBack()">
+      ← {{ 'BACK' | translate }}
+    </button>
+    <button class="btn btn-primary" (click)="retry()" *ngIf="error">
+      {{ 'RETRY' | translate }}
+    </button>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>{{ 'LOADING' | translate }}</p>
+  </div>
+
+  <div class="error" *ngIf="error && !isLoading">
+    <h2>{{ 'ERROR' | translate }}</h2>
+    <p>{{ error }}</p>
+  </div>
+
+  <div class="content" *ngIf="!isLoading && !error">
+    <div class="page-header">
+      <h1>{{ 'USER_FAVORITES' | translate }}</h1>
+      <p class="subtitle">{{ 'FAVORITES_DESCRIPTION' | translate }}</p>
+    </div>
+
+    <div class="books-section">
+      <div class="books-grid" *ngIf="favoriteBooks.length > 0">
+        <div class="book-card" *ngFor="let book of favoriteBooks" (click)="goToBookDetail(book.bookId)">
+          <div class="book-info">
+            <h3 class="book-title">{{ book.title }}</h3>
+            <p class="book-author" *ngIf="book.authorName">
+              {{ 'AUTHOR' | translate }}: {{ book.authorName }}
+            </p>
+            <p class="book-publisher" *ngIf="book.publisherName">
+              {{ 'PUBLISHER' | translate }}: {{ book.publisherName }}
+            </p>
+            <p class="publication-year" *ngIf="book.publicationYear">
+              {{ 'PUBLICATION_YEAR' | translate }}: {{ book.publicationYear }}
+            </p>
+            <div class="book-status">
+              <span class="status-badge favorite">
+                {{ 'FAVORITE' | translate }}
+              </span>
+            </div>
+
+            <!-- Book Availability Information -->
+            <div class="availability-info">
+              <div class="availability-status" [class.available]="book.isAvailable" [class.unavailable]="!book.isAvailable">
+                <i class="fas" [class.fa-check-circle]="book.isAvailable" [class.fa-times-circle]="!book.isAvailable"></i>
+                <span>{{ book.isAvailable ? ('AVAILABLE' | translate) : ('UNAVAILABLE' | translate) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="no-books" *ngIf="favoriteBooks.length === 0">
+        <div class="empty-state">
+          <i class="fas fa-heart"></i>
+          <h3>{{ 'NO_FAVORITES' | translate }}</h3>
+          <p>{{ 'NO_FAVORITES_DESCRIPTION' | translate }}</p>
+          <button class="btn btn-primary" (click)="goBack()">
+            {{ 'BROWSE_BOOKS' | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

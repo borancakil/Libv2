@@ -1,50 +1,196 @@
 <div class="book-list-container">
-  <div class="header">
-    <h1>{{ 'BOOK_LIST_TITLE' | translate }}</h1>
-    <button class="btn btn-primary" (click)="retry()" *ngIf="error">
-      {{ 'RETRY' | translate }}
-    </button>
-  </div>
-
-  <div class="loading" *ngIf="isLoading">
-    <div class="spinner"></div>
-    <p>{{ 'LOADING' | translate }}</p>
-  </div>
-
-  <div class="error" *ngIf="error && !isLoading">
-    <p>{{ error }}</p>
-  </div>
-
-  <div class="books-grid" *ngIf="!isLoading && !error">
-    <div class="book-card" *ngFor="let book of books" (click)="goToBookDetail(book.bookId)">
-      <div class="book-info">
-        <h3>{{ book.title }}</h3>
-        
-        <div class="book-details">
-          <p *ngIf="book.publicationYear" class="publication-year">
-            {{ 'PUBLICATION_YEAR' | translate }}: {{ book.publicationYear }}
-          </p>
-          
-          <p *ngIf="book.authorName" class="author">
-            {{ 'AUTHOR' | translate }}: 
-            <a class="author-link" (click)="goToAuthorDetail(book.authorId); $event.stopPropagation()">
-              {{ book.authorName }}
-            </a>
-          </p>
-          
-          <p *ngIf="book.publisherName" class="publisher">
-            {{ 'PUBLISHER' | translate }}: {{ book.publisherName }}
-          </p>
-        </div>
-        
-        <div class="availability" [class.available]="book.isAvailable" [class.unavailable]="!book.isAvailable">
-          {{ book.isAvailable ? ('AVAILABLE' | translate) : ('UNAVAILABLE' | translate) }}
-        </div>
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <button class="btn btn-back" (click)="goBack()">
+          <i class="fas fa-arrow-left"></i>
+          <span>{{ 'BACK' | translate }}</span>
+        </button>
+      </div>
+      <div class="header-center">
+        <h1 class="page-title">
+          <i class="fas fa-books"></i>
+          {{ 'BOOK_LIST_TITLE' | translate }}
+        </h1>
+        <p class="page-subtitle">{{ 'BOOK_LIST_DESCRIPTION' | translate }}</p>
+      </div>
+      <div class="header-right">
+        <button class="btn btn-primary" (click)="retry()" *ngIf="error">
+          <i class="fas fa-redo"></i>
+          <span>{{ 'RETRY' | translate }}</span>
+        </button>
       </div>
     </div>
   </div>
 
-  <div class="no-books" *ngIf="!isLoading && !error && books.length === 0">
-    <p>{{ 'NO_BOOKS_FOUND' | translate }}</p>
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="loading-content">
+      <div class="loading-spinner">
+        <i class="fas fa-book fa-pulse"></i>
+      </div>
+      <h3>{{ 'LOADING_BOOKS' | translate }}</h3>
+      <p>{{ 'PLEASE_WAIT' | translate }}</p>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-state" *ngIf="error && !isLoading">
+    <div class="error-content">
+      <div class="error-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <h3>{{ 'BOOK_LIST_LOAD_ERROR' | translate }}</h3>
+      <p>{{ error }}</p>
+      <button class="btn btn-primary" (click)="retry()">
+        <i class="fas fa-redo"></i>
+        {{ 'RETRY' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Content Section -->
+  <div class="content-section" *ngIf="!isLoading && !error">
+    <!-- Search Section (visual only) -->
+    <div class="search-section">
+      <div class="search-container">
+        <div class="search-input-group">
+          <input type="text" class="search-input" placeholder="Ara..." [(ngModel)]="filter" (keyup.enter)="onFilterButtonClick()">
+          <button class="search-button" (click)="onFilterButtonClick()">
+            <span>Filtrele</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="stats-section" *ngIf="filteredBooks.length > 0">
+      <div class="stats-card">
+        <div class="stat-item">
+          <div class="stat-icon">
+            <i class="fas fa-book"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-number">{{ filteredBooks.length }}</span>
+            <span class="stat-label">{{ 'FILTERED_BOOKS' | translate }}</span>
+          </div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-number">{{ getAvailableBooksCount() }}</span>
+            <span class="stat-label">{{ 'AVAILABLE_BOOKS' | translate }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Books Grid -->
+    <div class="books-section" *ngIf="filteredBooks.length > 0">
+      <div class="books-grid">
+        <div class="book-card" *ngFor="let book of filteredBooks" [class.book-animation]="true">
+          <!-- Book Cover -->
+          <div class="book-cover">
+            <div *ngIf="book.hasCoverImage" class="cover-image">
+              <img [src]="'https://localhost:7209/api/Books/' + book.bookId + '/cover'" 
+                   [alt]="book.title" 
+                   class="book-cover-img"
+                   (error)="hideImage($event)">
+            </div>
+            <div *ngIf="!book.hasCoverImage" class="cover-placeholder">
+              <div class="placeholder-icon">📚</div>
+            </div>
+            
+            <!-- Book Status Badge -->
+            <div class="book-status-badge" [class.available]="book.isAvailable" [class.unavailable]="!book.isAvailable">
+              <span class="status-text">{{ book.isAvailable ? ('AVAILABLE' | translate) : ('UNAVAILABLE' | translate) }}</span>
+            </div>
+
+            <!-- User Status Badge -->
+            <div *ngIf="getBookStatus(book.bookId)" class="user-status-badge">
+              <span *ngIf="getBookStatus(book.bookId)?.isBorrowedByUser" class="borrowed-by-me">
+                {{ 'BORROWED_BY_ME' | translate }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Book Info -->
+          <div class="book-info">
+            <div class="book-header">
+              <h3 class="book-title" (click)="goToBookDetail(book.bookId)">
+                {{ book.title }}
+              </h3>
+              <div class="book-call-number">
+                <span class="call-number-label">Call No:</span>
+                <span class="call-number">{{ book.bookId.toString().padStart(6, '0') }}</span>
+              </div>
+            </div>
+            
+            <div class="book-meta">
+              <div class="meta-item" *ngIf="book.publicationYear">
+                <span class="meta-icon">📅</span>
+                <span>{{ book.publicationYear }}</span>
+              </div>
+              
+              <div class="meta-item" *ngIf="book.authorName">
+                <span class="meta-icon">👤</span>
+                <a class="author-link" (click)="goToAuthorDetail(book.authorId); $event.stopPropagation()">
+                  {{ book.authorName }}
+                </a>
+              </div>
+              
+              <div class="meta-item" *ngIf="book.publisherName">
+                <span class="meta-icon">🏢</span>
+                <a class="publisher-link" (click)="goToPublisherDetail(book.publisherId); $event.stopPropagation()">
+                  {{ book.publisherName }}
+                </a>
+              </div>
+            </div>
+
+            <!-- Book Actions -->
+            <div class="book-actions">
+              <button class="view-button" (click)="goToBookDetail(book.bookId)">
+                <span>{{ 'VIEW_DETAILS' | translate }}</span>
+              </button>
+              
+              <button 
+                *ngIf="getBookStatus(book.bookId)?.canBorrow && book.isAvailable"
+                class="borrow-button" 
+                (click)="borrowBook(book.bookId); $event.stopPropagation()"
+                [disabled]="isBorrowing(book.bookId)"
+              >
+                <span>{{ 'BORROW' | translate }}</span>
+              </button>
+              
+              <button 
+                *ngIf="getBookStatus(book.bookId)?.canReturn"
+                class="return-button" 
+                (click)="returnBook(book.bookId); $event.stopPropagation()"
+                [disabled]="isReturning(book.bookId)"
+              >
+                <span>{{ 'RETURN' | translate }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredBooks.length === 0 && (books.length > 0 || filter.trim())">
+      <div class="empty-content">
+        <div class="empty-icon">
+          <i class="fas fa-search"></i>
+        </div>
+        <h3>{{ 'NO_BOOKS_FOUND' | translate }}</h3>
+        <p>{{ 'NO_BOOKS_DESCRIPTION' | translate }}</p>
+        <p *ngIf="filter.trim()" class="filter-info">
+          "{{ filter }}" araması için sonuç bulunamadı.
+        </p>
+      </div>
+    </div>
   </div>
 </div>
