@@ -29,7 +29,7 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
     .Enrich.FromLogContext()
     .WriteTo.Console()
     .WriteTo.File(
-        Path.Combine("Infrastructure", "LibraryApp.Infrastructure", "Logs", "app_.log"),
+        Path.Combine("..", "Infrastructure", "LibraryApp.Infrastructure", "Logs", "app_.log"),
         rollingInterval: RollingInterval.Day,
         outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
     ));

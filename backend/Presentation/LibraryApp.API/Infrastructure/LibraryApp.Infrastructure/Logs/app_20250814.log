@@ -863,3 +863,9 @@ DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
 2025-08-14 21:15:26.713 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"ecb8cc4d-f184-4b57-9161-a3c2fcea0c60","Method":"GET","Path":"/api/Users/my-borrowed-books","StatusCode":401,"Duration":12.9355,"UserId":null,"Timestamp":"2025-08-14T18:15:26.7137509Z"}
 2025-08-14 21:15:26.720 [INF] Request finished HTTP/1.1 GET http://localhost:7208/api/Users/my-borrowed-books - 401 0 null 22.9497ms
 2025-08-14 21:20:39.596 [INF] Application is shutting down...
+2025-08-14 21:35:39.758 [INF] User profile is available. Using 'C:\Users\boran\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-08-14 21:35:39.866 [WRN] The WebRootPath was not found: C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\wwwroot. Static files may be unavailable.
+2025-08-14 21:35:39.894 [INF] Now listening on: http://localhost:7208
+2025-08-14 21:35:39.898 [INF] Application started. Press Ctrl+C to shut down.
+2025-08-14 21:35:39.900 [INF] Hosting environment: Development
+2025-08-14 21:35:39.901 [INF] Content root path: C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API
