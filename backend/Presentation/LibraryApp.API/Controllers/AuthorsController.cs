@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using LibraryApp.Application.DTOs.Author;
-using LibraryApp.Application.Services;
-using LibraryApp.Application.Exceptions;
-using FluentValidation;
+using LibraryApp.Application.Interfaces;
 
 namespace LibraryApp.API.Controllers
 {
@@ -10,188 +9,91 @@ namespace LibraryApp.API.Controllers
     [Route("api/[controller]")]
     public class AuthorsController : ControllerBase
     {
-        private readonly AuthorService _authorService;
-        private readonly IValidator<CreateAuthorDto> _createValidator;
-        private readonly IValidator<UpdateAuthorDto> _updateValidator;
+        private readonly IAuthorService _authorService;
         private readonly ILogger<AuthorsController> _logger;
 
-        public AuthorsController(
-            AuthorService authorService,
-            IValidator<CreateAuthorDto> createValidator,
-            IValidator<UpdateAuthorDto> updateValidator,
-            ILogger<AuthorsController> logger)
+        public AuthorsController(IAuthorService authorService, ILogger<AuthorsController> logger)
         {
             _authorService = authorService;
-            _createValidator = createValidator;
-            _updateValidator = updateValidator;
             _logger = logger;
         }
 
-        /// <summary>
-        /// Get all authors
-        /// </summary>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AuthorDto>>> GetAll()
+        public async Task<IActionResult> GetAllAuthors([FromQuery] string? filter = null)
         {
-            try
-            {
-                _logger.LogInformation("Getting all authors");
-                var authors = await _authorService.GetAllAuthorsAsync();
-                return Ok(authors);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting all authors");
-                throw;
-            }
+            var authors = await _authorService.GetAllAuthorsAsync(filter);
+            return Ok(authors);
         }
 
-        /// <summary>
-        /// Get author by ID
-        /// </summary>
-        [HttpGet("{id}")]
-        public async Task<ActionResult<AuthorDto>> GetById(int id)
-        {
-            try
-            {
-                _logger.LogInformation("Getting author with ID: {AuthorId}", id);
-                var author = await _authorService.GetAuthorByIdAsync(id);
-                return Ok(author);
-            }
-            catch (AuthorNotFoundException ex)
-            {
-                _logger.LogWarning("Author not found: {AuthorId}", id);
-                return NotFound(new { message = ex.Message, authorId = ex.AuthorId });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting author with ID: {AuthorId}", id);
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Create a new author
-        /// </summary>
         [HttpPost]
-        public async Task<ActionResult<AuthorDto>> Create([FromBody] CreateAuthorDto createAuthorDto)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AddAuthor([FromBody] CreateAuthorDto dto)
         {
-            try
-            {
-                _logger.LogInformation("Creating new author: {AuthorName}", createAuthorDto.Name);
-
-                // Validate
-                var validationResult = await _createValidator.ValidateAsync(createAuthorDto);
-                if (!validationResult.IsValid)
-                {
-                    foreach (var error in validationResult.Errors)
-                    {
-                        ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
-                    }
-                    return BadRequest(ModelState);
-                }
-
-                var createdAuthor = await _authorService.CreateAuthorAsync(createAuthorDto);
-                _logger.LogInformation("Author created successfully with ID: {AuthorId}", createdAuthor.AuthorId);
-
-                return CreatedAtAction(
-                    nameof(GetById),
-                    new { id = createdAuthor.AuthorId },
-                    createdAuthor);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating author: {AuthorName}", createAuthorDto.Name);
-                throw;
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var author = await _authorService.AddAuthorAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = author.AuthorId }, author);
         }
 
-        /// <summary>
-        /// Update an existing author
-        /// </summary>
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            if (id <= 0) return BadRequest(new { message = "Invalid author ID" });
+            var author = await _authorService.GetByIdAsync(id);
+            if (author == null) return NotFound(new { message = $"Author with ID {id} not found" });
+            return Ok(author);
+        }
+
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] UpdateAuthorDto updateAuthorDto)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateAuthor(int id, [FromBody] UpdateAuthorDto dto)
         {
-            try
-            {
-                _logger.LogInformation("Updating author with ID: {AuthorId}", id);
-
-                // Validate
-                var validationResult = await _updateValidator.ValidateAsync(updateAuthorDto);
-                if (!validationResult.IsValid)
-                {
-                    foreach (var error in validationResult.Errors)
-                    {
-                        ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
-                    }
-                    return BadRequest(ModelState);
-                }
-
-                await _authorService.UpdateAuthorAsync(id, updateAuthorDto);
-                _logger.LogInformation("Author updated successfully: {AuthorId}", id);
-
-                return NoContent();
-            }
-            catch (AuthorNotFoundException ex)
-            {
-                _logger.LogWarning("Author not found for update: {AuthorId}", id);
-                return NotFound(new { message = ex.Message, authorId = ex.AuthorId });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating author with ID: {AuthorId}", id);
-                throw;
-            }
+            if (id <= 0) return BadRequest(new { message = "Invalid author ID" });
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            await _authorService.UpdateAuthorAsync(id, dto);
+            return NoContent();
         }
 
-        /// <summary>
-        /// Delete an author
-        /// </summary>
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteAuthor(int id)
         {
-            try
-            {
-                _logger.LogInformation("Deleting author with ID: {AuthorId}", id);
-                await _authorService.DeleteAuthorAsync(id);
-                _logger.LogInformation("Author deleted successfully: {AuthorId}", id);
-
-                return NoContent();
-            }
-            catch (AuthorNotFoundException ex)
-            {
-                _logger.LogWarning("Author not found for deletion: {AuthorId}", id);
-                return NotFound(new { message = ex.Message, authorId = ex.AuthorId });
-            }
-            catch (InvalidOperationException ex)
-            {
-                _logger.LogWarning("Cannot delete author: {Message}", ex.Message);
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error deleting author with ID: {AuthorId}", id);
-                throw;
-            }
+            if (id <= 0) return BadRequest(new { message = "Invalid author ID" });
+            await _authorService.DeleteAuthorAsync(id);
+            return NoContent();
         }
 
-        /// <summary>
-        /// Check if author exists
-        /// </summary>
-        [HttpGet("{id}/exists")]
-        public async Task<ActionResult<bool>> Exists(int id)
+        [HttpGet("{id}/books")]
+        public async Task<IActionResult> GetAuthorBooks(int id)
         {
-            try
-            {
-                _logger.LogInformation("Checking if author exists: {AuthorId}", id);
-                var exists = await _authorService.AuthorExistsAsync(id);
-                return Ok(exists);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error checking if author exists: {AuthorId}", id);
-                throw;
-            }
+            if (id <= 0) return BadRequest(new { message = "Invalid author ID" });
+            var books = await _authorService.GetAuthorBooksAsync(id);
+            return Ok(books);
+        }
+
+        [HttpGet("{id}/book-count")]
+        public async Task<IActionResult> GetAuthorBookCount(int id)
+        {
+            if (id <= 0) return BadRequest(new { message = "Invalid author ID" });
+            var count = await _authorService.GetAuthorBookCountAsync(id);
+            return Ok(new { count });
+        }
+
+        [HttpGet("{id}/profile-image")]
+        public async Task<IActionResult> GetAuthorProfileImage(int id)
+        {
+            if (id <= 0) return BadRequest(new { message = "Invalid author ID" });
+            var (content, contentType, fileName) = await _authorService.GetAuthorProfileImageAsync(id);
+            if (content == null) return NotFound(new { message = "Profile image not found" });
+            return File(content, contentType, fileName);
+        }
+
+        [HttpDelete("{id}/profile-image")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteAuthorProfileImage(int id)
+        {
+            if (id <= 0) return BadRequest(new { message = "Invalid author ID" });
+            await _authorService.DeleteAuthorProfileImageAsync(id);
+            return NoContent();
         }
     }
-} 
+}

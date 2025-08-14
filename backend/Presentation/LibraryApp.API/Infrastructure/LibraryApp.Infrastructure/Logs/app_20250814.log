@@ -1,0 +1,865 @@
+2025-08-14 20:20:07.674 [INF] Executed DbCommand (251ms) [Parameters=[], CommandType='"Text"', CommandTimeout='60']
+CREATE DATABASE [LibraryApp];
+2025-08-14 20:20:07.808 [INF] Executed DbCommand (82ms) [Parameters=[], CommandType='"Text"', CommandTimeout='60']
+IF SERVERPROPERTY('EngineEdition') <> 5
+BEGIN
+    ALTER DATABASE [LibraryApp] SET READ_COMMITTED_SNAPSHOT ON;
+END;
+2025-08-14 20:20:07.839 [INF] Executed DbCommand (12ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2025-08-14 20:20:07.995 [INF] Executed DbCommand (8ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Authors] (
+    [AuthorId] int NOT NULL IDENTITY,
+    [Name] nvarchar(255) NOT NULL,
+    [Biography] nvarchar(2000) NULL,
+    [BirthDate] datetime2 NULL,
+    [Nationality] nvarchar(100) NULL,
+    [ProfileImage] varbinary(max) NULL,
+    [ImageContentType] nvarchar(max) NULL,
+    [ImageFileName] nvarchar(max) NULL,
+    CONSTRAINT [PK_Authors] PRIMARY KEY ([AuthorId])
+);
+2025-08-14 20:20:08.002 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Categories] (
+    [CategoryId] int NOT NULL IDENTITY,
+    [Name] nvarchar(100) NOT NULL,
+    [Description] nvarchar(500) NULL,
+    CONSTRAINT [PK_Categories] PRIMARY KEY ([CategoryId])
+);
+2025-08-14 20:20:08.007 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Publishers] (
+    [PublisherId] int NOT NULL IDENTITY,
+    [Name] nvarchar(255) NOT NULL,
+    [Address] nvarchar(500) NULL,
+    [Website] nvarchar(255) NULL,
+    [ContactEmail] nvarchar(255) NULL,
+    [EstablishedDate] datetime2 NULL,
+    [LogoImage] varbinary(max) NULL,
+    [ImageContentType] nvarchar(max) NULL,
+    [ImageFileName] nvarchar(max) NULL,
+    CONSTRAINT [PK_Publishers] PRIMARY KEY ([PublisherId])
+);
+2025-08-14 20:20:08.012 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Users] (
+    [UserId] int NOT NULL IDENTITY,
+    [Name] nvarchar(max) NOT NULL,
+    [Email] nvarchar(max) NOT NULL,
+    [Password] nvarchar(max) NOT NULL,
+    [Age] int NULL,
+    [Gender] nvarchar(max) NULL,
+    [Address] nvarchar(max) NULL,
+    [RegistrationDate] datetime2 NOT NULL,
+    [Role] int NOT NULL,
+    CONSTRAINT [PK_Users] PRIMARY KEY ([UserId])
+);
+2025-08-14 20:20:08.018 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Books] (
+    [BookId] int NOT NULL IDENTITY,
+    [Title] nvarchar(255) NOT NULL,
+    [PublicationYear] int NOT NULL,
+    [IsAvailable] bit NOT NULL DEFAULT CAST(1 AS bit),
+    [Rating] DECIMAL(3,2) NOT NULL DEFAULT 0.0,
+    [CategoryId] int NOT NULL,
+    [CoverImage] VARBINARY(MAX) NULL,
+    [ImageContentType] nvarchar(100) NULL,
+    [ImageFileName] nvarchar(255) NULL,
+    [AuthorId] int NOT NULL,
+    [PublisherId] int NOT NULL,
+    CONSTRAINT [PK_Books] PRIMARY KEY ([BookId]),
+    CONSTRAINT [FK_Books_Authors_AuthorId] FOREIGN KEY ([AuthorId]) REFERENCES [Authors] ([AuthorId]) ON DELETE NO ACTION,
+    CONSTRAINT [FK_Books_Categories_CategoryId] FOREIGN KEY ([CategoryId]) REFERENCES [Categories] ([CategoryId]) ON DELETE NO ACTION,
+    CONSTRAINT [FK_Books_Publishers_PublisherId] FOREIGN KEY ([PublisherId]) REFERENCES [Publishers] ([PublisherId]) ON DELETE NO ACTION
+);
+2025-08-14 20:20:08.027 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Loans] (
+    [LoanId] int NOT NULL IDENTITY,
+    [LoanDate] datetime2 NOT NULL,
+    [DueDate] datetime2 NOT NULL,
+    [ReturnDate] datetime2 NULL,
+    [BookId] int NOT NULL,
+    [UserId] int NOT NULL,
+    CONSTRAINT [PK_Loans] PRIMARY KEY ([LoanId]),
+    CONSTRAINT [FK_Loans_Books_BookId] FOREIGN KEY ([BookId]) REFERENCES [Books] ([BookId]) ON DELETE CASCADE,
+    CONSTRAINT [FK_Loans_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([UserId]) ON DELETE CASCADE
+);
+2025-08-14 20:20:08.036 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [UserFavoriteBooks] (
+    [UserId] int NOT NULL,
+    [BookId] int NOT NULL,
+    [AddedDate] datetime2 NOT NULL,
+    CONSTRAINT [PK_UserFavoriteBooks] PRIMARY KEY ([UserId], [BookId]),
+    CONSTRAINT [FK_UserFavoriteBooks_Books_BookId] FOREIGN KEY ([BookId]) REFERENCES [Books] ([BookId]) ON DELETE CASCADE,
+    CONSTRAINT [FK_UserFavoriteBooks_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([UserId]) ON DELETE CASCADE
+);
+2025-08-14 20:20:08.084 [INF] Executed DbCommand (43ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'CategoryId', N'Description', N'Name') AND [object_id] = OBJECT_ID(N'[Categories]'))
+    SET IDENTITY_INSERT [Categories] ON;
+INSERT INTO [Categories] ([CategoryId], [Description], [Name])
+VALUES (1, N'Fictional literature including novels, short stories, and poetry', N'Fiction'),
+(2, N'Factual literature including biographies, history, and science', N'Non-Fiction'),
+(3, N'Educational materials including textbooks and reference books', N'Educational'),
+(4, N'Speculative fiction with scientific and technological themes', N'Science Fiction'),
+(5, N'Detective and crime fiction', N'Mystery'),
+(6, N'Love stories and romantic fiction', N'Romance'),
+(7, N'Imaginative fiction with magical and supernatural elements', N'Fantasy'),
+(8, N'Life stories of real people', N'Biography'),
+(9, N'Historical accounts and analysis', N'History'),
+(10, N'Scientific literature and research', N'Science');
+IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'CategoryId', N'Description', N'Name') AND [object_id] = OBJECT_ID(N'[Categories]'))
+    SET IDENTITY_INSERT [Categories] OFF;
+2025-08-14 20:20:08.090 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Books_AuthorId] ON [Books] ([AuthorId]);
+2025-08-14 20:20:08.094 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Books_CategoryId] ON [Books] ([CategoryId]);
+2025-08-14 20:20:08.098 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Books_PublisherId] ON [Books] ([PublisherId]);
+2025-08-14 20:20:08.103 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Loans_BookId] ON [Loans] ([BookId]);
+2025-08-14 20:20:08.107 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Loans_UserId] ON [Loans] ([UserId]);
+2025-08-14 20:20:08.111 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_UserFavoriteBooks_BookId] ON [UserFavoriteBooks] ([BookId]);
+2025-08-14 20:20:08.143 [INF] User profile is available. Using 'C:\Users\boran\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-08-14 20:20:08.253 [WRN] The WebRootPath was not found: C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\wwwroot. Static files may be unavailable.
+2025-08-14 20:20:08.297 [INF] Now listening on: http://localhost:7208
+2025-08-14 20:20:08.301 [INF] Application started. Press Ctrl+C to shut down.
+2025-08-14 20:20:08.302 [INF] Hosting environment: Development
+2025-08-14 20:20:08.303 [INF] Content root path: C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API
+2025-08-14 20:20:29.168 [INF] Request starting HTTP/1.1 GET http://localhost:7208/ - null null
+2025-08-14 20:20:29.228 [INF] System Action: REQUEST_START - Request started {"RequestId":"4ba23934-3c59-4b37-8f3c-37068f705f20","Method":"GET","Path":"/","UserId":null,"Timestamp":"2025-08-14T17:20:29.2089595Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:20:29.270 [WRN] Failed to determine the https port for redirect.
+2025-08-14 20:20:29.293 [INF] Bearer was not authenticated. Failure message: Authorization header not found.
+2025-08-14 20:20:29.305 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"4ba23934-3c59-4b37-8f3c-37068f705f20","Method":"GET","Path":"/","StatusCode":404,"Duration":95.9267,"UserId":null,"Timestamp":"2025-08-14T17:20:29.3048862Z"}
+2025-08-14 20:20:29.324 [INF] Request finished HTTP/1.1 GET http://localhost:7208/ - 404 0 null 157.4257ms
+2025-08-14 20:20:29.333 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET http://localhost:7208/, Response status code: 404
+2025-08-14 20:20:38.358 [INF] Request starting HTTP/1.1 GET http://localhost:7208/swagger - null null
+2025-08-14 20:20:38.363 [INF] System Action: REQUEST_START - Request started {"RequestId":"33ead125-5ae2-46f0-bead-0bcce7fc1c75","Method":"GET","Path":"/swagger","UserId":null,"Timestamp":"2025-08-14T17:20:38.3625194Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:20:38.374 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"33ead125-5ae2-46f0-bead-0bcce7fc1c75","Method":"GET","Path":"/swagger","StatusCode":301,"Duration":10.7886,"UserId":null,"Timestamp":"2025-08-14T17:20:38.3733080Z"}
+2025-08-14 20:20:38.385 [INF] Request finished HTTP/1.1 GET http://localhost:7208/swagger - 301 0 null 26.4596ms
+2025-08-14 20:20:38.392 [INF] Request starting HTTP/1.1 GET http://localhost:7208/swagger/index.html - null null
+2025-08-14 20:20:38.397 [INF] System Action: REQUEST_START - Request started {"RequestId":"4173842f-887f-4e2c-b54a-8528a9467989","Method":"GET","Path":"/swagger/index.html","UserId":null,"Timestamp":"2025-08-14T17:20:38.3970447Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:20:38.504 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"4173842f-887f-4e2c-b54a-8528a9467989","Method":"GET","Path":"/swagger/index.html","StatusCode":200,"Duration":107.8657,"UserId":null,"Timestamp":"2025-08-14T17:20:38.5049104Z"}
+2025-08-14 20:20:38.513 [INF] Request finished HTTP/1.1 GET http://localhost:7208/swagger/index.html - 200 null text/html;charset=utf-8 121.5577ms
+2025-08-14 20:20:38.532 [INF] Request starting HTTP/1.1 GET http://localhost:7208/swagger/swagger-ui.css - null null
+2025-08-14 20:20:38.533 [INF] Request starting HTTP/1.1 GET http://localhost:7208/swagger/swagger-ui-bundle.js - null null
+2025-08-14 20:20:38.534 [INF] Request starting HTTP/1.1 GET http://localhost:7208/swagger/swagger-ui-standalone-preset.js - null null
+2025-08-14 20:20:38.537 [INF] System Action: REQUEST_START - Request started {"RequestId":"0bbdef7b-3ece-4196-99a5-bf640e4296ea","Method":"GET","Path":"/swagger/swagger-ui.css","UserId":null,"Timestamp":"2025-08-14T17:20:38.5376792Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:20:38.543 [INF] System Action: REQUEST_START - Request started {"RequestId":"ff71d87a-c06c-4ce9-9c26-a1ac57c1f34a","Method":"GET","Path":"/swagger/swagger-ui-bundle.js","UserId":null,"Timestamp":"2025-08-14T17:20:38.5429170Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:20:38.547 [INF] System Action: REQUEST_START - Request started {"RequestId":"99bd0afd-97eb-4f52-aa5c-ba2d1b250b2a","Method":"GET","Path":"/swagger/swagger-ui-standalone-preset.js","UserId":null,"Timestamp":"2025-08-14T17:20:38.5469814Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:20:38.580 [INF] Sending file. Request path: '/swagger-ui.css'. Physical path: 'N/A'
+2025-08-14 20:20:38.585 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"0bbdef7b-3ece-4196-99a5-bf640e4296ea","Method":"GET","Path":"/swagger/swagger-ui.css","StatusCode":200,"Duration":47.463,"UserId":null,"Timestamp":"2025-08-14T17:20:38.5851422Z"}
+2025-08-14 20:20:38.586 [INF] Sending file. Request path: '/swagger-ui-standalone-preset.js'. Physical path: 'N/A'
+2025-08-14 20:20:38.599 [INF] Request finished HTTP/1.1 GET http://localhost:7208/swagger/swagger-ui.css - 200 144929 text/css 66.3992ms
+2025-08-14 20:20:38.600 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"99bd0afd-97eb-4f52-aa5c-ba2d1b250b2a","Method":"GET","Path":"/swagger/swagger-ui-standalone-preset.js","StatusCode":200,"Duration":53.7203,"UserId":null,"Timestamp":"2025-08-14T17:20:38.6007017Z"}
+2025-08-14 20:20:38.616 [INF] Sending file. Request path: '/swagger-ui-bundle.js'. Physical path: 'N/A'
+2025-08-14 20:20:38.618 [INF] Request finished HTTP/1.1 GET http://localhost:7208/swagger/swagger-ui-standalone-preset.js - 200 312163 text/javascript 84.6174ms
+2025-08-14 20:20:38.620 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"ff71d87a-c06c-4ce9-9c26-a1ac57c1f34a","Method":"GET","Path":"/swagger/swagger-ui-bundle.js","StatusCode":200,"Duration":77.9055,"UserId":null,"Timestamp":"2025-08-14T17:20:38.6208225Z"}
+2025-08-14 20:20:38.637 [INF] Request finished HTTP/1.1 GET http://localhost:7208/swagger/swagger-ui-bundle.js - 200 1061536 text/javascript 103.1459ms
+2025-08-14 20:20:38.804 [INF] Request starting HTTP/1.1 GET http://localhost:7208/swagger/v1/swagger.json - null null
+2025-08-14 20:20:38.808 [INF] System Action: REQUEST_START - Request started {"RequestId":"efe944ca-cb9d-47bb-b656-5a0c5a4a4199","Method":"GET","Path":"/swagger/v1/swagger.json","UserId":null,"Timestamp":"2025-08-14T17:20:38.8082675Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:20:38.816 [INF] Request starting HTTP/1.1 GET http://localhost:7208/swagger/favicon-32x32.png - null null
+2025-08-14 20:20:38.821 [INF] System Action: REQUEST_START - Request started {"RequestId":"9673e12d-25d2-4d70-823d-7f329bc97d98","Method":"GET","Path":"/swagger/favicon-32x32.png","UserId":null,"Timestamp":"2025-08-14T17:20:38.8210720Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:20:38.832 [INF] Sending file. Request path: '/favicon-32x32.png'. Physical path: 'N/A'
+2025-08-14 20:20:38.835 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"9673e12d-25d2-4d70-823d-7f329bc97d98","Method":"GET","Path":"/swagger/favicon-32x32.png","StatusCode":200,"Duration":14.0194,"UserId":null,"Timestamp":"2025-08-14T17:20:38.8350914Z"}
+2025-08-14 20:20:38.846 [INF] Request finished HTTP/1.1 GET http://localhost:7208/swagger/favicon-32x32.png - 200 628 image/png 29.4364ms
+2025-08-14 20:20:38.945 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"efe944ca-cb9d-47bb-b656-5a0c5a4a4199","Method":"GET","Path":"/swagger/v1/swagger.json","StatusCode":200,"Duration":136.8551,"UserId":null,"Timestamp":"2025-08-14T17:20:38.9451226Z"}
+2025-08-14 20:20:38.953 [INF] Request finished HTTP/1.1 GET http://localhost:7208/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 148.9582ms
+2025-08-14 20:21:06.408 [INF] Request starting HTTP/1.1 POST http://localhost:7208/api/Users/login - application/json 60
+2025-08-14 20:21:06.415 [INF] System Action: REQUEST_START - Request started {"RequestId":"f626bed4-8f4e-475b-bf58-9d3d15c6c08a","Method":"POST","Path":"/api/Users/login","UserId":null,"Timestamp":"2025-08-14T17:21:06.4157492Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:21:06.426 [INF] CORS policy execution successful.
+2025-08-14 20:21:06.430 [INF] Bearer was not authenticated. Failure message: Authorization header not found.
+2025-08-14 20:21:06.433 [INF] Executing endpoint 'LibraryApp.API.Controllers.UsersController.Login (LibraryApp.API)'
+2025-08-14 20:21:06.466 [INF] Route matched with {action = "Login", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(LibraryApp.Application.DTOs.User.LoginUserDto) on controller LibraryApp.API.Controllers.UsersController (LibraryApp.API).
+2025-08-14 20:21:06.876 [INF] Executed DbCommand (45ms) [Parameters=[@__ToLowerInvariant_0='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[UserId], [u].[Address], [u].[Age], [u].[Email], [u].[Gender], [u].[Name], [u].[Password], [u].[RegistrationDate], [u].[Role]
+FROM [Users] AS [u]
+WHERE [u].[Email] = @__ToLowerInvariant_0
+2025-08-14 20:21:06.912 [INF] Executed action LibraryApp.API.Controllers.UsersController.Login (LibraryApp.API) in 434.5255ms
+2025-08-14 20:21:06.918 [INF] Executed endpoint 'LibraryApp.API.Controllers.UsersController.Login (LibraryApp.API)'
+2025-08-14 20:21:07.000 [ERR] Error in HTTP_REQUEST_ERROR: User with email 'string@gmail.com' was not found. {"Method":"POST","Endpoint":"/api/users/login","StatusCode":404,"Duration":497.5281,"UserId":null,"RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+LibraryApp.Application.Exceptions.UserNotFoundException: User with email 'string@gmail.com' was not found.
+   at LibraryApp.Application.Services.UserService.LoginAsync(String email, String password) in C:\Users\boran\source\repos\backend\Core\LibraryApp.Application\Services\UserService.cs:line 156
+   at LibraryApp.API.Controllers.UsersController.Login(LoginUserDto dto) in C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\Controllers\UsersController.cs:line 28
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.<Invoke>g__AwaitRequestTask|7_0(Endpoint endpoint, Task requestTask, ILogger logger)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at LibraryApp.Infrastructure.Middleware.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Middleware\GlobalExceptionMiddleware.cs:line 40
+2025-08-14 20:21:07.042 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"f626bed4-8f4e-475b-bf58-9d3d15c6c08a","Method":"POST","Path":"/api/Users/login","StatusCode":404,"Duration":626.4548,"UserId":null,"Timestamp":"2025-08-14T17:21:07.0422040Z"}
+2025-08-14 20:21:07.059 [INF] Request finished HTTP/1.1 POST http://localhost:7208/api/Users/login - 404 null application/json 651.3987ms
+2025-08-14 20:21:27.719 [INF] Request starting HTTP/1.1 POST http://localhost:7208/api/Users/register - application/json 80
+2025-08-14 20:21:27.728 [INF] System Action: REQUEST_START - Request started {"RequestId":"466a2bd6-7c66-47ce-a41b-83fd0e7a3016","Method":"POST","Path":"/api/Users/register","UserId":null,"Timestamp":"2025-08-14T17:21:27.7287813Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:21:27.737 [INF] CORS policy execution successful.
+2025-08-14 20:21:27.743 [INF] Bearer was not authenticated. Failure message: Authorization header not found.
+2025-08-14 20:21:27.745 [INF] Executing endpoint 'LibraryApp.API.Controllers.UsersController.Register (LibraryApp.API)'
+2025-08-14 20:21:27.752 [INF] Route matched with {action = "Register", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Register(LibraryApp.Application.DTOs.User.AddUserDto) on controller LibraryApp.API.Controllers.UsersController (LibraryApp.API).
+2025-08-14 20:21:27.785 [INF] Executing BadRequestObjectResult, writing value of type 'Microsoft.AspNetCore.Mvc.ValidationProblemDetails'.
+2025-08-14 20:21:27.810 [INF] Executed action LibraryApp.API.Controllers.UsersController.Register (LibraryApp.API) in 54.2659ms
+2025-08-14 20:21:27.812 [INF] Executed endpoint 'LibraryApp.API.Controllers.UsersController.Register (LibraryApp.API)'
+2025-08-14 20:21:27.815 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"466a2bd6-7c66-47ce-a41b-83fd0e7a3016","Method":"POST","Path":"/api/Users/register","StatusCode":400,"Duration":86.6965,"UserId":null,"Timestamp":"2025-08-14T17:21:27.8154778Z"}
+2025-08-14 20:21:27.824 [INF] Request finished HTTP/1.1 POST http://localhost:7208/api/Users/register - 400 null application/problem+json; charset=utf-8 105.5588ms
+2025-08-14 20:21:35.711 [INF] Request starting HTTP/1.1 POST http://localhost:7208/api/Users/register - application/json 80
+2025-08-14 20:21:35.714 [INF] System Action: REQUEST_START - Request started {"RequestId":"2a3de6d1-e0ba-4e2c-8c5c-0cfcea7185c4","Method":"POST","Path":"/api/Users/register","UserId":null,"Timestamp":"2025-08-14T17:21:35.7146666Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:21:35.722 [INF] CORS policy execution successful.
+2025-08-14 20:21:35.724 [INF] Bearer was not authenticated. Failure message: Authorization header not found.
+2025-08-14 20:21:35.725 [INF] Executing endpoint 'LibraryApp.API.Controllers.UsersController.Register (LibraryApp.API)'
+2025-08-14 20:21:35.727 [INF] Route matched with {action = "Register", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Register(LibraryApp.Application.DTOs.User.AddUserDto) on controller LibraryApp.API.Controllers.UsersController (LibraryApp.API).
+2025-08-14 20:21:35.818 [INF] Executed DbCommand (3ms) [Parameters=[@__ToLowerInvariant_0='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[UserId], [u].[Address], [u].[Age], [u].[Email], [u].[Gender], [u].[Name], [u].[Password], [u].[RegistrationDate], [u].[Role]
+FROM [Users] AS [u]
+WHERE [u].[Email] = @__ToLowerInvariant_0
+2025-08-14 20:21:36.256 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [u].[UserId], [u].[Address], [u].[Age], [u].[Email], [u].[Gender], [u].[Name], [u].[Password], [u].[RegistrationDate], [u].[Role]
+FROM [Users] AS [u]
+2025-08-14 20:21:36.349 [INF] Database operation: INSERT on Users - ID: 0, Email: string@gmail.com, Name: string
+2025-08-14 20:21:36.409 [INF] Executed DbCommand (3ms) [Parameters=[@p0='?' (Size = 4000), @p1='?' (DbType = Int32), @p2='?' (Size = 4000), @p3='?' (Size = 4000), @p4='?' (Size = 4000), @p5='?' (Size = 4000), @p6='?' (DbType = DateTime2), @p7='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+INSERT INTO [Users] ([Address], [Age], [Email], [Gender], [Name], [Password], [RegistrationDate], [Role])
+OUTPUT INSERTED.[UserId]
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+2025-08-14 20:21:36.443 [INF] User registered - ID: 1, Name: string, Email: string@gmail.com, Role: "User"
+2025-08-14 20:21:36.558 [WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2025-08-14 20:21:36.580 [INF] Executed DbCommand (13ms) [Parameters=[@__id_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [t].[UserId], [t].[Address], [t].[Age], [t].[Email], [t].[Gender], [t].[Name], [t].[Password], [t].[RegistrationDate], [t].[Role], [t0].[LoanId], [t0].[BookId], [t0].[DueDate], [t0].[LoanDate], [t0].[ReturnDate], [t0].[UserId], [t0].[BookId0], [t0].[AuthorId], [t0].[CategoryId], [t0].[CoverImage], [t0].[ImageContentType], [t0].[ImageFileName], [t0].[IsAvailable], [t0].[PublicationYear], [t0].[PublisherId], [t0].[Rating], [t0].[Title], [t1].[UserId], [t1].[BookId], [t1].[AddedDate], [t1].[BookId0], [t1].[AuthorId], [t1].[CategoryId], [t1].[CoverImage], [t1].[ImageContentType], [t1].[ImageFileName], [t1].[IsAvailable], [t1].[PublicationYear], [t1].[PublisherId], [t1].[Rating], [t1].[Title]
+FROM (
+    SELECT TOP(1) [u].[UserId], [u].[Address], [u].[Age], [u].[Email], [u].[Gender], [u].[Name], [u].[Password], [u].[RegistrationDate], [u].[Role]
+    FROM [Users] AS [u]
+    WHERE [u].[UserId] = @__id_0
+) AS [t]
+LEFT JOIN (
+    SELECT [l].[LoanId], [l].[BookId], [l].[DueDate], [l].[LoanDate], [l].[ReturnDate], [l].[UserId], [b].[BookId] AS [BookId0], [b].[AuthorId], [b].[CategoryId], [b].[CoverImage], [b].[ImageContentType], [b].[ImageFileName], [b].[IsAvailable], [b].[PublicationYear], [b].[PublisherId], [b].[Rating], [b].[Title]
+    FROM [Loans] AS [l]
+    INNER JOIN [Books] AS [b] ON [l].[BookId] = [b].[BookId]
+) AS [t0] ON [t].[UserId] = [t0].[UserId]
+LEFT JOIN (
+    SELECT [u0].[UserId], [u0].[BookId], [u0].[AddedDate], [b0].[BookId] AS [BookId0], [b0].[AuthorId], [b0].[CategoryId], [b0].[CoverImage], [b0].[ImageContentType], [b0].[ImageFileName], [b0].[IsAvailable], [b0].[PublicationYear], [b0].[PublisherId], [b0].[Rating], [b0].[Title]
+    FROM [UserFavoriteBooks] AS [u0]
+    INNER JOIN [Books] AS [b0] ON [u0].[BookId] = [b0].[BookId]
+) AS [t1] ON [t].[UserId] = [t1].[UserId]
+ORDER BY [t].[UserId], [t0].[LoanId], [t0].[BookId0], [t1].[UserId], [t1].[BookId]
+2025-08-14 20:21:36.596 [INF] Executing CreatedAtActionResult, writing value of type 'LibraryApp.Application.DTOs.User.UserDto'.
+2025-08-14 20:21:36.634 [INF] Executed action LibraryApp.API.Controllers.UsersController.Register (LibraryApp.API) in 904.7815ms
+2025-08-14 20:21:36.637 [INF] Executed endpoint 'LibraryApp.API.Controllers.UsersController.Register (LibraryApp.API)'
+2025-08-14 20:21:36.641 [INF] System Action: SUCCESS_OPERATION - Operation completed successfully {"Method":"POST","Endpoint":"/api/users/register","StatusCode":201,"Operation":"User Register","Duration":917.3296,"UserId":null}
+2025-08-14 20:21:36.650 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"2a3de6d1-e0ba-4e2c-8c5c-0cfcea7185c4","Method":"POST","Path":"/api/Users/register","StatusCode":201,"Duration":935.3238,"UserId":null,"Timestamp":"2025-08-14T17:21:36.6499904Z"}
+2025-08-14 20:21:36.659 [INF] Request finished HTTP/1.1 POST http://localhost:7208/api/Users/register - 201 null application/json; charset=utf-8 948.0994ms
+2025-08-14 20:21:47.166 [INF] Request starting HTTP/1.1 POST http://localhost:7208/api/Users/login - application/json 60
+2025-08-14 20:21:47.170 [INF] System Action: REQUEST_START - Request started {"RequestId":"f978e32f-dafd-47b8-923b-fcdf011c4141","Method":"POST","Path":"/api/Users/login","UserId":null,"Timestamp":"2025-08-14T17:21:47.1704208Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:21:47.178 [INF] CORS policy execution successful.
+2025-08-14 20:21:47.180 [INF] Bearer was not authenticated. Failure message: Authorization header not found.
+2025-08-14 20:21:47.182 [INF] Executing endpoint 'LibraryApp.API.Controllers.UsersController.Login (LibraryApp.API)'
+2025-08-14 20:21:47.184 [INF] Route matched with {action = "Login", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(LibraryApp.Application.DTOs.User.LoginUserDto) on controller LibraryApp.API.Controllers.UsersController (LibraryApp.API).
+2025-08-14 20:21:47.192 [INF] Executed DbCommand (1ms) [Parameters=[@__ToLowerInvariant_0='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[UserId], [u].[Address], [u].[Age], [u].[Email], [u].[Gender], [u].[Name], [u].[Password], [u].[RegistrationDate], [u].[Role]
+FROM [Users] AS [u]
+WHERE [u].[Email] = @__ToLowerInvariant_0
+2025-08-14 20:21:47.404 [INF] Executed action LibraryApp.API.Controllers.UsersController.Login (LibraryApp.API) in 217.3855ms
+2025-08-14 20:21:47.407 [INF] Executed endpoint 'LibraryApp.API.Controllers.UsersController.Login (LibraryApp.API)'
+2025-08-14 20:21:47.412 [ERR] Error in HTTP_REQUEST_ERROR: Could not find a part of the path 'C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\Keys\jwt-sig-private.pem'. {"Method":"POST","Endpoint":"/api/users/login","StatusCode":500,"Duration":230.9957,"UserId":null,"RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\Keys\jwt-sig-private.pem'.
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.File.ReadAllBytes(String path)
+   at LibraryApp.Infrastructure.Auth.JwtService.LoadRsaPrivateKey(String path) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Auth\JwtService.cs:line 247
+   at LibraryApp.Infrastructure.Auth.JwtService.CreateAccessToken(Int32 userId, String email, String role, IDictionary`2 extraClaims) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Auth\JwtService.cs:line 66
+   at LibraryApp.Application.Services.UserService.LoginAsync(String email, String password) in C:\Users\boran\source\repos\backend\Core\LibraryApp.Application\Services\UserService.cs:line 162
+   at LibraryApp.API.Controllers.UsersController.Login(LoginUserDto dto) in C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\Controllers\UsersController.cs:line 28
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.<Invoke>g__AwaitRequestTask|7_0(Endpoint endpoint, Task requestTask, ILogger logger)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at LibraryApp.Infrastructure.Middleware.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Middleware\GlobalExceptionMiddleware.cs:line 40
+2025-08-14 20:21:47.432 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"f978e32f-dafd-47b8-923b-fcdf011c4141","Method":"POST","Path":"/api/Users/login","StatusCode":500,"Duration":262.1871,"UserId":null,"Timestamp":"2025-08-14T17:21:47.4326079Z"}
+2025-08-14 20:21:47.444 [INF] Request finished HTTP/1.1 POST http://localhost:7208/api/Users/login - 500 null application/json 277.4216ms
+2025-08-14 20:23:02.416 [INF] Application is shutting down...
+2025-08-14 20:23:11.309 [INF] Executed DbCommand (297ms) [Parameters=[], CommandType='"Text"', CommandTimeout='60']
+CREATE DATABASE [LibraryApp];
+2025-08-14 20:23:11.478 [INF] Executed DbCommand (112ms) [Parameters=[], CommandType='"Text"', CommandTimeout='60']
+IF SERVERPROPERTY('EngineEdition') <> 5
+BEGIN
+    ALTER DATABASE [LibraryApp] SET READ_COMMITTED_SNAPSHOT ON;
+END;
+2025-08-14 20:23:11.507 [INF] Executed DbCommand (8ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2025-08-14 20:23:11.675 [INF] Executed DbCommand (11ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Authors] (
+    [AuthorId] int NOT NULL IDENTITY,
+    [Name] nvarchar(255) NOT NULL,
+    [Biography] nvarchar(2000) NULL,
+    [BirthDate] datetime2 NULL,
+    [Nationality] nvarchar(100) NULL,
+    [ProfileImage] varbinary(max) NULL,
+    [ImageContentType] nvarchar(max) NULL,
+    [ImageFileName] nvarchar(max) NULL,
+    CONSTRAINT [PK_Authors] PRIMARY KEY ([AuthorId])
+);
+2025-08-14 20:23:11.682 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Categories] (
+    [CategoryId] int NOT NULL IDENTITY,
+    [Name] nvarchar(100) NOT NULL,
+    [Description] nvarchar(500) NULL,
+    CONSTRAINT [PK_Categories] PRIMARY KEY ([CategoryId])
+);
+2025-08-14 20:23:11.688 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Publishers] (
+    [PublisherId] int NOT NULL IDENTITY,
+    [Name] nvarchar(255) NOT NULL,
+    [Address] nvarchar(500) NULL,
+    [Website] nvarchar(255) NULL,
+    [ContactEmail] nvarchar(255) NULL,
+    [EstablishedDate] datetime2 NULL,
+    [LogoImage] varbinary(max) NULL,
+    [ImageContentType] nvarchar(max) NULL,
+    [ImageFileName] nvarchar(max) NULL,
+    CONSTRAINT [PK_Publishers] PRIMARY KEY ([PublisherId])
+);
+2025-08-14 20:23:11.695 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Users] (
+    [UserId] int NOT NULL IDENTITY,
+    [Name] nvarchar(max) NOT NULL,
+    [Email] nvarchar(max) NOT NULL,
+    [Password] nvarchar(max) NOT NULL,
+    [Age] int NULL,
+    [Gender] nvarchar(max) NULL,
+    [Address] nvarchar(max) NULL,
+    [RegistrationDate] datetime2 NOT NULL,
+    [Role] int NOT NULL,
+    CONSTRAINT [PK_Users] PRIMARY KEY ([UserId])
+);
+2025-08-14 20:23:11.705 [INF] Executed DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Books] (
+    [BookId] int NOT NULL IDENTITY,
+    [Title] nvarchar(255) NOT NULL,
+    [PublicationYear] int NOT NULL,
+    [IsAvailable] bit NOT NULL DEFAULT CAST(1 AS bit),
+    [Rating] DECIMAL(3,2) NOT NULL DEFAULT 0.0,
+    [CategoryId] int NOT NULL,
+    [CoverImage] VARBINARY(MAX) NULL,
+    [ImageContentType] nvarchar(100) NULL,
+    [ImageFileName] nvarchar(255) NULL,
+    [AuthorId] int NOT NULL,
+    [PublisherId] int NOT NULL,
+    CONSTRAINT [PK_Books] PRIMARY KEY ([BookId]),
+    CONSTRAINT [FK_Books_Authors_AuthorId] FOREIGN KEY ([AuthorId]) REFERENCES [Authors] ([AuthorId]) ON DELETE NO ACTION,
+    CONSTRAINT [FK_Books_Categories_CategoryId] FOREIGN KEY ([CategoryId]) REFERENCES [Categories] ([CategoryId]) ON DELETE NO ACTION,
+    CONSTRAINT [FK_Books_Publishers_PublisherId] FOREIGN KEY ([PublisherId]) REFERENCES [Publishers] ([PublisherId]) ON DELETE NO ACTION
+);
+2025-08-14 20:23:11.711 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Loans] (
+    [LoanId] int NOT NULL IDENTITY,
+    [LoanDate] datetime2 NOT NULL,
+    [DueDate] datetime2 NOT NULL,
+    [ReturnDate] datetime2 NULL,
+    [BookId] int NOT NULL,
+    [UserId] int NOT NULL,
+    CONSTRAINT [PK_Loans] PRIMARY KEY ([LoanId]),
+    CONSTRAINT [FK_Loans_Books_BookId] FOREIGN KEY ([BookId]) REFERENCES [Books] ([BookId]) ON DELETE CASCADE,
+    CONSTRAINT [FK_Loans_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([UserId]) ON DELETE CASCADE
+);
+2025-08-14 20:23:11.718 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [UserFavoriteBooks] (
+    [UserId] int NOT NULL,
+    [BookId] int NOT NULL,
+    [AddedDate] datetime2 NOT NULL,
+    CONSTRAINT [PK_UserFavoriteBooks] PRIMARY KEY ([UserId], [BookId]),
+    CONSTRAINT [FK_UserFavoriteBooks_Books_BookId] FOREIGN KEY ([BookId]) REFERENCES [Books] ([BookId]) ON DELETE CASCADE,
+    CONSTRAINT [FK_UserFavoriteBooks_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([UserId]) ON DELETE CASCADE
+);
+2025-08-14 20:23:11.776 [INF] Executed DbCommand (54ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'CategoryId', N'Description', N'Name') AND [object_id] = OBJECT_ID(N'[Categories]'))
+    SET IDENTITY_INSERT [Categories] ON;
+INSERT INTO [Categories] ([CategoryId], [Description], [Name])
+VALUES (1, N'Fictional literature including novels, short stories, and poetry', N'Fiction'),
+(2, N'Factual literature including biographies, history, and science', N'Non-Fiction'),
+(3, N'Educational materials including textbooks and reference books', N'Educational'),
+(4, N'Speculative fiction with scientific and technological themes', N'Science Fiction'),
+(5, N'Detective and crime fiction', N'Mystery'),
+(6, N'Love stories and romantic fiction', N'Romance'),
+(7, N'Imaginative fiction with magical and supernatural elements', N'Fantasy'),
+(8, N'Life stories of real people', N'Biography'),
+(9, N'Historical accounts and analysis', N'History'),
+(10, N'Scientific literature and research', N'Science');
+IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'CategoryId', N'Description', N'Name') AND [object_id] = OBJECT_ID(N'[Categories]'))
+    SET IDENTITY_INSERT [Categories] OFF;
+2025-08-14 20:23:11.785 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Books_AuthorId] ON [Books] ([AuthorId]);
+2025-08-14 20:23:11.788 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Books_CategoryId] ON [Books] ([CategoryId]);
+2025-08-14 20:23:11.793 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Books_PublisherId] ON [Books] ([PublisherId]);
+2025-08-14 20:23:11.798 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Loans_BookId] ON [Loans] ([BookId]);
+2025-08-14 20:23:11.802 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Loans_UserId] ON [Loans] ([UserId]);
+2025-08-14 20:23:11.807 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_UserFavoriteBooks_BookId] ON [UserFavoriteBooks] ([BookId]);
+2025-08-14 20:23:11.833 [INF] User profile is available. Using 'C:\Users\boran\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-08-14 20:23:11.881 [WRN] The WebRootPath was not found: C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\wwwroot. Static files may be unavailable.
+2025-08-14 20:23:11.914 [INF] Now listening on: http://localhost:7208
+2025-08-14 20:23:11.919 [INF] Application started. Press Ctrl+C to shut down.
+2025-08-14 20:23:11.921 [INF] Hosting environment: Development
+2025-08-14 20:23:11.924 [INF] Content root path: C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API
+2025-08-14 20:32:00.155 [INF] Application is shutting down...
+2025-08-14 20:32:07.091 [INF] User profile is available. Using 'C:\Users\boran\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-08-14 20:32:07.191 [WRN] The WebRootPath was not found: C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\wwwroot. Static files may be unavailable.
+2025-08-14 20:32:07.216 [INF] Now listening on: http://localhost:7208
+2025-08-14 20:32:07.220 [INF] Application started. Press Ctrl+C to shut down.
+2025-08-14 20:32:07.223 [INF] Hosting environment: Development
+2025-08-14 20:32:07.225 [INF] Content root path: C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API
+2025-08-14 20:36:17.193 [INF] Request starting HTTP/1.1 POST http://localhost:7208/api/Users/login - application/json 60
+2025-08-14 20:36:17.248 [INF] System Action: REQUEST_START - Request started {"RequestId":"78ea9dee-c5cc-499a-ac4a-358635026dcb","Method":"POST","Path":"/api/Users/login","UserId":null,"Timestamp":"2025-08-14T17:36:17.2305204Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:36:17.284 [WRN] Failed to determine the https port for redirect.
+2025-08-14 20:36:17.287 [INF] CORS policy execution successful.
+2025-08-14 20:36:17.313 [INF] Bearer was not authenticated. Failure message: Authorization header not found.
+2025-08-14 20:36:17.318 [INF] Executing endpoint 'LibraryApp.API.Controllers.UsersController.Login (LibraryApp.API)'
+2025-08-14 20:36:17.358 [INF] Route matched with {action = "Login", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(LibraryApp.Application.DTOs.User.LoginUserDto) on controller LibraryApp.API.Controllers.UsersController (LibraryApp.API).
+2025-08-14 20:36:18.982 [INF] Executed DbCommand (47ms) [Parameters=[@__ToLowerInvariant_0='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[UserId], [u].[Address], [u].[Age], [u].[Email], [u].[Gender], [u].[Name], [u].[Password], [u].[RegistrationDate], [u].[Role]
+FROM [Users] AS [u]
+WHERE [u].[Email] = @__ToLowerInvariant_0
+2025-08-14 20:36:19.576 [INF] Executed action LibraryApp.API.Controllers.UsersController.Login (LibraryApp.API) in 2210.7844ms
+2025-08-14 20:36:19.580 [INF] Executed endpoint 'LibraryApp.API.Controllers.UsersController.Login (LibraryApp.API)'
+2025-08-14 20:36:19.610 [ERR] Error in HTTP_REQUEST_ERROR: Could not find a part of the path 'C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\Keys\jwt-sig-private.pem'. {"Method":"POST","Endpoint":"/api/users/login","StatusCode":500,"Duration":2316.4816,"UserId":null,"RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\Keys\jwt-sig-private.pem'.
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.File.ReadAllBytes(String path)
+   at LibraryApp.Infrastructure.Auth.JwtService.LoadRsaPrivateKey(String path) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Auth\JwtService.cs:line 247
+   at LibraryApp.Infrastructure.Auth.JwtService.CreateAccessToken(Int32 userId, String email, String role, IDictionary`2 extraClaims) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Auth\JwtService.cs:line 66
+   at LibraryApp.Application.Services.UserService.LoginAsync(String email, String password) in C:\Users\boran\source\repos\backend\Core\LibraryApp.Application\Services\UserService.cs:line 162
+   at LibraryApp.API.Controllers.UsersController.Login(LoginUserDto dto) in C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\Controllers\UsersController.cs:line 28
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.<Invoke>g__AwaitRequestTask|7_0(Endpoint endpoint, Task requestTask, ILogger logger)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at LibraryApp.Infrastructure.Middleware.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Middleware\GlobalExceptionMiddleware.cs:line 40
+2025-08-14 20:36:19.664 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"78ea9dee-c5cc-499a-ac4a-358635026dcb","Method":"POST","Path":"/api/Users/login","StatusCode":500,"Duration":2432.8816,"UserId":null,"Timestamp":"2025-08-14T17:36:19.6634020Z"}
+2025-08-14 20:36:19.676 [INF] System Action: PERFORMANCE_WARNING - Slow request detected {"RequestId":"78ea9dee-c5cc-499a-ac4a-358635026dcb","Method":"POST","Path":"/api/Users/login","Duration":2432.8816,"UserId":null}
+2025-08-14 20:36:19.695 [INF] Request finished HTTP/1.1 POST http://localhost:7208/api/Users/login - 500 null application/json 2503.4319ms
+2025-08-14 20:36:21.232 [INF] Request starting HTTP/1.1 GET http://localhost:7208/swagger/index.html - null null
+2025-08-14 20:36:21.237 [INF] System Action: REQUEST_START - Request started {"RequestId":"3e4add78-ce4e-4d77-a2d0-34bc512e3425","Method":"GET","Path":"/swagger/index.html","UserId":null,"Timestamp":"2025-08-14T17:36:21.2365057Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:36:21.317 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"3e4add78-ce4e-4d77-a2d0-34bc512e3425","Method":"GET","Path":"/swagger/index.html","StatusCode":200,"Duration":80.4511,"UserId":null,"Timestamp":"2025-08-14T17:36:21.3169568Z"}
+2025-08-14 20:36:21.329 [INF] Request finished HTTP/1.1 GET http://localhost:7208/swagger/index.html - 200 null text/html;charset=utf-8 96.6116ms
+2025-08-14 20:36:21.508 [INF] Request starting HTTP/1.1 GET http://localhost:7208/swagger/v1/swagger.json - null null
+2025-08-14 20:36:21.513 [INF] System Action: REQUEST_START - Request started {"RequestId":"18cc3e2a-4814-4f03-9bf3-33a99035fc40","Method":"GET","Path":"/swagger/v1/swagger.json","UserId":null,"Timestamp":"2025-08-14T17:36:21.5135480Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:36:21.639 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"18cc3e2a-4814-4f03-9bf3-33a99035fc40","Method":"GET","Path":"/swagger/v1/swagger.json","StatusCode":200,"Duration":126.3165,"UserId":null,"Timestamp":"2025-08-14T17:36:21.6398645Z"}
+2025-08-14 20:36:21.649 [INF] Request finished HTTP/1.1 GET http://localhost:7208/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 140.1655ms
+2025-08-14 20:36:29.380 [INF] Request starting HTTP/1.1 POST http://localhost:7208/api/Users/register - application/json 80
+2025-08-14 20:36:29.393 [INF] System Action: REQUEST_START - Request started {"RequestId":"c73f3584-207b-4d83-9ab5-fd1b15f684a1","Method":"POST","Path":"/api/Users/register","UserId":null,"Timestamp":"2025-08-14T17:36:29.3927635Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:36:29.406 [INF] CORS policy execution successful.
+2025-08-14 20:36:29.411 [INF] Bearer was not authenticated. Failure message: Authorization header not found.
+2025-08-14 20:36:29.413 [INF] Executing endpoint 'LibraryApp.API.Controllers.UsersController.Register (LibraryApp.API)'
+2025-08-14 20:36:29.421 [INF] Route matched with {action = "Register", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Register(LibraryApp.Application.DTOs.User.AddUserDto) on controller LibraryApp.API.Controllers.UsersController (LibraryApp.API).
+2025-08-14 20:36:29.492 [INF] Executed DbCommand (12ms) [Parameters=[@__ToLowerInvariant_0='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[UserId], [u].[Address], [u].[Age], [u].[Email], [u].[Gender], [u].[Name], [u].[Password], [u].[RegistrationDate], [u].[Role]
+FROM [Users] AS [u]
+WHERE [u].[Email] = @__ToLowerInvariant_0
+2025-08-14 20:36:29.501 [INF] Executed action LibraryApp.API.Controllers.UsersController.Register (LibraryApp.API) in 76.1397ms
+2025-08-14 20:36:29.505 [INF] Executed endpoint 'LibraryApp.API.Controllers.UsersController.Register (LibraryApp.API)'
+2025-08-14 20:36:29.512 [ERR] Error in HTTP_REQUEST_ERROR: An account with email 'string@gmail.com' already exists. {"Method":"POST","Endpoint":"/api/users/register","StatusCode":409,"Duration":102.5396,"UserId":null,"RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+LibraryApp.Application.Exceptions.DuplicateEmailException: An account with email 'string@gmail.com' already exists.
+   at LibraryApp.Application.Services.UserService.AddUserAsync(AddUserDto dto) in C:\Users\boran\source\repos\backend\Core\LibraryApp.Application\Services\UserService.cs:line 41
+   at LibraryApp.API.Controllers.UsersController.Register(AddUserDto dto) in C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\Controllers\UsersController.cs:line 37
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.<Invoke>g__AwaitRequestTask|7_0(Endpoint endpoint, Task requestTask, ILogger logger)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at LibraryApp.Infrastructure.Middleware.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Middleware\GlobalExceptionMiddleware.cs:line 40
+2025-08-14 20:36:29.540 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"c73f3584-207b-4d83-9ab5-fd1b15f684a1","Method":"POST","Path":"/api/Users/register","StatusCode":409,"Duration":147.9568,"UserId":null,"Timestamp":"2025-08-14T17:36:29.5407203Z"}
+2025-08-14 20:36:29.552 [INF] Request finished HTTP/1.1 POST http://localhost:7208/api/Users/register - 409 null application/json 171.9147ms
+2025-08-14 20:36:46.772 [INF] Request starting HTTP/1.1 POST http://localhost:7208/api/Users/login - application/json 60
+2025-08-14 20:36:46.777 [INF] System Action: REQUEST_START - Request started {"RequestId":"7af6e424-1c9d-47fd-a78c-ebc85cb6e5ef","Method":"POST","Path":"/api/Users/login","UserId":null,"Timestamp":"2025-08-14T17:36:46.7776924Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:36:46.786 [INF] CORS policy execution successful.
+2025-08-14 20:36:46.790 [INF] Bearer was not authenticated. Failure message: Authorization header not found.
+2025-08-14 20:36:46.791 [INF] Executing endpoint 'LibraryApp.API.Controllers.UsersController.Login (LibraryApp.API)'
+2025-08-14 20:36:46.793 [INF] Route matched with {action = "Login", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(LibraryApp.Application.DTOs.User.LoginUserDto) on controller LibraryApp.API.Controllers.UsersController (LibraryApp.API).
+2025-08-14 20:36:46.903 [INF] Executed DbCommand (1ms) [Parameters=[@__ToLowerInvariant_0='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[UserId], [u].[Address], [u].[Age], [u].[Email], [u].[Gender], [u].[Name], [u].[Password], [u].[RegistrationDate], [u].[Role]
+FROM [Users] AS [u]
+WHERE [u].[Email] = @__ToLowerInvariant_0
+2025-08-14 20:36:47.181 [INF] Executed action LibraryApp.API.Controllers.UsersController.Login (LibraryApp.API) in 384.2692ms
+2025-08-14 20:36:47.183 [INF] Executed endpoint 'LibraryApp.API.Controllers.UsersController.Login (LibraryApp.API)'
+2025-08-14 20:36:47.185 [ERR] Error in HTTP_REQUEST_ERROR: Could not find a part of the path 'C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\Keys\jwt-sig-private.pem'. {"Method":"POST","Endpoint":"/api/users/login","StatusCode":500,"Duration":399.0971,"UserId":null,"RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\Keys\jwt-sig-private.pem'.
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.File.ReadAllBytes(String path)
+   at LibraryApp.Infrastructure.Auth.JwtService.LoadRsaPrivateKey(String path) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Auth\JwtService.cs:line 247
+   at LibraryApp.Infrastructure.Auth.JwtService.CreateAccessToken(Int32 userId, String email, String role, IDictionary`2 extraClaims) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Auth\JwtService.cs:line 66
+   at LibraryApp.Application.Services.UserService.LoginAsync(String email, String password) in C:\Users\boran\source\repos\backend\Core\LibraryApp.Application\Services\UserService.cs:line 162
+   at LibraryApp.API.Controllers.UsersController.Login(LoginUserDto dto) in C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\Controllers\UsersController.cs:line 28
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.<Invoke>g__AwaitRequestTask|7_0(Endpoint endpoint, Task requestTask, ILogger logger)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at LibraryApp.Infrastructure.Middleware.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Middleware\GlobalExceptionMiddleware.cs:line 40
+2025-08-14 20:36:47.202 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"7af6e424-1c9d-47fd-a78c-ebc85cb6e5ef","Method":"POST","Path":"/api/Users/login","StatusCode":500,"Duration":425.1312,"UserId":null,"Timestamp":"2025-08-14T17:36:47.2028236Z"}
+2025-08-14 20:36:47.213 [INF] Request finished HTTP/1.1 POST http://localhost:7208/api/Users/login - 500 null application/json 440.7453ms
+2025-08-14 20:53:12.889 [INF] Application is shutting down...
+2025-08-14 20:54:03.083 [INF] User profile is available. Using 'C:\Users\boran\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-08-14 20:54:03.176 [WRN] The WebRootPath was not found: C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\wwwroot. Static files may be unavailable.
+2025-08-14 20:54:03.200 [INF] Now listening on: http://localhost:7208
+2025-08-14 20:54:03.205 [INF] Application started. Press Ctrl+C to shut down.
+2025-08-14 20:54:03.207 [INF] Hosting environment: Development
+2025-08-14 20:54:03.209 [INF] Content root path: C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API
+2025-08-14 20:54:11.442 [INF] Request starting HTTP/1.1 GET http://localhost:7208/swagger/index.html - null null
+2025-08-14 20:54:11.481 [INF] System Action: REQUEST_START - Request started {"RequestId":"e730512f-45c7-496a-937d-f7bacc654fe3","Method":"GET","Path":"/swagger/index.html","UserId":null,"Timestamp":"2025-08-14T17:54:11.4675209Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:54:11.596 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"e730512f-45c7-496a-937d-f7bacc654fe3","Method":"GET","Path":"/swagger/index.html","StatusCode":200,"Duration":127.7849,"UserId":null,"Timestamp":"2025-08-14T17:54:11.5953058Z"}
+2025-08-14 20:54:11.610 [INF] Request finished HTTP/1.1 GET http://localhost:7208/swagger/index.html - 200 null text/html;charset=utf-8 169.2582ms
+2025-08-14 20:54:11.768 [INF] Request starting HTTP/1.1 GET http://localhost:7208/swagger/v1/swagger.json - null null
+2025-08-14 20:54:11.773 [INF] System Action: REQUEST_START - Request started {"RequestId":"0b138a0e-6a0f-4584-8537-35cd0236712f","Method":"GET","Path":"/swagger/v1/swagger.json","UserId":null,"Timestamp":"2025-08-14T17:54:11.7723006Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:54:11.906 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"0b138a0e-6a0f-4584-8537-35cd0236712f","Method":"GET","Path":"/swagger/v1/swagger.json","StatusCode":200,"Duration":133.0039,"UserId":null,"Timestamp":"2025-08-14T17:54:11.9053045Z"}
+2025-08-14 20:54:11.915 [INF] Request finished HTTP/1.1 GET http://localhost:7208/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 147.3753ms
+2025-08-14 20:54:18.348 [INF] Request starting HTTP/1.1 POST http://localhost:7208/api/Users/login - application/json 60
+2025-08-14 20:54:18.355 [INF] System Action: REQUEST_START - Request started {"RequestId":"cb9bc3ba-c965-453a-961d-fb838d4bd3a6","Method":"POST","Path":"/api/Users/login","UserId":null,"Timestamp":"2025-08-14T17:54:18.3551326Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:54:18.367 [WRN] Failed to determine the https port for redirect.
+2025-08-14 20:54:18.371 [INF] CORS policy execution successful.
+2025-08-14 20:54:18.393 [INF] Bearer was not authenticated. Failure message: Authorization header not found.
+2025-08-14 20:54:18.399 [INF] Executing endpoint 'LibraryApp.API.Controllers.UsersController.Login (LibraryApp.API)'
+2025-08-14 20:54:18.433 [INF] Route matched with {action = "Login", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(LibraryApp.Application.DTOs.User.LoginUserDto) on controller LibraryApp.API.Controllers.UsersController (LibraryApp.API).
+2025-08-14 20:54:19.854 [INF] Executed DbCommand (42ms) [Parameters=[@__ToLowerInvariant_0='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[UserId], [u].[Address], [u].[Age], [u].[Email], [u].[Gender], [u].[Name], [u].[Password], [u].[RegistrationDate], [u].[Role]
+FROM [Users] AS [u]
+WHERE [u].[Email] = @__ToLowerInvariant_0
+2025-08-14 20:54:20.341 [INF] Executed action LibraryApp.API.Controllers.UsersController.Login (LibraryApp.API) in 1901.489ms
+2025-08-14 20:54:20.343 [INF] Executed endpoint 'LibraryApp.API.Controllers.UsersController.Login (LibraryApp.API)'
+2025-08-14 20:54:20.355 [ERR] Error in HTTP_REQUEST_ERROR: Could not find file 'C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\Keys\jwt-sig-private.pem'. {"Method":"POST","Endpoint":"/api/users/login","StatusCode":500,"Duration":1981.8665,"UserId":null,"RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+System.IO.FileNotFoundException: Could not find file 'C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\Keys\jwt-sig-private.pem'.
+File name: 'C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\Keys\jwt-sig-private.pem'
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+   at System.IO.File.ReadAllBytes(String path)
+   at LibraryApp.Infrastructure.Auth.JwtService.LoadRsaPrivateKey(String path) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Auth\JwtService.cs:line 247
+   at LibraryApp.Infrastructure.Auth.JwtService.CreateAccessToken(Int32 userId, String email, String role, IDictionary`2 extraClaims) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Auth\JwtService.cs:line 66
+   at LibraryApp.Application.Services.UserService.LoginAsync(String email, String password) in C:\Users\boran\source\repos\backend\Core\LibraryApp.Application\Services\UserService.cs:line 162
+   at LibraryApp.API.Controllers.UsersController.Login(LoginUserDto dto) in C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\Controllers\UsersController.cs:line 28
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.<Invoke>g__AwaitRequestTask|7_0(Endpoint endpoint, Task requestTask, ILogger logger)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at LibraryApp.Infrastructure.Middleware.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Middleware\GlobalExceptionMiddleware.cs:line 40
+2025-08-14 20:54:20.385 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"cb9bc3ba-c965-453a-961d-fb838d4bd3a6","Method":"POST","Path":"/api/Users/login","StatusCode":500,"Duration":2030.4364,"UserId":null,"Timestamp":"2025-08-14T17:54:20.3855690Z"}
+2025-08-14 20:54:20.396 [INF] System Action: PERFORMANCE_WARNING - Slow request detected {"RequestId":"cb9bc3ba-c965-453a-961d-fb838d4bd3a6","Method":"POST","Path":"/api/Users/login","Duration":2030.4364,"UserId":null}
+2025-08-14 20:54:20.412 [INF] Request finished HTTP/1.1 POST http://localhost:7208/api/Users/login - 500 null application/json 2063.8024ms
+2025-08-14 20:55:20.603 [INF] Application is shutting down...
+2025-08-14 20:57:13.948 [INF] User profile is available. Using 'C:\Users\boran\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-08-14 20:57:14.040 [WRN] The WebRootPath was not found: C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API\wwwroot. Static files may be unavailable.
+2025-08-14 20:57:14.065 [INF] Now listening on: http://localhost:7208
+2025-08-14 20:57:14.070 [INF] Application started. Press Ctrl+C to shut down.
+2025-08-14 20:57:14.072 [INF] Hosting environment: Development
+2025-08-14 20:57:14.075 [INF] Content root path: C:\Users\boran\source\repos\backend\Presentation\LibraryApp.API
+2025-08-14 20:57:15.456 [INF] Request starting HTTP/1.1 GET http://localhost:7208/swagger/index.html - null null
+2025-08-14 20:57:15.494 [INF] System Action: REQUEST_START - Request started {"RequestId":"941cc3d7-bb49-478b-9c8d-186440e5b9bf","Method":"GET","Path":"/swagger/index.html","UserId":null,"Timestamp":"2025-08-14T17:57:15.4829348Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:57:15.608 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"941cc3d7-bb49-478b-9c8d-186440e5b9bf","Method":"GET","Path":"/swagger/index.html","StatusCode":200,"Duration":125.0063,"UserId":null,"Timestamp":"2025-08-14T17:57:15.6079411Z"}
+2025-08-14 20:57:15.627 [INF] Request finished HTTP/1.1 GET http://localhost:7208/swagger/index.html - 200 null text/html;charset=utf-8 171.2509ms
+2025-08-14 20:57:15.677 [INF] Request starting HTTP/1.1 GET http://localhost:7208/swagger/v1/swagger.json - null null
+2025-08-14 20:57:15.686 [INF] System Action: REQUEST_START - Request started {"RequestId":"0229d5a3-7a38-4b20-9926-756c608f1530","Method":"GET","Path":"/swagger/v1/swagger.json","UserId":null,"Timestamp":"2025-08-14T17:57:15.6854776Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:57:15.819 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"0229d5a3-7a38-4b20-9926-756c608f1530","Method":"GET","Path":"/swagger/v1/swagger.json","StatusCode":200,"Duration":133.0005,"UserId":null,"Timestamp":"2025-08-14T17:57:15.8184781Z"}
+2025-08-14 20:57:15.828 [INF] Request finished HTTP/1.1 GET http://localhost:7208/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 150.9488ms
+2025-08-14 20:57:21.722 [INF] Request starting HTTP/1.1 POST http://localhost:7208/api/Users/login - application/json 60
+2025-08-14 20:57:21.729 [INF] System Action: REQUEST_START - Request started {"RequestId":"5684c24a-3005-4304-8eb1-116ed5174027","Method":"POST","Path":"/api/Users/login","UserId":null,"Timestamp":"2025-08-14T17:57:21.7294783Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:57:21.740 [WRN] Failed to determine the https port for redirect.
+2025-08-14 20:57:21.742 [INF] CORS policy execution successful.
+2025-08-14 20:57:21.763 [INF] Bearer was not authenticated. Failure message: Authorization header not found.
+2025-08-14 20:57:21.767 [INF] Executing endpoint 'LibraryApp.API.Controllers.UsersController.Login (LibraryApp.API)'
+2025-08-14 20:57:21.793 [INF] Route matched with {action = "Login", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(LibraryApp.Application.DTOs.User.LoginUserDto) on controller LibraryApp.API.Controllers.UsersController (LibraryApp.API).
+2025-08-14 20:57:23.176 [INF] Executed DbCommand (41ms) [Parameters=[@__ToLowerInvariant_0='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[UserId], [u].[Address], [u].[Age], [u].[Email], [u].[Gender], [u].[Name], [u].[Password], [u].[RegistrationDate], [u].[Role]
+FROM [Users] AS [u]
+WHERE [u].[Email] = @__ToLowerInvariant_0
+2025-08-14 20:57:23.693 [INF] User logged in successfully - ID: 9, Email: string@gmail.com, Role: "User"
+2025-08-14 20:57:23.700 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType5`2[[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2025-08-14 20:57:23.708 [INF] Executed action LibraryApp.API.Controllers.UsersController.Login (LibraryApp.API) in 1907.7165ms
+2025-08-14 20:57:23.711 [INF] Executed endpoint 'LibraryApp.API.Controllers.UsersController.Login (LibraryApp.API)'
+2025-08-14 20:57:23.714 [INF] System Action: SUCCESS_OPERATION - Operation completed successfully {"Method":"POST","Endpoint":"/api/users/login","StatusCode":200,"Operation":"User Login","Duration":1977.0031,"UserId":null}
+2025-08-14 20:57:23.722 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"5684c24a-3005-4304-8eb1-116ed5174027","Method":"POST","Path":"/api/Users/login","StatusCode":200,"Duration":1992.5066,"UserId":null,"Timestamp":"2025-08-14T17:57:23.7219849Z"}
+2025-08-14 20:57:23.731 [INF] System Action: PERFORMANCE_WARNING - Slow request detected {"RequestId":"5684c24a-3005-4304-8eb1-116ed5174027","Method":"POST","Path":"/api/Users/login","Duration":1992.5066,"UserId":null}
+2025-08-14 20:57:23.746 [INF] Request finished HTTP/1.1 POST http://localhost:7208/api/Users/login - 200 null application/json; charset=utf-8 2023.5079ms
+2025-08-14 20:57:37.362 [INF] Request starting HTTP/1.1 GET http://localhost:7208/api/Users/my-borrowed-books - null null
+2025-08-14 20:57:37.368 [INF] System Action: REQUEST_START - Request started {"RequestId":"c4783e73-95c2-48a0-832e-b4d5a181c216","Method":"GET","Path":"/api/Users/my-borrowed-books","UserId":null,"Timestamp":"2025-08-14T17:57:37.3681501Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:57:37.431 [INF] Executing endpoint 'LibraryApp.API.Controllers.UsersController.GetMyBorrowedBooks (LibraryApp.API)'
+2025-08-14 20:57:37.438 [INF] Route matched with {action = "GetMyBorrowedBooks", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetMyBorrowedBooks() on controller LibraryApp.API.Controllers.UsersController (LibraryApp.API).
+2025-08-14 20:57:37.559 [WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2025-08-14 20:57:37.590 [INF] Executed DbCommand (21ms) [Parameters=[@__id_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [t].[UserId], [t].[Address], [t].[Age], [t].[Email], [t].[Gender], [t].[Name], [t].[Password], [t].[RegistrationDate], [t].[Role], [t0].[LoanId], [t0].[BookId], [t0].[DueDate], [t0].[LoanDate], [t0].[ReturnDate], [t0].[UserId], [t0].[BookId0], [t0].[AuthorId], [t0].[CategoryId], [t0].[CoverImage], [t0].[ImageContentType], [t0].[ImageFileName], [t0].[IsAvailable], [t0].[PublicationYear], [t0].[PublisherId], [t0].[Rating], [t0].[Title], [t1].[UserId], [t1].[BookId], [t1].[AddedDate], [t1].[BookId0], [t1].[AuthorId], [t1].[CategoryId], [t1].[CoverImage], [t1].[ImageContentType], [t1].[ImageFileName], [t1].[IsAvailable], [t1].[PublicationYear], [t1].[PublisherId], [t1].[Rating], [t1].[Title]
+FROM (
+    SELECT TOP(1) [u].[UserId], [u].[Address], [u].[Age], [u].[Email], [u].[Gender], [u].[Name], [u].[Password], [u].[RegistrationDate], [u].[Role]
+    FROM [Users] AS [u]
+    WHERE [u].[UserId] = @__id_0
+) AS [t]
+LEFT JOIN (
+    SELECT [l].[LoanId], [l].[BookId], [l].[DueDate], [l].[LoanDate], [l].[ReturnDate], [l].[UserId], [b].[BookId] AS [BookId0], [b].[AuthorId], [b].[CategoryId], [b].[CoverImage], [b].[ImageContentType], [b].[ImageFileName], [b].[IsAvailable], [b].[PublicationYear], [b].[PublisherId], [b].[Rating], [b].[Title]
+    FROM [Loans] AS [l]
+    INNER JOIN [Books] AS [b] ON [l].[BookId] = [b].[BookId]
+) AS [t0] ON [t].[UserId] = [t0].[UserId]
+LEFT JOIN (
+    SELECT [u0].[UserId], [u0].[BookId], [u0].[AddedDate], [b0].[BookId] AS [BookId0], [b0].[AuthorId], [b0].[CategoryId], [b0].[CoverImage], [b0].[ImageContentType], [b0].[ImageFileName], [b0].[IsAvailable], [b0].[PublicationYear], [b0].[PublisherId], [b0].[Rating], [b0].[Title]
+    FROM [UserFavoriteBooks] AS [u0]
+    INNER JOIN [Books] AS [b0] ON [u0].[BookId] = [b0].[BookId]
+) AS [t1] ON [t].[UserId] = [t1].[UserId]
+ORDER BY [t].[UserId], [t0].[LoanId], [t0].[BookId0], [t1].[UserId], [t1].[BookId]
+2025-08-14 20:57:37.730 [INF] Executed DbCommand (14ms) [Parameters=[@__userId_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [l].[LoanId], [l].[BookId], [l].[DueDate], [l].[LoanDate], [l].[ReturnDate], [l].[UserId], [b].[BookId], [b].[AuthorId], [b].[CategoryId], [b].[CoverImage], [b].[ImageContentType], [b].[ImageFileName], [b].[IsAvailable], [b].[PublicationYear], [b].[PublisherId], [b].[Rating], [b].[Title], [a].[AuthorId], [a].[Biography], [a].[BirthDate], [a].[ImageContentType], [a].[ImageFileName], [a].[Name], [a].[Nationality], [a].[ProfileImage], [p].[PublisherId], [p].[Address], [p].[ContactEmail], [p].[EstablishedDate], [p].[ImageContentType], [p].[ImageFileName], [p].[LogoImage], [p].[Name], [p].[Website], [l0].[LoanId], [l0].[BookId], [l0].[DueDate], [l0].[LoanDate], [l0].[ReturnDate], [l0].[UserId]
+FROM [Loans] AS [l]
+INNER JOIN [Books] AS [b] ON [l].[BookId] = [b].[BookId]
+INNER JOIN [Authors] AS [a] ON [b].[AuthorId] = [a].[AuthorId]
+INNER JOIN [Publishers] AS [p] ON [b].[PublisherId] = [p].[PublisherId]
+LEFT JOIN [Loans] AS [l0] ON [b].[BookId] = [l0].[BookId]
+WHERE [l].[UserId] = @__userId_0
+ORDER BY [l].[LoanId], [b].[BookId], [a].[AuthorId], [p].[PublisherId]
+2025-08-14 20:57:37.787 [INF] Executing OkObjectResult, writing value of type 'System.Linq.Enumerable+SelectListIterator`2[[LibraryApp.Domain.Entities.Book, LibraryApp.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[LibraryApp.Application.DTOs.Book.BookDto, LibraryApp.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2025-08-14 20:57:37.806 [INF] Executed action LibraryApp.API.Controllers.UsersController.GetMyBorrowedBooks (LibraryApp.API) in 363.5921ms
+2025-08-14 20:57:37.810 [INF] Executed endpoint 'LibraryApp.API.Controllers.UsersController.GetMyBorrowedBooks (LibraryApp.API)'
+2025-08-14 20:57:37.817 [INF] System Action: SUCCESS_OPERATION - Operation completed successfully {"Method":"GET","Endpoint":"/api/users/my-borrowed-books","StatusCode":200,"Operation":"Get Users","Duration":438.161,"UserId":null}
+2025-08-14 20:57:37.827 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"c4783e73-95c2-48a0-832e-b4d5a181c216","Method":"GET","Path":"/api/Users/my-borrowed-books","StatusCode":200,"Duration":459.0196,"UserId":null,"Timestamp":"2025-08-14T17:57:37.8271697Z"}
+2025-08-14 20:57:37.837 [INF] Request finished HTTP/1.1 GET http://localhost:7208/api/Users/my-borrowed-books - 200 null application/json; charset=utf-8 474.7192ms
+2025-08-14 20:57:39.791 [INF] Request starting HTTP/1.1 GET http://localhost:7208/api/Users/my-borrowed-books - null null
+2025-08-14 20:57:39.794 [INF] System Action: REQUEST_START - Request started {"RequestId":"55cd2a3a-39d7-41ee-8736-26b5ce3801ca","Method":"GET","Path":"/api/Users/my-borrowed-books","UserId":null,"Timestamp":"2025-08-14T17:57:39.7941476Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:57:39.812 [INF] Executing endpoint 'LibraryApp.API.Controllers.UsersController.GetMyBorrowedBooks (LibraryApp.API)'
+2025-08-14 20:57:39.816 [INF] Route matched with {action = "GetMyBorrowedBooks", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetMyBorrowedBooks() on controller LibraryApp.API.Controllers.UsersController (LibraryApp.API).
+2025-08-14 20:57:39.886 [INF] Executed DbCommand (1ms) [Parameters=[@__id_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [t].[UserId], [t].[Address], [t].[Age], [t].[Email], [t].[Gender], [t].[Name], [t].[Password], [t].[RegistrationDate], [t].[Role], [t0].[LoanId], [t0].[BookId], [t0].[DueDate], [t0].[LoanDate], [t0].[ReturnDate], [t0].[UserId], [t0].[BookId0], [t0].[AuthorId], [t0].[CategoryId], [t0].[CoverImage], [t0].[ImageContentType], [t0].[ImageFileName], [t0].[IsAvailable], [t0].[PublicationYear], [t0].[PublisherId], [t0].[Rating], [t0].[Title], [t1].[UserId], [t1].[BookId], [t1].[AddedDate], [t1].[BookId0], [t1].[AuthorId], [t1].[CategoryId], [t1].[CoverImage], [t1].[ImageContentType], [t1].[ImageFileName], [t1].[IsAvailable], [t1].[PublicationYear], [t1].[PublisherId], [t1].[Rating], [t1].[Title]
+FROM (
+    SELECT TOP(1) [u].[UserId], [u].[Address], [u].[Age], [u].[Email], [u].[Gender], [u].[Name], [u].[Password], [u].[RegistrationDate], [u].[Role]
+    FROM [Users] AS [u]
+    WHERE [u].[UserId] = @__id_0
+) AS [t]
+LEFT JOIN (
+    SELECT [l].[LoanId], [l].[BookId], [l].[DueDate], [l].[LoanDate], [l].[ReturnDate], [l].[UserId], [b].[BookId] AS [BookId0], [b].[AuthorId], [b].[CategoryId], [b].[CoverImage], [b].[ImageContentType], [b].[ImageFileName], [b].[IsAvailable], [b].[PublicationYear], [b].[PublisherId], [b].[Rating], [b].[Title]
+    FROM [Loans] AS [l]
+    INNER JOIN [Books] AS [b] ON [l].[BookId] = [b].[BookId]
+) AS [t0] ON [t].[UserId] = [t0].[UserId]
+LEFT JOIN (
+    SELECT [u0].[UserId], [u0].[BookId], [u0].[AddedDate], [b0].[BookId] AS [BookId0], [b0].[AuthorId], [b0].[CategoryId], [b0].[CoverImage], [b0].[ImageContentType], [b0].[ImageFileName], [b0].[IsAvailable], [b0].[PublicationYear], [b0].[PublisherId], [b0].[Rating], [b0].[Title]
+    FROM [UserFavoriteBooks] AS [u0]
+    INNER JOIN [Books] AS [b0] ON [u0].[BookId] = [b0].[BookId]
+) AS [t1] ON [t].[UserId] = [t1].[UserId]
+ORDER BY [t].[UserId], [t0].[LoanId], [t0].[BookId0], [t1].[UserId], [t1].[BookId]
+2025-08-14 20:57:39.895 [INF] Executed DbCommand (3ms) [Parameters=[@__userId_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [l].[LoanId], [l].[BookId], [l].[DueDate], [l].[LoanDate], [l].[ReturnDate], [l].[UserId], [b].[BookId], [b].[AuthorId], [b].[CategoryId], [b].[CoverImage], [b].[ImageContentType], [b].[ImageFileName], [b].[IsAvailable], [b].[PublicationYear], [b].[PublisherId], [b].[Rating], [b].[Title], [a].[AuthorId], [a].[Biography], [a].[BirthDate], [a].[ImageContentType], [a].[ImageFileName], [a].[Name], [a].[Nationality], [a].[ProfileImage], [p].[PublisherId], [p].[Address], [p].[ContactEmail], [p].[EstablishedDate], [p].[ImageContentType], [p].[ImageFileName], [p].[LogoImage], [p].[Name], [p].[Website], [l0].[LoanId], [l0].[BookId], [l0].[DueDate], [l0].[LoanDate], [l0].[ReturnDate], [l0].[UserId]
+FROM [Loans] AS [l]
+INNER JOIN [Books] AS [b] ON [l].[BookId] = [b].[BookId]
+INNER JOIN [Authors] AS [a] ON [b].[AuthorId] = [a].[AuthorId]
+INNER JOIN [Publishers] AS [p] ON [b].[PublisherId] = [p].[PublisherId]
+LEFT JOIN [Loans] AS [l0] ON [b].[BookId] = [l0].[BookId]
+WHERE [l].[UserId] = @__userId_0
+ORDER BY [l].[LoanId], [b].[BookId], [a].[AuthorId], [p].[PublisherId]
+2025-08-14 20:57:39.898 [INF] Executing OkObjectResult, writing value of type 'System.Linq.Enumerable+SelectListIterator`2[[LibraryApp.Domain.Entities.Book, LibraryApp.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[LibraryApp.Application.DTOs.Book.BookDto, LibraryApp.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2025-08-14 20:57:39.900 [INF] Executed action LibraryApp.API.Controllers.UsersController.GetMyBorrowedBooks (LibraryApp.API) in 81.3593ms
+2025-08-14 20:57:39.902 [INF] Executed endpoint 'LibraryApp.API.Controllers.UsersController.GetMyBorrowedBooks (LibraryApp.API)'
+2025-08-14 20:57:39.903 [INF] System Action: SUCCESS_OPERATION - Operation completed successfully {"Method":"GET","Endpoint":"/api/users/my-borrowed-books","StatusCode":200,"Operation":"Get Users","Duration":101.1595,"UserId":null}
+2025-08-14 20:57:39.909 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"55cd2a3a-39d7-41ee-8736-26b5ce3801ca","Method":"GET","Path":"/api/Users/my-borrowed-books","StatusCode":200,"Duration":115.1512,"UserId":null,"Timestamp":"2025-08-14T17:57:39.9092988Z"}
+2025-08-14 20:57:39.915 [INF] Request finished HTTP/1.1 GET http://localhost:7208/api/Users/my-borrowed-books - 200 null application/json; charset=utf-8 124.0261ms
+2025-08-14 20:57:40.468 [INF] Request starting HTTP/1.1 GET http://localhost:7208/api/Users/my-borrowed-books - null null
+2025-08-14 20:57:40.471 [INF] System Action: REQUEST_START - Request started {"RequestId":"d5c3da38-4cc3-4d1f-9bdf-5baf3e7540bf","Method":"GET","Path":"/api/Users/my-borrowed-books","UserId":null,"Timestamp":"2025-08-14T17:57:40.4718940Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:57:40.482 [INF] Executing endpoint 'LibraryApp.API.Controllers.UsersController.GetMyBorrowedBooks (LibraryApp.API)'
+2025-08-14 20:57:40.485 [INF] Route matched with {action = "GetMyBorrowedBooks", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetMyBorrowedBooks() on controller LibraryApp.API.Controllers.UsersController (LibraryApp.API).
+2025-08-14 20:57:40.493 [INF] Executed DbCommand (1ms) [Parameters=[@__id_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [t].[UserId], [t].[Address], [t].[Age], [t].[Email], [t].[Gender], [t].[Name], [t].[Password], [t].[RegistrationDate], [t].[Role], [t0].[LoanId], [t0].[BookId], [t0].[DueDate], [t0].[LoanDate], [t0].[ReturnDate], [t0].[UserId], [t0].[BookId0], [t0].[AuthorId], [t0].[CategoryId], [t0].[CoverImage], [t0].[ImageContentType], [t0].[ImageFileName], [t0].[IsAvailable], [t0].[PublicationYear], [t0].[PublisherId], [t0].[Rating], [t0].[Title], [t1].[UserId], [t1].[BookId], [t1].[AddedDate], [t1].[BookId0], [t1].[AuthorId], [t1].[CategoryId], [t1].[CoverImage], [t1].[ImageContentType], [t1].[ImageFileName], [t1].[IsAvailable], [t1].[PublicationYear], [t1].[PublisherId], [t1].[Rating], [t1].[Title]
+FROM (
+    SELECT TOP(1) [u].[UserId], [u].[Address], [u].[Age], [u].[Email], [u].[Gender], [u].[Name], [u].[Password], [u].[RegistrationDate], [u].[Role]
+    FROM [Users] AS [u]
+    WHERE [u].[UserId] = @__id_0
+) AS [t]
+LEFT JOIN (
+    SELECT [l].[LoanId], [l].[BookId], [l].[DueDate], [l].[LoanDate], [l].[ReturnDate], [l].[UserId], [b].[BookId] AS [BookId0], [b].[AuthorId], [b].[CategoryId], [b].[CoverImage], [b].[ImageContentType], [b].[ImageFileName], [b].[IsAvailable], [b].[PublicationYear], [b].[PublisherId], [b].[Rating], [b].[Title]
+    FROM [Loans] AS [l]
+    INNER JOIN [Books] AS [b] ON [l].[BookId] = [b].[BookId]
+) AS [t0] ON [t].[UserId] = [t0].[UserId]
+LEFT JOIN (
+    SELECT [u0].[UserId], [u0].[BookId], [u0].[AddedDate], [b0].[BookId] AS [BookId0], [b0].[AuthorId], [b0].[CategoryId], [b0].[CoverImage], [b0].[ImageContentType], [b0].[ImageFileName], [b0].[IsAvailable], [b0].[PublicationYear], [b0].[PublisherId], [b0].[Rating], [b0].[Title]
+    FROM [UserFavoriteBooks] AS [u0]
+    INNER JOIN [Books] AS [b0] ON [u0].[BookId] = [b0].[BookId]
+) AS [t1] ON [t].[UserId] = [t1].[UserId]
+ORDER BY [t].[UserId], [t0].[LoanId], [t0].[BookId0], [t1].[UserId], [t1].[BookId]
+2025-08-14 20:57:40.502 [INF] Executed DbCommand (3ms) [Parameters=[@__userId_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [l].[LoanId], [l].[BookId], [l].[DueDate], [l].[LoanDate], [l].[ReturnDate], [l].[UserId], [b].[BookId], [b].[AuthorId], [b].[CategoryId], [b].[CoverImage], [b].[ImageContentType], [b].[ImageFileName], [b].[IsAvailable], [b].[PublicationYear], [b].[PublisherId], [b].[Rating], [b].[Title], [a].[AuthorId], [a].[Biography], [a].[BirthDate], [a].[ImageContentType], [a].[ImageFileName], [a].[Name], [a].[Nationality], [a].[ProfileImage], [p].[PublisherId], [p].[Address], [p].[ContactEmail], [p].[EstablishedDate], [p].[ImageContentType], [p].[ImageFileName], [p].[LogoImage], [p].[Name], [p].[Website], [l0].[LoanId], [l0].[BookId], [l0].[DueDate], [l0].[LoanDate], [l0].[ReturnDate], [l0].[UserId]
+FROM [Loans] AS [l]
+INNER JOIN [Books] AS [b] ON [l].[BookId] = [b].[BookId]
+INNER JOIN [Authors] AS [a] ON [b].[AuthorId] = [a].[AuthorId]
+INNER JOIN [Publishers] AS [p] ON [b].[PublisherId] = [p].[PublisherId]
+LEFT JOIN [Loans] AS [l0] ON [b].[BookId] = [l0].[BookId]
+WHERE [l].[UserId] = @__userId_0
+ORDER BY [l].[LoanId], [b].[BookId], [a].[AuthorId], [p].[PublisherId]
+2025-08-14 20:57:40.507 [INF] Executing OkObjectResult, writing value of type 'System.Linq.Enumerable+SelectListIterator`2[[LibraryApp.Domain.Entities.Book, LibraryApp.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[LibraryApp.Application.DTOs.Book.BookDto, LibraryApp.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2025-08-14 20:57:40.509 [INF] Executed action LibraryApp.API.Controllers.UsersController.GetMyBorrowedBooks (LibraryApp.API) in 20.5579ms
+2025-08-14 20:57:40.512 [INF] Executed endpoint 'LibraryApp.API.Controllers.UsersController.GetMyBorrowedBooks (LibraryApp.API)'
+2025-08-14 20:57:40.514 [INF] System Action: SUCCESS_OPERATION - Operation completed successfully {"Method":"GET","Endpoint":"/api/users/my-borrowed-books","StatusCode":200,"Operation":"Get Users","Duration":34.9349,"UserId":null}
+2025-08-14 20:57:40.520 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"d5c3da38-4cc3-4d1f-9bdf-5baf3e7540bf","Method":"GET","Path":"/api/Users/my-borrowed-books","StatusCode":200,"Duration":48.7957,"UserId":null,"Timestamp":"2025-08-14T17:57:40.5206897Z"}
+2025-08-14 20:57:40.529 [INF] Request finished HTTP/1.1 GET http://localhost:7208/api/Users/my-borrowed-books - 200 null application/json; charset=utf-8 59.8676ms
+2025-08-14 20:57:40.904 [INF] Request starting HTTP/1.1 GET http://localhost:7208/api/Users/my-borrowed-books - null null
+2025-08-14 20:57:40.908 [INF] System Action: REQUEST_START - Request started {"RequestId":"5dd0b291-3c8f-49c3-8c1e-cad5f951eb63","Method":"GET","Path":"/api/Users/my-borrowed-books","UserId":null,"Timestamp":"2025-08-14T17:57:40.9083275Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:57:40.918 [INF] Executing endpoint 'LibraryApp.API.Controllers.UsersController.GetMyBorrowedBooks (LibraryApp.API)'
+2025-08-14 20:57:40.919 [INF] Route matched with {action = "GetMyBorrowedBooks", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetMyBorrowedBooks() on controller LibraryApp.API.Controllers.UsersController (LibraryApp.API).
+2025-08-14 20:57:40.926 [INF] Executed DbCommand (2ms) [Parameters=[@__id_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [t].[UserId], [t].[Address], [t].[Age], [t].[Email], [t].[Gender], [t].[Name], [t].[Password], [t].[RegistrationDate], [t].[Role], [t0].[LoanId], [t0].[BookId], [t0].[DueDate], [t0].[LoanDate], [t0].[ReturnDate], [t0].[UserId], [t0].[BookId0], [t0].[AuthorId], [t0].[CategoryId], [t0].[CoverImage], [t0].[ImageContentType], [t0].[ImageFileName], [t0].[IsAvailable], [t0].[PublicationYear], [t0].[PublisherId], [t0].[Rating], [t0].[Title], [t1].[UserId], [t1].[BookId], [t1].[AddedDate], [t1].[BookId0], [t1].[AuthorId], [t1].[CategoryId], [t1].[CoverImage], [t1].[ImageContentType], [t1].[ImageFileName], [t1].[IsAvailable], [t1].[PublicationYear], [t1].[PublisherId], [t1].[Rating], [t1].[Title]
+FROM (
+    SELECT TOP(1) [u].[UserId], [u].[Address], [u].[Age], [u].[Email], [u].[Gender], [u].[Name], [u].[Password], [u].[RegistrationDate], [u].[Role]
+    FROM [Users] AS [u]
+    WHERE [u].[UserId] = @__id_0
+) AS [t]
+LEFT JOIN (
+    SELECT [l].[LoanId], [l].[BookId], [l].[DueDate], [l].[LoanDate], [l].[ReturnDate], [l].[UserId], [b].[BookId] AS [BookId0], [b].[AuthorId], [b].[CategoryId], [b].[CoverImage], [b].[ImageContentType], [b].[ImageFileName], [b].[IsAvailable], [b].[PublicationYear], [b].[PublisherId], [b].[Rating], [b].[Title]
+    FROM [Loans] AS [l]
+    INNER JOIN [Books] AS [b] ON [l].[BookId] = [b].[BookId]
+) AS [t0] ON [t].[UserId] = [t0].[UserId]
+LEFT JOIN (
+    SELECT [u0].[UserId], [u0].[BookId], [u0].[AddedDate], [b0].[BookId] AS [BookId0], [b0].[AuthorId], [b0].[CategoryId], [b0].[CoverImage], [b0].[ImageContentType], [b0].[ImageFileName], [b0].[IsAvailable], [b0].[PublicationYear], [b0].[PublisherId], [b0].[Rating], [b0].[Title]
+    FROM [UserFavoriteBooks] AS [u0]
+    INNER JOIN [Books] AS [b0] ON [u0].[BookId] = [b0].[BookId]
+) AS [t1] ON [t].[UserId] = [t1].[UserId]
+ORDER BY [t].[UserId], [t0].[LoanId], [t0].[BookId0], [t1].[UserId], [t1].[BookId]
+2025-08-14 20:57:40.936 [INF] Executed DbCommand (4ms) [Parameters=[@__userId_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [l].[LoanId], [l].[BookId], [l].[DueDate], [l].[LoanDate], [l].[ReturnDate], [l].[UserId], [b].[BookId], [b].[AuthorId], [b].[CategoryId], [b].[CoverImage], [b].[ImageContentType], [b].[ImageFileName], [b].[IsAvailable], [b].[PublicationYear], [b].[PublisherId], [b].[Rating], [b].[Title], [a].[AuthorId], [a].[Biography], [a].[BirthDate], [a].[ImageContentType], [a].[ImageFileName], [a].[Name], [a].[Nationality], [a].[ProfileImage], [p].[PublisherId], [p].[Address], [p].[ContactEmail], [p].[EstablishedDate], [p].[ImageContentType], [p].[ImageFileName], [p].[LogoImage], [p].[Name], [p].[Website], [l0].[LoanId], [l0].[BookId], [l0].[DueDate], [l0].[LoanDate], [l0].[ReturnDate], [l0].[UserId]
+FROM [Loans] AS [l]
+INNER JOIN [Books] AS [b] ON [l].[BookId] = [b].[BookId]
+INNER JOIN [Authors] AS [a] ON [b].[AuthorId] = [a].[AuthorId]
+INNER JOIN [Publishers] AS [p] ON [b].[PublisherId] = [p].[PublisherId]
+LEFT JOIN [Loans] AS [l0] ON [b].[BookId] = [l0].[BookId]
+WHERE [l].[UserId] = @__userId_0
+ORDER BY [l].[LoanId], [b].[BookId], [a].[AuthorId], [p].[PublisherId]
+2025-08-14 20:57:40.940 [INF] Executing OkObjectResult, writing value of type 'System.Linq.Enumerable+SelectListIterator`2[[LibraryApp.Domain.Entities.Book, LibraryApp.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[LibraryApp.Application.DTOs.Book.BookDto, LibraryApp.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2025-08-14 20:57:40.942 [INF] Executed action LibraryApp.API.Controllers.UsersController.GetMyBorrowedBooks (LibraryApp.API) in 20.4641ms
+2025-08-14 20:57:40.945 [INF] Executed endpoint 'LibraryApp.API.Controllers.UsersController.GetMyBorrowedBooks (LibraryApp.API)'
+2025-08-14 20:57:40.947 [INF] System Action: SUCCESS_OPERATION - Operation completed successfully {"Method":"GET","Endpoint":"/api/users/my-borrowed-books","StatusCode":200,"Operation":"Get Users","Duration":31.6125,"UserId":null}
+2025-08-14 20:57:40.954 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"5dd0b291-3c8f-49c3-8c1e-cad5f951eb63","Method":"GET","Path":"/api/Users/my-borrowed-books","StatusCode":200,"Duration":45.74,"UserId":null,"Timestamp":"2025-08-14T17:57:40.9540675Z"}
+2025-08-14 20:57:40.960 [INF] Request finished HTTP/1.1 GET http://localhost:7208/api/Users/my-borrowed-books - 200 null application/json; charset=utf-8 55.8516ms
+2025-08-14 20:57:41.160 [INF] Request starting HTTP/1.1 GET http://localhost:7208/api/Users/my-borrowed-books - null null
+2025-08-14 20:57:41.162 [INF] System Action: REQUEST_START - Request started {"RequestId":"dabbc174-e110-4aba-a95c-1e469b00691e","Method":"GET","Path":"/api/Users/my-borrowed-books","UserId":null,"Timestamp":"2025-08-14T17:57:41.1627265Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 20:57:41.173 [INF] Executing endpoint 'LibraryApp.API.Controllers.UsersController.GetMyBorrowedBooks (LibraryApp.API)'
+2025-08-14 20:57:41.174 [INF] Route matched with {action = "GetMyBorrowedBooks", controller = "Users"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetMyBorrowedBooks() on controller LibraryApp.API.Controllers.UsersController (LibraryApp.API).
+2025-08-14 20:57:41.178 [INF] Executed DbCommand (1ms) [Parameters=[@__id_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [t].[UserId], [t].[Address], [t].[Age], [t].[Email], [t].[Gender], [t].[Name], [t].[Password], [t].[RegistrationDate], [t].[Role], [t0].[LoanId], [t0].[BookId], [t0].[DueDate], [t0].[LoanDate], [t0].[ReturnDate], [t0].[UserId], [t0].[BookId0], [t0].[AuthorId], [t0].[CategoryId], [t0].[CoverImage], [t0].[ImageContentType], [t0].[ImageFileName], [t0].[IsAvailable], [t0].[PublicationYear], [t0].[PublisherId], [t0].[Rating], [t0].[Title], [t1].[UserId], [t1].[BookId], [t1].[AddedDate], [t1].[BookId0], [t1].[AuthorId], [t1].[CategoryId], [t1].[CoverImage], [t1].[ImageContentType], [t1].[ImageFileName], [t1].[IsAvailable], [t1].[PublicationYear], [t1].[PublisherId], [t1].[Rating], [t1].[Title]
+FROM (
+    SELECT TOP(1) [u].[UserId], [u].[Address], [u].[Age], [u].[Email], [u].[Gender], [u].[Name], [u].[Password], [u].[RegistrationDate], [u].[Role]
+    FROM [Users] AS [u]
+    WHERE [u].[UserId] = @__id_0
+) AS [t]
+LEFT JOIN (
+    SELECT [l].[LoanId], [l].[BookId], [l].[DueDate], [l].[LoanDate], [l].[ReturnDate], [l].[UserId], [b].[BookId] AS [BookId0], [b].[AuthorId], [b].[CategoryId], [b].[CoverImage], [b].[ImageContentType], [b].[ImageFileName], [b].[IsAvailable], [b].[PublicationYear], [b].[PublisherId], [b].[Rating], [b].[Title]
+    FROM [Loans] AS [l]
+    INNER JOIN [Books] AS [b] ON [l].[BookId] = [b].[BookId]
+) AS [t0] ON [t].[UserId] = [t0].[UserId]
+LEFT JOIN (
+    SELECT [u0].[UserId], [u0].[BookId], [u0].[AddedDate], [b0].[BookId] AS [BookId0], [b0].[AuthorId], [b0].[CategoryId], [b0].[CoverImage], [b0].[ImageContentType], [b0].[ImageFileName], [b0].[IsAvailable], [b0].[PublicationYear], [b0].[PublisherId], [b0].[Rating], [b0].[Title]
+    FROM [UserFavoriteBooks] AS [u0]
+    INNER JOIN [Books] AS [b0] ON [u0].[BookId] = [b0].[BookId]
+) AS [t1] ON [t].[UserId] = [t1].[UserId]
+ORDER BY [t].[UserId], [t0].[LoanId], [t0].[BookId0], [t1].[UserId], [t1].[BookId]
+2025-08-14 20:57:41.188 [INF] Executed DbCommand (3ms) [Parameters=[@__userId_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [l].[LoanId], [l].[BookId], [l].[DueDate], [l].[LoanDate], [l].[ReturnDate], [l].[UserId], [b].[BookId], [b].[AuthorId], [b].[CategoryId], [b].[CoverImage], [b].[ImageContentType], [b].[ImageFileName], [b].[IsAvailable], [b].[PublicationYear], [b].[PublisherId], [b].[Rating], [b].[Title], [a].[AuthorId], [a].[Biography], [a].[BirthDate], [a].[ImageContentType], [a].[ImageFileName], [a].[Name], [a].[Nationality], [a].[ProfileImage], [p].[PublisherId], [p].[Address], [p].[ContactEmail], [p].[EstablishedDate], [p].[ImageContentType], [p].[ImageFileName], [p].[LogoImage], [p].[Name], [p].[Website], [l0].[LoanId], [l0].[BookId], [l0].[DueDate], [l0].[LoanDate], [l0].[ReturnDate], [l0].[UserId]
+FROM [Loans] AS [l]
+INNER JOIN [Books] AS [b] ON [l].[BookId] = [b].[BookId]
+INNER JOIN [Authors] AS [a] ON [b].[AuthorId] = [a].[AuthorId]
+INNER JOIN [Publishers] AS [p] ON [b].[PublisherId] = [p].[PublisherId]
+LEFT JOIN [Loans] AS [l0] ON [b].[BookId] = [l0].[BookId]
+WHERE [l].[UserId] = @__userId_0
+ORDER BY [l].[LoanId], [b].[BookId], [a].[AuthorId], [p].[PublisherId]
+2025-08-14 20:57:41.192 [INF] Executing OkObjectResult, writing value of type 'System.Linq.Enumerable+SelectListIterator`2[[LibraryApp.Domain.Entities.Book, LibraryApp.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[LibraryApp.Application.DTOs.Book.BookDto, LibraryApp.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2025-08-14 20:57:41.195 [INF] Executed action LibraryApp.API.Controllers.UsersController.GetMyBorrowedBooks (LibraryApp.API) in 19.0428ms
+2025-08-14 20:57:41.198 [INF] Executed endpoint 'LibraryApp.API.Controllers.UsersController.GetMyBorrowedBooks (LibraryApp.API)'
+2025-08-14 20:57:41.199 [INF] System Action: SUCCESS_OPERATION - Operation completed successfully {"Method":"GET","Endpoint":"/api/users/my-borrowed-books","StatusCode":200,"Operation":"Get Users","Duration":29.3989,"UserId":null}
+2025-08-14 20:57:41.206 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"dabbc174-e110-4aba-a95c-1e469b00691e","Method":"GET","Path":"/api/Users/my-borrowed-books","StatusCode":200,"Duration":44.0891,"UserId":null,"Timestamp":"2025-08-14T17:57:41.2068156Z"}
+2025-08-14 20:57:41.214 [INF] Request finished HTTP/1.1 GET http://localhost:7208/api/Users/my-borrowed-books - 200 null application/json; charset=utf-8 53.8904ms
+2025-08-14 21:15:01.683 [INF] Request starting HTTP/1.1 GET http://localhost:7208/api/Users/my-favorite-books - null null
+2025-08-14 21:15:01.689 [INF] System Action: REQUEST_START - Request started {"RequestId":"b4d0f6f1-e049-416c-a249-df2f32489b5a","Method":"GET","Path":"/api/Users/my-favorite-books","UserId":null,"Timestamp":"2025-08-14T18:15:01.6893159Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 21:15:01.711 [INF] Bearer was not authenticated. Failure message: Invalid token.
+2025-08-14 21:15:01.715 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+2025-08-14 21:15:01.719 [INF] AuthenticationScheme: Bearer was challenged.
+2025-08-14 21:15:01.720 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"b4d0f6f1-e049-416c-a249-df2f32489b5a","Method":"GET","Path":"/api/Users/my-favorite-books","StatusCode":401,"Duration":31.459,"UserId":null,"Timestamp":"2025-08-14T18:15:01.7207749Z"}
+2025-08-14 21:15:01.728 [INF] Request finished HTTP/1.1 GET http://localhost:7208/api/Users/my-favorite-books - 401 0 null 45.251ms
+2025-08-14 21:15:05.062 [INF] Request starting HTTP/1.1 GET http://localhost:7208/api/Users/my-favorite-books - null null
+2025-08-14 21:15:05.065 [INF] System Action: REQUEST_START - Request started {"RequestId":"d5540df7-fc10-4eb0-acc6-6225d6179fb1","Method":"GET","Path":"/api/Users/my-favorite-books","UserId":null,"Timestamp":"2025-08-14T18:15:05.0658108Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 21:15:05.079 [INF] Bearer was not authenticated. Failure message: Invalid token.
+2025-08-14 21:15:05.081 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+2025-08-14 21:15:05.084 [INF] AuthenticationScheme: Bearer was challenged.
+2025-08-14 21:15:05.086 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"d5540df7-fc10-4eb0-acc6-6225d6179fb1","Method":"GET","Path":"/api/Users/my-favorite-books","StatusCode":401,"Duration":20.4134,"UserId":null,"Timestamp":"2025-08-14T18:15:05.0862242Z"}
+2025-08-14 21:15:05.096 [INF] Request finished HTTP/1.1 GET http://localhost:7208/api/Users/my-favorite-books - 401 0 null 33.5751ms
+2025-08-14 21:15:06.886 [INF] Request starting HTTP/1.1 GET http://localhost:7208/api/Users/my-favorite-books - null null
+2025-08-14 21:15:06.890 [INF] System Action: REQUEST_START - Request started {"RequestId":"e2f1ab9f-9b38-402a-94ae-6069452ffa9d","Method":"GET","Path":"/api/Users/my-favorite-books","UserId":null,"Timestamp":"2025-08-14T18:15:06.8902759Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 21:15:06.900 [INF] Bearer was not authenticated. Failure message: Invalid token.
+2025-08-14 21:15:06.901 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+2025-08-14 21:15:06.902 [INF] AuthenticationScheme: Bearer was challenged.
+2025-08-14 21:15:06.904 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"e2f1ab9f-9b38-402a-94ae-6069452ffa9d","Method":"GET","Path":"/api/Users/my-favorite-books","StatusCode":401,"Duration":14.0093,"UserId":null,"Timestamp":"2025-08-14T18:15:06.9042852Z"}
+2025-08-14 21:15:06.911 [INF] Request finished HTTP/1.1 GET http://localhost:7208/api/Users/my-favorite-books - 401 0 null 24.2144ms
+2025-08-14 21:15:24.896 [INF] Request starting HTTP/1.1 GET http://localhost:7208/api/Users/my-borrowed-books - null null
+2025-08-14 21:15:24.899 [INF] System Action: REQUEST_START - Request started {"RequestId":"84fe6237-f785-4ace-b1a2-47a382061774","Method":"GET","Path":"/api/Users/my-borrowed-books","UserId":null,"Timestamp":"2025-08-14T18:15:24.8994905Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 21:15:24.909 [INF] Bearer was not authenticated. Failure message: Invalid token.
+2025-08-14 21:15:24.911 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+2025-08-14 21:15:24.912 [INF] AuthenticationScheme: Bearer was challenged.
+2025-08-14 21:15:24.913 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"84fe6237-f785-4ace-b1a2-47a382061774","Method":"GET","Path":"/api/Users/my-borrowed-books","StatusCode":401,"Duration":14.2497,"UserId":null,"Timestamp":"2025-08-14T18:15:24.9137402Z"}
+2025-08-14 21:15:24.920 [INF] Request finished HTTP/1.1 GET http://localhost:7208/api/Users/my-borrowed-books - 401 0 null 24.0829ms
+2025-08-14 21:15:26.697 [INF] Request starting HTTP/1.1 GET http://localhost:7208/api/Users/my-borrowed-books - null null
+2025-08-14 21:15:26.700 [INF] System Action: REQUEST_START - Request started {"RequestId":"ecb8cc4d-f184-4b57-9161-a3c2fcea0c60","Method":"GET","Path":"/api/Users/my-borrowed-books","UserId":null,"Timestamp":"2025-08-14T18:15:26.7008154Z","RemoteIP":"::1","UserAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+2025-08-14 21:15:26.710 [INF] Bearer was not authenticated. Failure message: Invalid token.
+2025-08-14 21:15:26.711 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+2025-08-14 21:15:26.712 [INF] AuthenticationScheme: Bearer was challenged.
+2025-08-14 21:15:26.713 [INF] System Action: REQUEST_COMPLETE - Request completed {"RequestId":"ecb8cc4d-f184-4b57-9161-a3c2fcea0c60","Method":"GET","Path":"/api/Users/my-borrowed-books","StatusCode":401,"Duration":12.9355,"UserId":null,"Timestamp":"2025-08-14T18:15:26.7137509Z"}
+2025-08-14 21:15:26.720 [INF] Request finished HTTP/1.1 GET http://localhost:7208/api/Users/my-borrowed-books - 401 0 null 22.9497ms
+2025-08-14 21:20:39.596 [INF] Application is shutting down...

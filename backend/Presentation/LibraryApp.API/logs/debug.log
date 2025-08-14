@@ -1,0 +1,20 @@
+14.08.2025 20:57:37: Token parse edildi, userId: 9
+14.08.2025 20:57:39: Token parse edildi, userId: 9
+14.08.2025 20:57:40: Token parse edildi, userId: 9
+14.08.2025 20:57:40: Token parse edildi, userId: 9
+14.08.2025 20:57:41: Token parse edildi, userId: 9
+14.08.2025 21:15:01: Token çözme hatası: IDX10223: Lifetime validation failed. The token is expired. ValidTo (UTC): '14.08.2025 18:07:23', Current time (UTC): '14.08.2025 18:15:01'.
+   at LibraryApp.Infrastructure.Auth.JwtService.ValidateAccessToken(String jweToken) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Auth\JwtService.cs:line 177
+   at LibraryApp.Infrastructure.Auth.EncryptedJwtHandler.ExtractUserIdFromToken(String token) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Auth\EncryptedJwtHandler.cs:line 111
+14.08.2025 21:15:05: Token çözme hatası: IDX10223: Lifetime validation failed. The token is expired. ValidTo (UTC): '14.08.2025 18:07:23', Current time (UTC): '14.08.2025 18:15:05'.
+   at LibraryApp.Infrastructure.Auth.JwtService.ValidateAccessToken(String jweToken) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Auth\JwtService.cs:line 177
+   at LibraryApp.Infrastructure.Auth.EncryptedJwtHandler.ExtractUserIdFromToken(String token) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Auth\EncryptedJwtHandler.cs:line 111
+14.08.2025 21:15:06: Token çözme hatası: IDX10223: Lifetime validation failed. The token is expired. ValidTo (UTC): '14.08.2025 18:07:23', Current time (UTC): '14.08.2025 18:15:06'.
+   at LibraryApp.Infrastructure.Auth.JwtService.ValidateAccessToken(String jweToken) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Auth\JwtService.cs:line 177
+   at LibraryApp.Infrastructure.Auth.EncryptedJwtHandler.ExtractUserIdFromToken(String token) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Auth\EncryptedJwtHandler.cs:line 111
+14.08.2025 21:15:24: Token çözme hatası: IDX10223: Lifetime validation failed. The token is expired. ValidTo (UTC): '14.08.2025 18:07:23', Current time (UTC): '14.08.2025 18:15:24'.
+   at LibraryApp.Infrastructure.Auth.JwtService.ValidateAccessToken(String jweToken) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Auth\JwtService.cs:line 177
+   at LibraryApp.Infrastructure.Auth.EncryptedJwtHandler.ExtractUserIdFromToken(String token) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Auth\EncryptedJwtHandler.cs:line 111
+14.08.2025 21:15:26: Token çözme hatası: IDX10223: Lifetime validation failed. The token is expired. ValidTo (UTC): '14.08.2025 18:07:23', Current time (UTC): '14.08.2025 18:15:26'.
+   at LibraryApp.Infrastructure.Auth.JwtService.ValidateAccessToken(String jweToken) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Auth\JwtService.cs:line 177
+   at LibraryApp.Infrastructure.Auth.EncryptedJwtHandler.ExtractUserIdFromToken(String token) in C:\Users\boran\source\repos\backend\Infrastructure\LibraryApp.Infrastructure\Auth\EncryptedJwtHandler.cs:line 111

@@ -1,7 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using LibraryApp.Application.DTOs.User;
-using LibraryApp.Application.Exceptions;
 using LibraryApp.Application.Interfaces;
 
 namespace LibraryApp.API.Controllers
@@ -12,335 +11,272 @@ namespace LibraryApp.API.Controllers
     {
         private readonly IUserService _userService;
         private readonly ILogger<UsersController> _logger;
+        private readonly IJwtService _jwtService;
 
-        public UsersController(IUserService userService, ILogger<UsersController> logger)
+        public UsersController(IUserService userService, ILogger<UsersController> logger, IJwtService jwtService)
         {
-            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _userService = userService;
+            _logger = logger;
+            _jwtService = jwtService;
         }
 
-        /// <summary>
-        /// User login endpoint
-        /// </summary>
-        /// <param name="dto">Login credentials</param>
-        /// <returns>JWT token</returns>
         [HttpPost("login")]
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginUserDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            try
-            {
-                var token = await _userService.LoginAsync(dto.Email, dto.Password);
-                return Ok(new { token, message = "Login successful" });
-            }
-            catch (UserNotFoundException ex)
-            {
-                _logger.LogWarning("Login attempt failed - user not found: {Email}", ex.Email);
-                return Unauthorized(new { message = "Invalid email or password" });
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                _logger.LogWarning("Login attempt failed - invalid password for email: {Email}", dto.Email);
-                return Unauthorized(new { message = ex.Message });
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var token = await _userService.LoginAsync(dto.Email, dto.Password);
+            return Ok(new { token, message = "Login successful" });
         }
 
-        /// <summary>
-        /// User registration endpoint
-        /// </summary>
-        /// <param name="dto">Registration data</param>
-        /// <returns>Success message with user ID</returns>
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] AddUserDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            try
-            {
-                var userId = await _userService.AddUserAsync(dto);
-                var createdUser = await _userService.GetByIdAsync(userId);
-                
-                return CreatedAtAction(
-                    nameof(GetById), 
-                    new { id = userId }, 
-                    new { message = "User registered successfully", user = createdUser }
-                );
-            }
-            catch (DuplicateEmailException ex)
-            {
-                _logger.LogWarning("Registration failed - duplicate email: {Email}", ex.Email);
-                return Conflict(new { message = ex.Message });
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var userId = await _userService.AddUserAsync(dto);
+            var createdUser = await _userService.GetByIdAsync(userId);
+            return CreatedAtAction(nameof(GetById), new { id = userId }, createdUser);
         }
 
-        /// <summary>
-        /// Get all users (Admin only)
-        /// </summary>
-        /// <param name="includeLoans">Whether to include loan information</param>
-        /// <returns>List of users</returns>
         [HttpGet]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAllUsers([FromQuery] bool includeLoans = false)
         {
-            try
-            {
-                var users = await _userService.GetAllUsersAsync(includeLoans);
-                return Ok(users);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving users");
-                return StatusCode(500, new { message = "An error occurred while retrieving users" });
-            }
+            var users = await _userService.GetAllUsersAsync(includeLoans);
+            return Ok(users);
         }
 
-        /// <summary>
-        /// Get user by ID (Admin only)
-        /// </summary>
-        /// <param name="id">User ID</param>
-        /// <returns>User details</returns>
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetById(int id)
         {
-            if (id <= 0)
-            {
-                return BadRequest(new { message = "Invalid user ID" });
-            }
-
-            try
-            {
-                var user = await _userService.GetByIdAsync(id);
-                if (user == null)
-                {
-                    return NotFound(new { message = $"User with ID {id} not found" });
-                }
-
-                return Ok(user);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving user with ID {UserId}", id);
-                return StatusCode(500, new { message = "An error occurred while retrieving the user" });
-            }
+            if (id <= 0) return BadRequest(new { message = "Invalid user ID" });
+            var user = await _userService.GetByIdAsync(id);
+            if (user == null) return NotFound(new { message = $"User with ID {id} not found" });
+            return Ok(user);
         }
 
-        /// <summary>
-        /// Update user profile (Admin only)
-        /// </summary>
-        /// <param name="id">User ID</param>
-        /// <param name="dto">Updated user data</param>
-        /// <returns>No content on success</returns>
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserDto dto)
         {
-            if (id <= 0)
-            {
-                return BadRequest(new { message = "Invalid user ID" });
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            try
-            {
-                await _userService.UpdateUserAsync(id, dto);
-                return NoContent();
-            }
-            catch (UserNotFoundException ex)
-            {
-                _logger.LogWarning("User not found for update: {UserId}", ex.UserId);
-                return NotFound(new { message = ex.Message });
-            }
-            catch (DuplicateEmailException ex)
-            {
-                _logger.LogWarning("Update failed - duplicate email: {Email}", ex.Email);
-                return Conflict(new { message = ex.Message });
-            }
+            if (id <= 0) return BadRequest(new { message = "Invalid user ID" });
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            await _userService.UpdateUserAsync(id, dto);
+            return NoContent();
         }
 
-        /// <summary>
-        /// Promote user to admin role (Admin only)
-        /// </summary>
-        /// <param name="id">User ID</param>
-        /// <returns>No content on success</returns>
-        [HttpPut("{id}/promote")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> PromoteToAdmin(int id)
-        {
-            if (id <= 0)
-            {
-                return BadRequest(new { message = "Invalid user ID" });
-            }
-
-            try
-            {
-                await _userService.PromoteUserToAdminAsync(id);
-                return NoContent();
-            }
-            catch (UserNotFoundException ex)
-            {
-                _logger.LogWarning("User not found for promotion: {UserId}", ex.UserId);
-                return NotFound(new { message = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Demote user to regular role (Admin only)
-        /// </summary>
-        /// <param name="id">User ID</param>
-        /// <returns>No content on success</returns>
-        [HttpPut("{id}/demote")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DemoteToUser(int id)
-        {
-            if (id <= 0)
-            {
-                return BadRequest(new { message = "Invalid user ID" });
-            }
-
-            try
-            {
-                await _userService.DemoteUserToRegularAsync(id);
-                return NoContent();
-            }
-            catch (UserNotFoundException ex)
-            {
-                _logger.LogWarning("User not found for demotion: {UserId}", ex.UserId);
-                return NotFound(new { message = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Update user password (Authenticated users can update their own password)
-        /// </summary>
-        /// <param name="id">User ID</param>
-        /// <param name="dto">Password update data</param>
-        /// <returns>No content on success</returns>
-        [HttpPut("{id}/password")]
-        [Authorize]
-        public async Task<IActionResult> UpdatePassword(int id, [FromBody] UpdatePasswordUserDto dto)
-        {
-            if (id <= 0)
-            {
-                return BadRequest(new { message = "Invalid user ID" });
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            try
-            {
-                await _userService.UpdatePasswordAsync(id, dto);
-                return NoContent();
-            }
-            catch (UserNotFoundException ex)
-            {
-                _logger.LogWarning("User not found for password update: {UserId}", ex.UserId);
-                return NotFound(new { message = ex.Message });
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                _logger.LogWarning("Password update failed - incorrect current password for user: {UserId}", id);
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Delete user (Admin only)
-        /// </summary>
-        /// <param name="id">User ID</param>
-        /// <returns>No content on success</returns>
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            if (id <= 0)
-            {
-                return BadRequest(new { message = "Invalid user ID" });
-            }
-
-            try
-            {
-                await _userService.DeleteUserAsync(id);
-                return NoContent();
-            }
-            catch (UserNotFoundException ex)
-            {
-                _logger.LogWarning("User not found for deletion: {UserId}", ex.UserId);
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                _logger.LogWarning("Cannot delete user: {Message}", ex.Message);
-                return BadRequest(new { message = ex.Message });
-            }
+            if (id <= 0) return BadRequest(new { message = "Invalid user ID" });
+            await _userService.DeleteUserAsync(id);
+            return NoContent();
         }
 
-        /// <summary>
-        /// Check if user exists (Admin only)
-        /// </summary>
-        /// <param name="id">User ID</param>
-        /// <returns>Existence status</returns>
         [HttpHead("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UserExists(int id)
         {
-            if (id <= 0)
-            {
-                return BadRequest();
-            }
-
-            try
-            {
-                var exists = await _userService.UserExistsAsync(id);
-                return exists ? Ok() : NotFound();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error checking user existence with ID {UserId}", id);
-                return StatusCode(500);
-            }
+            if (id <= 0) return BadRequest();
+            var exists = await _userService.UserExistsAsync(id);
+            return exists ? Ok() : NotFound();
         }
 
-        /// <summary>
-        /// Check if email exists (Public endpoint for registration validation)
-        /// </summary>
-        /// <param name="email">Email address</param>
-        /// <returns>Existence status</returns>
+        [HttpPut("{id}/promote")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> PromoteToAdmin(int id)
+        {
+            if (id <= 0) return BadRequest(new { message = "Invalid user ID" });
+            await _userService.PromoteUserToAdminAsync(id);
+            return NoContent();
+        }
+
+        [HttpPut("{id}/demote")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DemoteToUser(int id)
+        {
+            if (id <= 0) return BadRequest(new { message = "Invalid user ID" });
+            await _userService.DemoteUserToRegularAsync(id);
+            return NoContent();
+        }
+
+        [HttpPut("{id}/password")]
+        [Authorize]
+        public async Task<IActionResult> UpdatePassword(int id, [FromBody] UpdatePasswordUserDto dto)
+        {
+            if (id <= 0) return BadRequest(new { message = "Invalid user ID" });
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            await _userService.UpdatePasswordAsync(id, dto);
+            return NoContent();
+        }
+
+        [HttpGet("my-borrowed-books")]
+        [Authorize]
+        public async Task<IActionResult> GetMyBorrowedBooks()
+        {
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+                return Unauthorized(new { message = "User ID not found in token" });
+            var books = await _userService.GetBorrowedBooksAsync(userId.Value);
+            return Ok(books);
+        }
+
+        [HttpGet("my-favorite-books")]
+        [Authorize]
+        public async Task<IActionResult> GetMyFavoriteBooks()
+        {
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+                return Unauthorized(new { message = "User ID not found in token" });
+            var books = await _userService.GetFavoriteBooksAsync(userId.Value);
+            return Ok(books);
+        }
+
+        [HttpPost("my-favorites/{bookId}")]
+        [Authorize]
+        public async Task<IActionResult> AddToMyFavorites(int bookId)
+        {
+            if (bookId <= 0) return BadRequest(new { message = "Invalid book ID" });
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+                return Unauthorized(new { message = "User ID not found in token" });
+            await _userService.AddToFavoritesAsync(userId.Value, bookId);
+            return NoContent();
+        }
+
+        [HttpDelete("my-favorites/{bookId}")]
+        [Authorize]
+        public async Task<IActionResult> RemoveFromMyFavorites(int bookId)
+        {
+            if (bookId <= 0) return BadRequest(new { message = "Invalid book ID" });
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+                return Unauthorized(new { message = "User ID not found in token" });
+            await _userService.RemoveFromFavoritesAsync(userId.Value, bookId);
+            return NoContent();
+        }
+
+        [HttpGet("{userId}/borrowed-books")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetBorrowedBooks(int userId)
+        {
+            if (userId <= 0) return BadRequest(new { message = "Invalid user ID" });
+            var books = await _userService.GetBorrowedBooksAsync(userId);
+            return Ok(books);
+        }
+
+        [HttpGet("{userId}/favorite-books")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetFavoriteBooks(int userId)
+        {
+            if (userId <= 0) return BadRequest(new { message = "Invalid user ID" });
+            var books = await _userService.GetFavoriteBooksAsync(userId);
+            return Ok(books);
+        }
+
+        [HttpPost("{userId}/favorites/{bookId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AddToFavorites(int userId, int bookId)
+        {
+            if (userId <= 0) return BadRequest(new { message = "Invalid user ID" });
+            if (bookId <= 0) return BadRequest(new { message = "Invalid book ID" });
+            await _userService.AddToFavoritesAsync(userId, bookId);
+            return NoContent();
+        }
+
+        [HttpDelete("{userId}/favorites/{bookId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> RemoveFromFavorites(int userId, int bookId)
+        {
+            if (userId <= 0) return BadRequest(new { message = "Invalid user ID" });
+            if (bookId <= 0) return BadRequest(new { message = "Invalid book ID" });
+            await _userService.RemoveFromFavoritesAsync(userId, bookId);
+            return NoContent();
+        }
+
         [HttpGet("email-exists")]
         [AllowAnonymous]
         public async Task<IActionResult> EmailExists([FromQuery] string email)
         {
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                return BadRequest(new { message = "Email is required" });
-            }
+            if (string.IsNullOrWhiteSpace(email)) return BadRequest(new { message = "Email is required" });
+            var exists = await _userService.EmailExistsAsync(email);
+            return Ok(new { exists });
+        }
 
-            try
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+                return Unauthorized(new { message = "User ID not found in token" });
+            var user = await _userService.GetByIdAsync(userId.Value);
+            if (user == null)
+                return NotFound(new { message = "User not found" });
+            return Ok(user);
+        }
+
+        [HttpGet("debug-auth")]
+        [Authorize]
+        public IActionResult DebugAuthentication()
+        {
+            var allClaims = User.Claims.Select(c => new { Type = c.Type, Value = c.Value }).ToList();
+            var userId = GetCurrentUserId();
+            return Ok(new
             {
-                var exists = await _userService.EmailExistsAsync(email);
-                return Ok(new { exists });
-            }
-            catch (Exception ex)
+                message = "Authentication successful",
+                userId = userId,
+                claims = allClaims,
+                isAuthenticated = User.Identity?.IsAuthenticated ?? false,
+                authenticationType = User.Identity?.AuthenticationType
+            });
+        }
+
+        [HttpPost("clear-auth-cookies")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult ClearAuthCookies()
+        {
+            _jwtService.ClearAuthCookies();
+            return Ok(new { message = "Auth cookies cleared successfully" });
+        }
+
+        [HttpGet("debug-loans")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DebugLoans()
+        {
+            var allLoans = await _userService.GetAllLoansAsync();
+            var loanData = allLoans.Select(l => new
             {
-                _logger.LogError(ex, "Error checking email existence: {Email}", email);
-                return StatusCode(500, new { message = "An error occurred while checking email" });
+                LoanId = l.LoanId,
+                UserId = l.UserId,
+                BookId = l.BookId,
+                BookTitle = l.Book?.Title,
+                UserEmail = l.User?.Email,
+                LoanDate = l.LoanDate,
+                DueDate = l.DueDate,
+                ReturnDate = l.ReturnDate,
+                IsActive = l.IsActive()
+            }).ToList();
+
+            return Ok(new
+            {
+                totalLoans = loanData.Count,
+                activeLoans = loanData.Count(l => l.IsActive),
+                loans = loanData
+            });
+        }
+
+        private int? GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst("sub") ?? User.FindFirst("userId");
+            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+            {
+                return userId;
             }
+            return null;
         }
     }
 }
