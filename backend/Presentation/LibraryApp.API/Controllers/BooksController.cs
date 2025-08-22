@@ -35,6 +35,13 @@ namespace LibraryApp.API.Controllers
             return Ok(books);
         }
 
+        [HttpGet("list")]
+        public async Task<IActionResult> GetAllBooksForList([FromQuery] string? filter = null, [FromQuery] bool includeUnavailable = true)
+        {
+            var books = await _bookService.GetAllBooksForListAsync(filter, includeUnavailable);
+            return Ok(books);
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -95,9 +102,18 @@ namespace LibraryApp.API.Controllers
         {
             if (id <= 0) return BadRequest(new { message = "Invalid book ID" });
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            
+            // DTO'dan gelen bilgileri kullan
+            if (dto.BookId != id)
+                return BadRequest(new { message = "Book ID mismatch" });
+            
             var userId = GetCurrentUserId();
             if (!userId.HasValue)
                 return Unauthorized(new { message = "User ID not found in token" });
+            
+            if (dto.UserId != userId.Value)
+                return BadRequest(new { message = "User ID mismatch" });
+            
             await _bookService.BorrowBookAsync(id, userId.Value);
             return Ok(new { message = "Book borrowed successfully" });
         }
@@ -157,14 +173,33 @@ namespace LibraryApp.API.Controllers
             return Ok(loan);
         }
 
-        [HttpGet("{id}/status-for-user/{userId}")]
+        [HttpGet("{id}/status-for-user")]
         [Authorize]
-        public async Task<IActionResult> GetBookStatusForUser(int id, int userId)
+        public async Task<IActionResult> GetBookStatusForUser(int id)
         {
             if (id <= 0) return BadRequest(new { message = "Invalid book ID" });
-            if (userId <= 0) return BadRequest(new { message = "Invalid user ID" });
-            var status = await _bookService.GetBookStatusForUserAsync(id, userId);
+            
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+                return Unauthorized(new { message = "User ID not found in token" });
+                
+            var status = await _bookService.GetBookStatusForUserAsync(id, userId.Value);
             return Ok(status);
+        }
+
+        [HttpPost("status-for-user-batch")]
+        [Authorize]
+        public async Task<IActionResult> GetBookStatusForUserBatch([FromBody] int[] bookIds)
+        {
+            if (bookIds == null || bookIds.Length == 0)
+                return BadRequest(new { message = "Book IDs are required" });
+            
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+                return Unauthorized(new { message = "User ID not found in token" });
+                
+            var statuses = await _bookService.GetBookStatusForUserBatchAsync(bookIds, userId.Value);
+            return Ok(statuses);
         }
 
         [HttpGet("{id}/favorite-count")]

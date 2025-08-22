@@ -2,23 +2,37 @@
 using System.Linq;
 using System.Threading.Tasks;
 using LibraryApp.Application.DTOs.User;
+using LibraryApp.Application.DTOs.Book;
 using LibraryApp.Application.Exceptions;
 using LibraryApp.Application.Helpers;
 using LibraryApp.Application.Interfaces;
 using LibraryApp.Domain.Entities;
 using LibraryApp.Domain.Interfaces;
+using Microsoft.Extensions.Logging;
+using AutoMapper;
 
 namespace LibraryApp.Application.Services
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IBookRepository _bookRepository;
         private readonly IJwtService _jwtService;
+        private readonly ILogger<UserService> _logger;
+        private readonly IMapper _mapper;
 
-        public UserService(IUserRepository userRepository, IJwtService jwtService)
+        public UserService(
+            IUserRepository userRepository, 
+            IBookRepository bookRepository, 
+            IJwtService jwtService, 
+            ILogger<UserService> logger,
+            IMapper mapper)
         {
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _bookRepository = bookRepository ?? throw new ArgumentNullException(nameof(bookRepository));
             _jwtService = jwtService ?? throw new ArgumentNullException(nameof(jwtService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         public async Task<int> AddUserAsync(AddUserDto dto)
@@ -31,9 +45,15 @@ namespace LibraryApp.Application.Services
                 throw new DuplicateEmailException(dto.Email);
 
             var user = new User(dto.Name, dto.Email, PasswordHasher.Hash(dto.Password));
-
+            var a = _userRepository.GetAllAsync().Result.AsQueryable().Where(x => x.Email == "dfgdfg").ToList();
             await _userRepository.AddAsync(user);
             await _userRepository.SaveChangesAsync();
+            
+            // Yeni JWT servisi RSA key pair gerektirmez
+
+            _logger.LogInformation(
+                "User registered - ID: {UserId}, Name: {Name}, Email: {Email}, Role: {Role}", 
+                user.UserId, dto.Name, dto.Email, user.Role);
             
             return user.UserId;
         }
@@ -42,16 +62,16 @@ namespace LibraryApp.Application.Services
         {
             var users = await _userRepository.GetAllAsync(includeLoans);
 
-            return users.Select(u => new UserDto
+            var dtos = _mapper.Map<IEnumerable<UserDto>>(users);
+            if (!includeLoans)
             {
-                UserId = u.UserId,
-                Name = u.Name,
-                Email = u.Email,
-                Role = u.Role,
-                RegistrationDate = u.RegistrationDate,
-                ActiveLoansCount = includeLoans ? u.GetActiveLoans().Count() : 0,
-                HasOverdueBooks = includeLoans ? u.HasOverdueBooks() : false
-            });
+                foreach (var dto in dtos)
+                {
+                    dto.ActiveLoansCount = 0;
+                    dto.HasOverdueBooks = false;
+                }
+            }
+            return dtos;
         }
 
         public async Task<UserDto?> GetByIdAsync(int id)
@@ -63,16 +83,7 @@ namespace LibraryApp.Application.Services
             if (user == null) 
                 return null;
 
-            return new UserDto
-            {
-                UserId = user.UserId,
-                Name = user.Name,
-                Email = user.Email,
-                Role = user.Role,
-                RegistrationDate = user.RegistrationDate,
-                ActiveLoansCount = user.GetActiveLoans().Count(),
-                HasOverdueBooks = user.HasOverdueBooks()
-            };
+            return _mapper.Map<UserDto>(user);
         }
 
         public async Task<UserDto?> GetByEmailAsync(string email)
@@ -84,16 +95,7 @@ namespace LibraryApp.Application.Services
             if (user == null) 
                 return null;
 
-            return new UserDto
-            {
-                UserId = user.UserId,
-                Name = user.Name,
-                Email = user.Email,
-                Role = user.Role,
-                RegistrationDate = user.RegistrationDate,
-                ActiveLoansCount = user.GetActiveLoans().Count(),
-                HasOverdueBooks = user.HasOverdueBooks()
-            };
+            return _mapper.Map<UserDto>(user);
         }
 
         public async Task UpdateUserAsync(int id, UpdateUserDto dto)
@@ -120,9 +122,13 @@ namespace LibraryApp.Application.Services
 
             _userRepository.Update(user);
             await _userRepository.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "User profile updated - ID: {UserId}, Name: {Name}, Email: {Email}, Age: {Age}, Gender: {Gender}",
+                id, dto.Name, dto.Email, dto.Age, dto.Gender);
         }
 
-        public async Task<string> LoginAsync(string email, string password)
+        public async Task<UserDto> LoginAsync(string email, string password)
         {
             if (string.IsNullOrWhiteSpace(email))
                 throw new ArgumentException("Email is required", nameof(email));
@@ -138,7 +144,11 @@ namespace LibraryApp.Application.Services
             if (!PasswordHasher.Verify(password, user.Password))
                 throw new UnauthorizedAccessException("Invalid email or password");
 
-            return _jwtService.GenerateToken(user.UserId, user.Email, user.Role.ToString());
+            _logger.LogInformation(
+                "User authenticated successfully - ID: {UserId}, Email: {Email}, Role: {Role}", 
+                user.UserId, email, user.Role);
+
+            return _mapper.Map<UserDto>(user);
         }
 
         public async Task UpdatePasswordAsync(int userId, UpdatePasswordUserDto dto)
@@ -161,6 +171,10 @@ namespace LibraryApp.Application.Services
                 
                 _userRepository.Update(user);
                 await _userRepository.SaveChangesAsync();
+
+                _logger.LogInformation(
+                    "User password updated successfully - ID: {UserId}, Email: {Email}",
+                    userId, user.Email);
             }
             catch (ArgumentException ex)
             {
@@ -202,6 +216,8 @@ namespace LibraryApp.Application.Services
             if (user.GetActiveLoans().Any())
                 throw new InvalidOperationException($"Cannot delete user '{user.Name}' because they have active book loans");
 
+            // Yeni JWT servisi RSA key pair gerektirmez, silme işlemi gerekmez
+
             _userRepository.Delete(user);
             await _userRepository.SaveChangesAsync();
         }
@@ -214,6 +230,104 @@ namespace LibraryApp.Application.Services
         public async Task<bool> EmailExistsAsync(string email)
         {
             return await _userRepository.EmailExistsAsync(email);
+        }
+
+        public async Task<IEnumerable<BookDto>> GetBorrowedBooksAsync(int userId)
+        {
+            if (userId <= 0)
+                throw new ArgumentException($"Invalid user ID: {userId}. User ID must be greater than zero.", nameof(userId));
+
+            if (!await _userRepository.ExistsAsync(userId))
+                throw new UserNotFoundException(userId);
+
+            var borrowedBooks = await _userRepository.GetBorrowedBooksAsync(userId, includeNavigationProperties: true);
+
+            var dtos = _mapper.Map<IEnumerable<BookDto>>(borrowedBooks);
+            foreach (var dto in dtos)
+                dto.BorrowCount = 0;
+            return dtos;
+        }
+
+        public async Task<IEnumerable<BookDto>> GetFavoriteBooksAsync(int userId)
+        {
+            if (userId <= 0)
+                throw new ArgumentException($"Invalid user ID: {userId}. User ID must be greater than zero.", nameof(userId));
+
+            if (!await _userRepository.ExistsAsync(userId))
+                throw new UserNotFoundException(userId);
+
+            var favoriteBooks = await _userRepository.GetFavoriteBooksAsync(userId, includeNavigationProperties: true);
+
+            var dtos = _mapper.Map<IEnumerable<BookDto>>(favoriteBooks);
+            foreach (var dto in dtos)
+                dto.BorrowCount = 0;
+            return dtos;
+        }
+
+        public async Task AddToFavoritesAsync(int userId, int bookId)
+        {
+            if (userId <= 0)
+                throw new ArgumentException("User ID must be greater than zero.", nameof(userId));
+
+            if (bookId <= 0)
+                throw new ArgumentException("Book ID must be greater than zero.", nameof(bookId));
+
+            var user = await _userRepository.GetByIdAsync(userId, includeNavigationProperties: true);
+            if (user == null)
+                throw new UserNotFoundException(userId);
+
+            // Check if book exists
+            var book = await _bookRepository.GetByIdAsync(bookId);
+            if (book == null)
+                throw new BookNotFoundException(bookId);
+
+            if (user.IsBookInFavorites(bookId))
+                throw new InvalidOperationException($"Book {bookId} is already in favorites");
+
+            var favoriteBook = new UserFavoriteBook(userId, bookId);
+            await _userRepository.AddFavoriteBookAsync(favoriteBook);
+            await _userRepository.SaveChangesAsync();
+        }
+
+        public async Task<bool> RemoveFromFavoritesAsync(int userId, int bookId)
+        {
+            if (userId <= 0)
+                throw new ArgumentException("User ID must be greater than zero.", nameof(userId));
+
+            if (bookId <= 0)
+                throw new ArgumentException("Book ID must be greater than zero.", nameof(bookId));
+
+            // Check if user exists
+            if (!await _userRepository.ExistsAsync(userId))
+                throw new UserNotFoundException(userId);
+
+            // Check if book exists
+            if (!await _bookRepository.ExistsAsync(bookId))
+                throw new BookNotFoundException(bookId);
+
+            // Check if the favorite relationship exists
+            var favoriteBook = await _userRepository.GetFavoriteBookAsync(userId, bookId);
+            if (favoriteBook == null)
+            {
+                return false; // Not in favorites
+            }
+
+            // Remove the favorite relationship
+            await _userRepository.RemoveFavoriteBookAsync(favoriteBook);
+            await _userRepository.SaveChangesAsync();
+            return true; // Successfully removed
+        }
+
+        public async Task<IEnumerable<Loan>> GetAllLoansAsync()
+        {
+            try
+            {
+                return await _userRepository.GetAllLoansAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Error retrieving all loans: {ex.Message}", ex);
+            }
         }
     }
 }

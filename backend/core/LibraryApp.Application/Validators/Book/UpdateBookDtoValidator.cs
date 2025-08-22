@@ -27,6 +27,12 @@ namespace LibraryApp.Application.Validators.Book
 
             RuleFor(x => x.IsAvailable)
                 .NotNull().WithMessage("IsAvailable field is required");
+
+            RuleFor(x => x.Rating)
+                .InclusiveBetween(0, 5).WithMessage("Rating must be between 0 and 5");
+
+            RuleFor(x => x.CategoryId)
+                .InclusiveBetween(1, 3).WithMessage("Category ID must be between 1 and 3");
         }
 
         private bool BeValidTitle(string title)

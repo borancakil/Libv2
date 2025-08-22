@@ -7,7 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\core\LibraryApp.Domain\LibraryApp.Domain.csproj" />
+    <ProjectReference Include="..\..\Core\LibraryApp.Domain\LibraryApp.Domain.csproj" />
+    <ProjectReference Include="..\..\Core\LibraryApp.Application\LibraryApp.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -17,6 +18,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

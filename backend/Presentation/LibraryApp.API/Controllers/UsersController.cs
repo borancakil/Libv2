@@ -25,8 +25,18 @@ namespace LibraryApp.API.Controllers
         public async Task<IActionResult> Login([FromBody] LoginUserDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            var token = await _userService.LoginAsync(dto.Email, dto.Password);
-            return Ok(new { token, message = "Login successful" });
+
+            var user = await _userService.LoginAsync(dto.Email, dto.Password);
+
+            // Create tokens
+            var accessToken = _jwtService.CreateAccessToken(user.UserId, user.Email, user.Role.ToString());
+            var refreshToken = _jwtService.CreateRefreshToken(user.UserId);
+
+            _logger.LogInformation("Login attempt for user {Email}. Access token length: {AccessLength}, Refresh token length: {RefreshLength}", 
+                user.Email, accessToken.Length, refreshToken.Length);
+
+            // Return tokens in response body (client will store in localStorage)
+            return Ok(new { message = "Login successful", accessToken, refreshToken, tokenType = "Bearer", expiresIn = (int)_jwtService.AccessLifetime.TotalSeconds });
         }
 
         [HttpPost("register")]
@@ -113,6 +123,21 @@ namespace LibraryApp.API.Controllers
             return NoContent();
         }
 
+        [HttpGet("current-user")]
+        [Authorize]
+        public async Task<IActionResult> GetCurrentUserInfo()
+        {
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+                return Unauthorized(new { message = "User ID not found in token" });
+            
+            var user = await _userService.GetByIdAsync(userId.Value);
+            if (user == null)
+                return NotFound(new { message = "User not found" });
+            
+            return Ok(user);
+        }
+
         [HttpGet("my-borrowed-books")]
         [Authorize]
         public async Task<IActionResult> GetMyBorrowedBooks()
@@ -147,7 +172,7 @@ namespace LibraryApp.API.Controllers
             return NoContent();
         }
 
-        [HttpDelete("my-favorites/{bookId}")]
+                [HttpDelete("my-favorites/{bookId}")]
         [Authorize]
         public async Task<IActionResult> RemoveFromMyFavorites(int bookId)
         {
@@ -155,7 +180,14 @@ namespace LibraryApp.API.Controllers
             var userId = GetCurrentUserId();
             if (!userId.HasValue)
                 return Unauthorized(new { message = "User ID not found in token" });
-            await _userService.RemoveFromFavoritesAsync(userId.Value, bookId);
+
+            var result = await _userService.RemoveFromFavoritesAsync(userId.Value, bookId);
+
+            if (!result)
+            {
+                return NotFound(new { message = $"Book with ID {bookId} is not in your favorites." });
+            }
+
             return NoContent();
         }
 
@@ -235,13 +267,62 @@ namespace LibraryApp.API.Controllers
             });
         }
 
-        [HttpPost("clear-auth-cookies")]
-        [Authorize(Roles = "Admin")]
-        public IActionResult ClearAuthCookies()
+        [HttpPost("logout")]
+        [Authorize]
+        public IActionResult Logout()
         {
-            _jwtService.ClearAuthCookies();
-            return Ok(new { message = "Auth cookies cleared successfully" });
+            // Client will clear localStorage tokens
+            return Ok(new { message = "Logout successful" });
         }
+
+        [HttpPost("refresh")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RefreshToken()
+        {
+            try
+            {
+                // Expect refresh token via Authorization: Bearer <refreshToken>
+                var authorization = Request.Headers["Authorization"].ToString();
+                if (string.IsNullOrWhiteSpace(authorization) || !authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                    return Unauthorized(new { message = "Authorization header with Bearer refresh token required" });
+                var refreshToken = authorization.Substring("Bearer ".Length).Trim();
+
+                // Refresh token'ı doğrula ve yeni access token oluştur
+                var principal = await _jwtService.ValidateRefreshToken(refreshToken);
+                
+                if (principal == null)
+                {
+                    return Unauthorized(new { message = "Invalid refresh token" });
+                }
+
+                // User ID'yi al
+                var userIdClaim = principal.FindFirst("sub");
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    return Unauthorized(new { message = "Invalid user ID in refresh token" });
+                }
+
+                // User bilgilerini al
+                var user = await _userService.GetByIdAsync(userId);
+                if (user == null)
+                {
+                    return Unauthorized(new { message = "User not found" });
+                }
+
+                // Yeni access token oluştur
+                var newAccessToken = _jwtService.CreateAccessToken(user.UserId, user.Email, user.Role.ToString());
+                
+                // Return new access token in response body
+                return Ok(new { message = "Token refreshed successfully", accessToken = newAccessToken, tokenType = "Bearer", expiresIn = (int)_jwtService.AccessLifetime.TotalSeconds });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error refreshing token");
+                return Unauthorized(new { message = "Token refresh failed" });
+            }
+        }
+
+        // Cookie management endpoint removed; tokens stored client-side
 
         [HttpGet("debug-loans")]
         [Authorize(Roles = "Admin")]

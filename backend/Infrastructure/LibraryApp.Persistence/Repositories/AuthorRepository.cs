@@ -2,16 +2,19 @@ using LibraryApp.Domain.Entities;
 using LibraryApp.Domain.Interfaces;
 using LibraryApp.Persistence.Data;
 using Microsoft.EntityFrameworkCore;
+using LibraryApp.Application.Interfaces;
 
 namespace LibraryApp.Persistence.Repositories
 {
     public class AuthorRepository : IAuthorRepository
     {
         private readonly LibraryDbContext _context;
+        private readonly ILoggingService _loggingService;
 
-        public AuthorRepository(LibraryDbContext context)
+        public AuthorRepository(LibraryDbContext context, ILoggingService loggingService)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
+            _loggingService = loggingService ?? throw new ArgumentNullException(nameof(loggingService));
         }
 
         public async Task<Author?> GetByIdAsync(int id, bool includeNavigationProperties = false)
@@ -47,6 +50,12 @@ namespace LibraryApp.Persistence.Repositories
                 throw new ArgumentNullException(nameof(author));
 
             await _context.Authors.AddAsync(author);
+            
+            // Logging ekle
+            _loggingService.LogDataOperation("INSERT", "Authors", author.AuthorId, new { 
+                Name = author.Name,
+                Biography = author.Biography?.Substring(0, Math.Min(50, author.Biography.Length)) + "..." 
+            });
         }
 
         public void Update(Author author)
@@ -55,6 +64,12 @@ namespace LibraryApp.Persistence.Repositories
                 throw new ArgumentNullException(nameof(author));
 
             _context.Authors.Update(author);
+            
+            // Logging ekle
+            _loggingService.LogDataOperation("UPDATE", "Authors", author.AuthorId, new { 
+                Name = author.Name,
+                Biography = author.Biography?.Substring(0, Math.Min(50, author.Biography.Length)) + "..." 
+            });
         }
 
         public void Delete(Author author)
@@ -63,6 +78,11 @@ namespace LibraryApp.Persistence.Repositories
                 throw new ArgumentNullException(nameof(author));
 
             _context.Authors.Remove(author);
+            
+            // Logging ekle
+            _loggingService.LogDataOperation("DELETE", "Authors", author.AuthorId, new { 
+                Name = author.Name 
+            });
         }
 
         public async Task<bool> ExistsAsync(int id)

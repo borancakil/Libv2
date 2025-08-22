@@ -25,6 +25,13 @@ namespace LibraryApp.API.Controllers
             return Ok(publishers);
         }
 
+        [HttpGet("details")]
+        public async Task<IActionResult> GetPublishersWithDetails([FromQuery] string? filter = null)
+        {
+            var publishers = await _publisherService.GetAllPublishersAsync(filter);
+            return Ok(publishers);
+        }
+
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddPublisher([FromBody] CreatePublisherDto dto)
@@ -34,7 +41,7 @@ namespace LibraryApp.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = publisher.PublisherId }, publisher);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {
             if (id <= 0) return BadRequest(new { message = "Invalid publisher ID" });
@@ -43,7 +50,7 @@ namespace LibraryApp.API.Controllers
             return Ok(publisher);
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdatePublisher(int id, [FromBody] UpdatePublisherDto dto)
         {
@@ -53,7 +60,7 @@ namespace LibraryApp.API.Controllers
             return NoContent();
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeletePublisher(int id)
         {
@@ -62,7 +69,7 @@ namespace LibraryApp.API.Controllers
             return NoContent();
         }
 
-        [HttpGet("{id}/books")]
+        [HttpGet("{id:int}/books")]
         public async Task<IActionResult> GetPublisherBooks(int id)
         {
             if (id <= 0) return BadRequest(new { message = "Invalid publisher ID" });
@@ -70,7 +77,7 @@ namespace LibraryApp.API.Controllers
             return Ok(books);
         }
 
-        [HttpGet("{id}/book-count")]
+        [HttpGet("{id:int}/book-count")]
         public async Task<IActionResult> GetPublisherBookCount(int id)
         {
             if (id <= 0) return BadRequest(new { message = "Invalid publisher ID" });
@@ -78,7 +85,7 @@ namespace LibraryApp.API.Controllers
             return Ok(new { count });
         }
 
-        [HttpGet("{id}/logo-image")]
+        [HttpGet("{id:int}/logo-image")]
         public async Task<IActionResult> GetPublisherLogoImage(int id)
         {
             if (id <= 0) return BadRequest(new { message = "Invalid publisher ID" });
@@ -87,7 +94,7 @@ namespace LibraryApp.API.Controllers
             return File(content, contentType, fileName);
         }
 
-        [HttpDelete("{id}/logo-image")]
+        [HttpDelete("{id:int}/logo-image")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeletePublisherLogoImage(int id)
         {

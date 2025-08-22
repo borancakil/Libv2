@@ -25,6 +25,13 @@ namespace LibraryApp.API.Controllers
             return Ok(authors);
         }
 
+        [HttpGet("details")]
+        public async Task<IActionResult> GetAuthorsWithDetails([FromQuery] string? filter = null)
+        {
+            var authors = await _authorService.GetAllAuthorsAsync(filter);
+            return Ok(authors);
+        }
+
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddAuthor([FromBody] CreateAuthorDto dto)
@@ -34,7 +41,7 @@ namespace LibraryApp.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = author.AuthorId }, author);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {
             if (id <= 0) return BadRequest(new { message = "Invalid author ID" });
@@ -43,7 +50,7 @@ namespace LibraryApp.API.Controllers
             return Ok(author);
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateAuthor(int id, [FromBody] UpdateAuthorDto dto)
         {
@@ -53,7 +60,7 @@ namespace LibraryApp.API.Controllers
             return NoContent();
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteAuthor(int id)
         {
@@ -62,7 +69,7 @@ namespace LibraryApp.API.Controllers
             return NoContent();
         }
 
-        [HttpGet("{id}/books")]
+        [HttpGet("{id:int}/books")]
         public async Task<IActionResult> GetAuthorBooks(int id)
         {
             if (id <= 0) return BadRequest(new { message = "Invalid author ID" });
@@ -70,7 +77,7 @@ namespace LibraryApp.API.Controllers
             return Ok(books);
         }
 
-        [HttpGet("{id}/book-count")]
+        [HttpGet("{id:int}/book-count")]
         public async Task<IActionResult> GetAuthorBookCount(int id)
         {
             if (id <= 0) return BadRequest(new { message = "Invalid author ID" });
@@ -78,7 +85,7 @@ namespace LibraryApp.API.Controllers
             return Ok(new { count });
         }
 
-        [HttpGet("{id}/profile-image")]
+        [HttpGet("{id:int}/profile-image")]
         public async Task<IActionResult> GetAuthorProfileImage(int id)
         {
             if (id <= 0) return BadRequest(new { message = "Invalid author ID" });
@@ -87,7 +94,7 @@ namespace LibraryApp.API.Controllers
             return File(content, contentType, fileName);
         }
 
-        [HttpDelete("{id}/profile-image")]
+        [HttpDelete("{id:int}/profile-image")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteAuthorProfileImage(int id)
         {

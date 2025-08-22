@@ -27,6 +27,11 @@
         public string? ContactEmail { get; set; }
         public DateTime? EstablishedDate { get; set; }
 
+        // Photo/Image properties
+        public byte[]? LogoImage { get; set; }
+        public string? ImageContentType { get; set; } // image/jpeg, image/png, etc.
+        public string? ImageFileName { get; set; }
+
         // Navigation properties
         public ICollection<Book> Books { get; set; } = new List<Book>();
 
@@ -60,6 +65,38 @@
                 return true;
 
             return Uri.TryCreate(website, UriKind.Absolute, out _);
+        }
+
+        /// <summary>
+        /// Checks if the publisher has a logo image
+        /// </summary>
+        /// <returns>True if publisher has a logo image</returns>
+        public bool HasLogoImage()
+        {
+            return LogoImage != null && LogoImage.Length > 0;
+        }
+
+        /// <summary>
+        /// Sets the logo image for the publisher
+        /// </summary>
+        /// <param name="imageData">Image byte array</param>
+        /// <param name="contentType">Image content type (e.g., image/jpeg)</param>
+        /// <param name="fileName">Original file name</param>
+        public void SetLogoImage(byte[] imageData, string contentType, string fileName)
+        {
+            LogoImage = imageData;
+            ImageContentType = contentType;
+            ImageFileName = fileName;
+        }
+
+        /// <summary>
+        /// Removes the logo image from the publisher
+        /// </summary>
+        public void RemoveLogoImage()
+        {
+            LogoImage = null;
+            ImageContentType = null;
+            ImageFileName = null;
         }
     }
 }

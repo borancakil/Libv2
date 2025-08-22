@@ -1,4 +1,6 @@
-﻿namespace LibraryApp.Application.DTOs.Book
+﻿using Microsoft.AspNetCore.Http;
+
+namespace LibraryApp.Application.DTOs.Book
 {
     /// <summary>
     /// DTO for creating a new book
@@ -10,5 +12,8 @@
         public int PublicationYear { get; set; }
         public int AuthorId { get; set; }
         public int PublisherId { get; set; }
+        public decimal Rating { get; set; } = 0;
+        public int CategoryId { get; set; } = 1; // Default to Fiction
+        public IFormFile? CoverImage { get; set; }
     }
 }

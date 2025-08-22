@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace LibraryApp.Application.DTOs.Publisher
 {
     public class UpdatePublisherDto
@@ -6,5 +8,6 @@ namespace LibraryApp.Application.DTOs.Publisher
         public string? Address { get; set; }
         public string? Website { get; set; }
         public string? ContactEmail { get; set; }
+        public IFormFile? LogoImage { get; set; }
     }
 } 

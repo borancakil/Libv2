@@ -23,11 +23,34 @@ namespace LibraryApp.Persistence.Configurations
                 .IsRequired()
                 .HasDefaultValue(true);
 
+            // Photo/Image properties
+            builder.Property(b => b.CoverImage)
+                .HasColumnType("VARBINARY(MAX)")
+                .IsRequired(false);
+
+            builder.Property(b => b.ImageContentType)
+                .HasMaxLength(100)
+                .IsRequired(false);
+
+            builder.Property(b => b.ImageFileName)
+                .HasMaxLength(255)
+                .IsRequired(false);
+
             // Foreign Keys
             builder.Property(b => b.AuthorId)
                 .IsRequired();
 
             builder.Property(b => b.PublisherId)
+                .IsRequired();
+
+            // Rating property
+            builder.Property(b => b.Rating)
+                .HasColumnType("DECIMAL(3,2)")
+                .IsRequired()
+                .HasDefaultValue(0);
+
+            // Category relationship
+            builder.Property(b => b.CategoryId)
                 .IsRequired();
 
             // Relationships
@@ -41,9 +64,19 @@ namespace LibraryApp.Persistence.Configurations
                 .HasForeignKey(b => b.PublisherId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.HasOne(b => b.Category)
+                .WithMany(c => c.Books)
+                .HasForeignKey(b => b.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             builder.HasMany(b => b.BorrowedBooks)
                 .WithOne(l => l.Book)
                 .HasForeignKey(l => l.BookId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(b => b.FavoritedByUsers)
+                .WithOne(ufb => ufb.Book)
+                .HasForeignKey(ufb => ufb.BookId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Table Name

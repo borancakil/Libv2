@@ -62,6 +62,7 @@ namespace LibraryApp.Domain.Entities
         public UserRole Role { get; private set; }
 
         public ICollection<Loan> BorrowedBooks { get; set; } = new List<Loan>();
+        public ICollection<UserFavoriteBook> FavoriteBooks { get; set; } = new List<UserFavoriteBook>();
 
         // Public constructors
         public User(string name, string email, string password) : this()
@@ -154,6 +155,20 @@ namespace LibraryApp.Domain.Entities
         {
             var today = DateTime.UtcNow.Date;
             return GetActiveLoans().Any(loan => loan.DueDate.Date < today);
+        }
+
+        /// <summary>
+        /// Gets user's favorite books
+        /// </summary>
+        /// <returns>Collection of favorite books</returns>
+        public IEnumerable<Book> GetFavoriteBooks()
+        {
+            return FavoriteBooks?.Select(fav => fav.Book).Where(book => book != null).Cast<Book>().ToList() ?? new List<Book>();
+        }
+
+        public bool IsBookInFavorites(int bookId)
+        {
+            return FavoriteBooks?.Any(fav => fav.BookId == bookId) == true;
         }
 
         /// <summary>

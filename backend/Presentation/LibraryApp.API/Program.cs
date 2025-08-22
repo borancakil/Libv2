@@ -22,6 +22,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
+// HttpContextAccessor ekleme - JWT service için gerekli
+builder.Services.AddHttpContextAccessor();
+
 // Add Serilog configuration
 builder.Host.UseSerilog((context, services, configuration) => configuration
     .ReadFrom.Configuration(context.Configuration)
@@ -29,14 +32,22 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
     .Enrich.FromLogContext()
     .WriteTo.Console()
     .WriteTo.File(
-        Path.Combine("..", "Infrastructure", "LibraryApp.Infrastructure", "Logs", "app_.log"),
+        Path.Combine("Logs", "app-.log"),
         rollingInterval: RollingInterval.Day,
-        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
+        retainedFileCountLimit: 7, // Reduce to 7 days
+        restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information, // Only log Information and above
+        buffered: true, // Enable buffering for better performance
+        flushToDiskInterval: TimeSpan.FromSeconds(5) // Flush every 5 seconds
     ));
 
 // Add Entity Framework
 builder.Services.AddDbContext<LibraryDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .EnableSensitiveDataLogging(false) // Disable sensitive data logging for production
+           .EnableDetailedErrors(false) // Disable detailed errors for production
+           .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking) // Disable change tracking by default
+           .ConfigureWarnings(warnings => warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.NavigationBaseIncludeIgnored))); // Ignore navigation warnings
 
 // JWT Authentication
 builder.Services.AddAuthentication("Bearer")
@@ -53,6 +64,9 @@ builder.Services.AddValidatorsFromAssemblyContaining<CreateBookDtoValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<AddUserDtoValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateAuthorDtoValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreatePublisherDtoValidator>();
+
+// Register AutoMapper (Application katmanı profilleri)
+builder.Services.AddAutoMapper(typeof(LibraryApp.Application.Mappings.BookMappingProfile).Assembly);
 
 // Register repositories (Domain interfaces in Infrastructure layer)
 builder.Services.AddScoped<IBookRepository, BookRepository>();
@@ -116,14 +130,15 @@ builder.Services.AddSwaggerGen(c =>
     }
 });
 
-// Add CORS policy
+// CORS konfigürasyonu ekle
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://localhost:4200")
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
@@ -139,12 +154,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// HTTPS redirection kaldırıldı - HTTP'ye izin ver
+// app.UseHttpsRedirection();
 
 // Add static files middleware for serving uploaded files
 app.UseStaticFiles();
 
-// Add CORS
+// CORS middleware ekle
 app.UseCors("AllowAll");
 
 // Authentication & Authorization

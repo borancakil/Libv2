@@ -30,5 +30,40 @@
         /// Current borrower information (if applicable)
         /// </summary>
         public string? CurrentBorrower { get; set; }
+
+        /// <summary>
+        /// Indicates if the book has a cover image
+        /// </summary>
+        public bool HasCoverImage { get; set; }
+
+        /// <summary>
+        /// Image content type (e.g., image/jpeg, image/png)
+        /// </summary>
+        public string? ImageContentType { get; set; }
+
+        /// <summary>
+        /// Original file name of the cover image
+        /// </summary>
+        public string? ImageFileName { get; set; }
+
+        /// <summary>
+        /// Book rating (0-5)
+        /// </summary>
+        public decimal Rating { get; set; }
+
+        /// <summary>
+        /// Book category ID
+        /// </summary>
+        public int CategoryId { get; set; }
+
+        /// <summary>
+        /// Book category name
+        /// </summary>
+        public string CategoryName { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Book category description
+        /// </summary>
+        public string? CategoryDescription { get; set; }
     }
 }

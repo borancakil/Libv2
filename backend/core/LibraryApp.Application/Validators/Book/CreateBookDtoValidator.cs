@@ -24,6 +24,12 @@ namespace LibraryApp.Application.Validators.Book
 
             RuleFor(x => x.PublisherId)
                 .GreaterThan(0).WithMessage("Publisher ID must be a positive number");
+
+            RuleFor(x => x.Rating)
+                .InclusiveBetween(0, 5).WithMessage("Rating must be between 0 and 5");
+
+            RuleFor(x => x.CategoryId)
+                .InclusiveBetween(1, 3).WithMessage("Category ID must be between 1 and 3");
         }
 
         private bool BeValidTitle(string title)

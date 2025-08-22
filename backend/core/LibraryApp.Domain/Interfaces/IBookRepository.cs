@@ -8,6 +8,7 @@ namespace LibraryApp.Domain.Interfaces
     /// </summary>
     public interface IBookRepository
     {
+
         /// <summary>
         /// Gets a book by its ID with optional navigation properties
         /// </summary>
@@ -22,6 +23,17 @@ namespace LibraryApp.Domain.Interfaces
         /// <param name="includeNavigationProperties">Whether to include related entities</param>
         /// <returns>Collection of book entities</returns>
         Task<IEnumerable<Book>> GetAllAsync(bool includeNavigationProperties = false);
+
+        /// <summary>
+        /// Gets all books optimized for list view (without heavy collections)
+        /// </summary>
+        /// <returns>Collection of book entities optimized for listing</returns>
+        Task<IEnumerable<Book>> GetAllForListAsync();
+        
+        /// <summary>
+        /// Gets all books as DTOs optimized for list view (with projection)
+        /// </summary>
+        /// <returns>Collection of objects optimized for listing</returns>
         
         /// <summary>
         /// Adds a new book to the repository
@@ -53,5 +65,40 @@ namespace LibraryApp.Domain.Interfaces
         /// <param name="id">Book ID</param>
         /// <returns>True if book exists</returns>
         Task<bool> ExistsAsync(int id);
+
+        /// <summary>
+        /// Gets book by ID with optimized loading for detail view
+        /// </summary>
+        /// <param name="id">Book ID</param>
+        /// <returns>Book entity optimized for detail view</returns>
+        Task<Book?> GetByIdForDetailAsync(int id);
+
+        /// <summary>
+        /// Gets the count of borrowed books for a specific book
+        /// </summary>
+        /// <param name="bookId">Book ID</param>
+        /// <returns>Count of borrowed books</returns>
+        Task<int> GetBorrowedBooksCountAsync(int bookId);
+
+        /// <summary>
+        /// Gets the count of borrowed books for multiple books
+        /// </summary>
+        /// <param name="bookIds">List of book IDs</param>
+        /// <returns>Dictionary of book IDs with their borrow counts</returns>
+        Task<Dictionary<int, int>> GetBorrowedBooksCountAsync(List<int> bookIds);
+
+        /// <summary>
+        /// Gets the count of books for a specific author
+        /// </summary>
+        /// <param name="authorId">Author ID</param>
+        /// <returns>Count of books by the author</returns>
+        Task<int> GetBookCountByAuthorAsync(int authorId);
+
+        /// <summary>
+        /// Gets the count of books for a specific publisher
+        /// </summary>
+        /// <param name="publisherId">Publisher ID</param>
+        /// <returns>Count of books by the publisher</returns>
+        Task<int> GetBookCountByPublisherAsync(int publisherId);
     }
 }

@@ -2,10 +2,6 @@
 
 namespace LibraryApp.Application.DTOs.Book
 {
-    /// <summary>
-    /// DTO for borrowing a book
-    /// Only FluentValidation is used for validation
-    /// </summary>
     public class BorrowBookDto
     {
         public int BookId { get; set; }

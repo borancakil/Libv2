@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using AutoMapper;
 using LibraryApp.Application.DTOs.Book;
+using LibraryApp.Application.DTOs.User;
 using LibraryApp.Application.Exceptions;
 using LibraryApp.Application.Interfaces;
 using LibraryApp.Domain.Entities;
 using LibraryApp.Domain.Interfaces;
+using Microsoft.AspNetCore.Http;
+
 
 namespace LibraryApp.Application.Services
 {
@@ -17,193 +17,201 @@ namespace LibraryApp.Application.Services
         private readonly ILoanRepository _loanRepository;
         private readonly IAuthorRepository _authorRepository;
         private readonly IPublisherRepository _publisherRepository;
+        private readonly ILoggingService _loggingService;
+        private readonly IMapper _mapper;   
 
-        public BookService(IBookRepository bookRepository, IUserRepository userRepository, ILoanRepository loanRepository, IAuthorRepository authorRepository, IPublisherRepository publisherRepository)
+        public BookService(IBookRepository bookRepository, IUserRepository userRepository, ILoanRepository loanRepository, IAuthorRepository authorRepository, IPublisherRepository publisherRepository, ILoggingService loggingService, IMapper mapper)
         {
             _bookRepository = bookRepository ?? throw new ArgumentNullException(nameof(bookRepository));
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
             _loanRepository = loanRepository ?? throw new ArgumentNullException(nameof(loanRepository));
             _authorRepository = authorRepository ?? throw new ArgumentNullException(nameof(authorRepository));
             _publisherRepository = publisherRepository ?? throw new ArgumentNullException(nameof(publisherRepository));
+            _loggingService= loggingService?? throw new ArgumentNullException(nameof(loggingService));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+
         }
+
 
         public async Task<int> AddBookAsync(CreateBookDto dto)
         {
-            Console.WriteLine("📚 BOOK SERVICE DEBUG - Step 1: AddBookAsync method entered");
-            
             // Validation
             if (dto == null)
             {
-                Console.WriteLine("📚 BOOK SERVICE DEBUG - Step 2: DTO is null - throwing ArgumentNullException");
                 throw new ArgumentNullException(nameof(dto));
             }
-
-            Console.WriteLine($"📚 BOOK SERVICE DEBUG - Step 3: DTO validation passed - Title: {dto.Title}, Year: {dto.PublicationYear}, AuthorId: {dto.AuthorId}, PublisherId: {dto.PublisherId}");
 
             // Validate publication year using domain logic
             if (!Book.IsValidPublicationYear(dto.PublicationYear))
             {
-                Console.WriteLine($"📚 BOOK SERVICE DEBUG - Step 4: Invalid publication year: {dto.PublicationYear}");
                 throw new ValidationException("PublicationYear", $"Publication year {dto.PublicationYear} is not valid");
             }
 
-            Console.WriteLine("📚 BOOK SERVICE DEBUG - Step 5: Publication year validation passed");
-
-            // Validate Author exists
-            Console.WriteLine($"📚 BOOK SERVICE DEBUG - Step 6: Checking if Author {dto.AuthorId} exists");
-            
-            try
+            // Validate author exists
+            var authorExists = await _authorRepository.ExistsAsync(dto.AuthorId);
+            if (!authorExists)
             {
-                var authorExists = await _authorRepository.ExistsAsync(dto.AuthorId);
-                Console.WriteLine($"📚 BOOK SERVICE DEBUG - Step 7: Author exists check result: {authorExists}");
-                
-                if (!authorExists)
-                {
-                    Console.WriteLine($"📚 BOOK SERVICE DEBUG - Step 8: Author {dto.AuthorId} does not exist - throwing ValidationException");
-                    throw new ValidationException("AuthorId", $"Author with ID {dto.AuthorId} does not exist");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"📚 BOOK SERVICE DEBUG - EXCEPTION in Author validation: {ex.Message}");
-                Console.WriteLine($"📚 BOOK SERVICE DEBUG - EXCEPTION Type: {ex.GetType().Name}");
-                Console.WriteLine($"📚 BOOK SERVICE DEBUG - EXCEPTION StackTrace: {ex.StackTrace}");
-                throw;
+                throw new ValidationException("AuthorId", $"Author with ID {dto.AuthorId} does not exist");
             }
 
-            Console.WriteLine("📚 BOOK SERVICE DEBUG - Step 9: Author validation passed");
-
-            // Validate Publisher exists
-            Console.WriteLine($"📚 BOOK SERVICE DEBUG - Step 10: Checking if Publisher {dto.PublisherId} exists");
-            
-            try
+            // Validate publisher exists
+            var publisherExists = await _publisherRepository.ExistsAsync(dto.PublisherId);
+            if (!publisherExists)
             {
-                var publisherExists = await _publisherRepository.ExistsAsync(dto.PublisherId);
-                Console.WriteLine($"📚 BOOK SERVICE DEBUG - Step 11: Publisher exists check result: {publisherExists}");
-                
-                if (!publisherExists)
-                {
-                    Console.WriteLine($"📚 BOOK SERVICE DEBUG - Step 12: Publisher {dto.PublisherId} does not exist - throwing ValidationException");
-                    throw new ValidationException("PublisherId", $"Publisher with ID {dto.PublisherId} does not exist");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"📚 BOOK SERVICE DEBUG - EXCEPTION in Publisher validation: {ex.Message}");
-                Console.WriteLine($"📚 BOOK SERVICE DEBUG - EXCEPTION Type: {ex.GetType().Name}");
-                Console.WriteLine($"📚 BOOK SERVICE DEBUG - EXCEPTION StackTrace: {ex.StackTrace}");
-                throw;
+                throw new ValidationException("PublisherId", $"Publisher with ID {dto.PublisherId} does not exist");
             }
 
-            Console.WriteLine("📚 BOOK SERVICE DEBUG - Step 13: Publisher validation passed");
+            var book = new Book(dto.Title, dto.PublicationYear, dto.AuthorId, dto.PublisherId, dto.CategoryId, dto.Rating);
 
-            // Create book entity
-            Console.WriteLine("📚 BOOK SERVICE DEBUG - Step 14: Creating Book entity");
-            
-            try
+            // Handle cover image if provided
+            if (dto.CoverImage != null)
             {
-                var book = new Book(dto.Title, dto.PublicationYear, dto.AuthorId, dto.PublisherId);
-                Console.WriteLine($"📚 BOOK SERVICE DEBUG - Step 15: Book entity created with BookId: {book.BookId}");
-
-                // Save to repository
-                Console.WriteLine("📚 BOOK SERVICE DEBUG - Step 16: Adding book to repository");
-                await _bookRepository.AddAsync(book);
-                
-                Console.WriteLine("📚 BOOK SERVICE DEBUG - Step 17: Calling SaveChangesAsync");
-                await _bookRepository.SaveChangesAsync(); // CRITICAL FIX: Added SaveChangesAsync
-                
-                Console.WriteLine($"📚 BOOK SERVICE DEBUG - Step 18: Book saved successfully with final BookId: {book.BookId}");
-
-                return book.BookId;
+                await ProcessCoverImageAsync(book, dto.CoverImage);
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"📚 BOOK SERVICE DEBUG - EXCEPTION in Book creation/save: {ex.Message}");
-                Console.WriteLine($"📚 BOOK SERVICE DEBUG - EXCEPTION Type: {ex.GetType().Name}");
-                Console.WriteLine($"📚 BOOK SERVICE DEBUG - EXCEPTION StackTrace: {ex.StackTrace}");
-                throw;
-            }
+
+            await _bookRepository.AddAsync(book);
+            await _bookRepository.SaveChangesAsync();
+
+            // Log CRUD operation
+            _loggingService.LogCrudOperation("CREATE", "Book", book.BookId, 0, new { 
+                Title = dto.Title,
+                AuthorId = dto.AuthorId, 
+                PublisherId = dto.PublisherId,
+                PublicationYear = dto.PublicationYear,
+                HasCoverImage = dto.CoverImage != null 
+            });
+
+            return book.BookId;
         }
 
         public async Task<BookDto?> GetByIdAsync(int id)
         {
             if (id <= 0)
                 return null;
-
-            var book = await _bookRepository.GetByIdAsync(id, includeNavigationProperties: true);
+    
+            // Optimized loading for detail view
+            var book = await _bookRepository.GetByIdForDetailAsync(id);
             if (book == null) 
                 return null;
 
-            return new BookDto
+            // Get borrowed books count separately to avoid loading the entire collection
+            var borrowCount = await _bookRepository.GetBorrowedBooksCountAsync(id);
+
+            var dto = _mapper.Map<BookDto>(book);
+
+            dto.BorrowCount = borrowCount;
+
+            return dto;
+
+        }
+        public async Task<IEnumerable<BookDto>> GetAllBooksAsync(string? filter = null, bool includeUnavailable = true)
+        {
+            var books = await _bookRepository.GetAllForListAsync() ?? Enumerable.Empty<Book>();
+
+            if (!string.IsNullOrWhiteSpace(filter))
             {
-                BookId = book.BookId,
-                Title = book.Title,
-                AuthorId = book.AuthorId,
-                AuthorName = book.Author?.Name, // Navigation property access
-                PublisherId = book.PublisherId,
-                PublisherName = book.Publisher?.Name, // Navigation property access
-                PublicationYear = book.PublicationYear,
-                IsAvailable = book.IsAvailable,
-                BorrowCount = book.BorrowedBooks?.Count ?? 0
-            };
+                var term = filter.Trim();
+                books = books.Where(b =>
+                    (b.Title?.Contains(term, StringComparison.CurrentCultureIgnoreCase) == true) ||
+                    (b.Author?.Name?.Contains(term, StringComparison.CurrentCultureIgnoreCase) == true) ||
+                    (b.Publisher?.Name?.Contains(term, StringComparison.CurrentCultureIgnoreCase) == true) ||
+                    (b.Category?.Name?.Contains(term, StringComparison.CurrentCultureIgnoreCase) == true) ||
+                    b.PublicationYear.ToString().Contains(term)
+                );
+            }
+
+            if (!includeUnavailable)
+                books = books.Where(b => b.IsAvailable);
+
+            var ids = books.Select(b => b.BookId).ToList();
+            var borrowCounts = ids.Count > 0
+                ? await _bookRepository.GetBorrowedBooksCountAsync(ids) 
+                : new Dictionary<int, int>();
+
+            var dtos = _mapper.Map<List<BookDto>>(books);
+
+            foreach (var dto in dtos)
+                dto.BorrowCount = borrowCounts.TryGetValue(dto.BookId, out var c) ? c : 0;
+
+            return dtos;
         }
 
-        public async Task<IEnumerable<BookDto>> GetAllBooksAsync(bool includeUnavailable = true)
+
+        public async Task<IEnumerable<BookListDto>> GetAllBooksForListAsync(
+            string? filter = null, bool includeUnavailable = true)
         {
-            var books = await _bookRepository.GetAllAsync(includeNavigationProperties: true);
+            var books = await _bookRepository.GetAllForListAsync() ?? Enumerable.Empty<Book>();
+
+            // Map
+            var bookListDtos = _mapper.Map<List<BookListDto>>(books);
+
+            // Filter
+            if (!string.IsNullOrWhiteSpace(filter))
+            {
+                var term = filter.Trim();
+                bookListDtos = bookListDtos.Where(b =>
+                    (b.Title?.Contains(term, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                    (b.AuthorName?.Contains(term, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                    (b.PublisherName?.Contains(term, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                    (b.CategoryName?.Contains(term, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                    b.PublicationYear.ToString().Contains(term)
+                ).ToList();
+            }
 
             if (!includeUnavailable)
             {
-                books = books.Where(b => b.IsAvailable);
+                bookListDtos = bookListDtos.Where(b => b.IsAvailable).ToList();
             }
 
-            return books.Select(book => new BookDto
-            {
-                BookId = book.BookId,
-                Title = book.Title,
-                AuthorId = book.AuthorId,
-                AuthorName = book.Author?.Name,
-                PublisherId = book.PublisherId,
-                PublisherName = book.Publisher?.Name,
-                PublicationYear = book.PublicationYear,
-                IsAvailable = book.IsAvailable,
-                BorrowCount = book.BorrowedBooks?.Count ?? 0
-            });
+            return bookListDtos;
         }
+
 
         public async Task UpdateBookAsync(int id, UpdateBookDto dto)
         {
-            if (dto == null)
-                throw new ArgumentNullException(nameof(dto));
-
-            if (id <= 0)
-                throw new ArgumentException("Book ID must be greater than zero.", nameof(id));
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+            if (id <= 0) throw new ArgumentException("Book ID must be greater than zero.", nameof(id));
 
             var book = await _bookRepository.GetByIdAsync(id);
-            if (book == null)
-                throw new BookNotFoundException(id);
+            if (book == null) throw new BookNotFoundException(id);
 
             if (!Book.IsValidPublicationYear(dto.PublicationYear))
                 throw new ValidationException("PublicationYear", $"Publication year {dto.PublicationYear} is not valid");
 
-            // Validate Author exists
             if (!await _authorRepository.ExistsAsync(dto.AuthorId))
                 throw new ValidationException("AuthorId", $"Author with ID {dto.AuthorId} does not exist");
 
-            // Validate Publisher exists
             if (!await _publisherRepository.ExistsAsync(dto.PublisherId))
                 throw new ValidationException("PublisherId", $"Publisher with ID {dto.PublisherId} does not exist");
 
-            // Update book properties
-            book.Title = dto.Title;
-            book.PublicationYear = dto.PublicationYear;
-            book.AuthorId = dto.AuthorId;
-            book.PublisherId = dto.PublisherId;
-            book.SetAvailability(dto.IsAvailable); // Use domain method instead of direct property access
 
-            _bookRepository.Update(book);
-            await _bookRepository.SaveChangesAsync(); // CRITICAL: This was missing!
+            _mapper.Map(dto, book);
+
+            if (dto.RemoveCoverImage)
+            {
+                book.RemoveCoverImage();
+            }
+            else if (dto.CoverImage != null)
+            {
+                await ProcessCoverImageAsync(book, dto.CoverImage);
+            }
+
+            await _bookRepository.SaveChangesAsync();
+
+            _loggingService.LogCrudOperation("UPDATE", "Book", id, 0, new
+            {
+                dto.Title,
+                dto.AuthorId,
+                dto.PublisherId,
+                dto.PublicationYear,
+                dto.IsAvailable,
+                dto.Rating,
+                dto.CategoryId,
+                dto.RemoveCoverImage,
+                HasNewCoverImage = dto.CoverImage != null
+            });
         }
+
 
         public async Task BorrowBookAsync(BorrowBookDto dto)
         {
@@ -214,7 +222,7 @@ namespace LibraryApp.Application.Services
             if (!dto.IsValid(out string validationError))
                 throw new ValidationException("BorrowData", validationError);
 
-            // TRANSACTION MANAGEMENT - Get entities first
+            // Get entities first
             var book = await _bookRepository.GetByIdAsync(dto.BookId);
             var user = await _userRepository.GetByIdAsync(dto.UserId);
 
@@ -228,25 +236,24 @@ namespace LibraryApp.Application.Services
             if (!book.IsAvailable)
                 throw new BookNotAvailableException(book.BookId, book.Title);
 
-            try
-            {
-                // Use domain logic for borrowing
-                book.MarkAsBorrowed();
-                _bookRepository.Update(book);
+            // Use domain logic for borrowing
+            book.MarkAsBorrowed();
+            _bookRepository.Update(book);
 
-                // Create loan record using domain constructor
-                var loan = new Loan(dto.BookId, dto.UserId, dto.BorrowDate, dto.DueDate);
+            // Create loan record using domain constructor
+            var loan = new Loan(dto.BookId, dto.UserId, dto.BorrowDate, dto.DueDate);
 
-                await _loanRepository.AddAsync(loan);
-                
-                // CRITICAL FIX: Save all changes in one transaction
-                await _bookRepository.SaveChangesAsync();
-            }
-            catch (InvalidOperationException ex)
-            {
-                // Domain logic threw an exception
-                throw new BookNotAvailableException(book.BookId, book.Title, ex.Message);
-            }
+            await _loanRepository.AddAsync(loan);
+            
+            // Save all changes in one transaction
+            await _bookRepository.SaveChangesAsync();
+            await _loanRepository.SaveChangesAsync();
+
+            // Business logic logging
+            _loggingService.LogBookAction(dto.UserId, "BORROW", dto.BookId, book.Title, new { 
+                BorrowDate = dto.BorrowDate, 
+                DueDate = dto.DueDate 
+            });
         }
 
         public async Task DeleteBookAsync(int id)
@@ -261,7 +268,15 @@ namespace LibraryApp.Application.Services
                 throw new InvalidOperationException($"Cannot delete book '{book.Title}' because it is currently on loan.");
 
             _bookRepository.Delete(book);
-            await _bookRepository.SaveChangesAsync(); // Ensure consistency
+            await _bookRepository.SaveChangesAsync();
+
+            // Log CRUD operation
+            _loggingService.LogCrudOperation("DELETE", "Book", id, 0, new { 
+                Title = book.Title,
+                AuthorId = book.AuthorId, 
+                PublisherId = book.PublisherId,
+                IsAvailable = book.IsAvailable
+            });
         }
 
         public async Task ReturnBookAsync(int bookId, int userId)
@@ -270,8 +285,9 @@ namespace LibraryApp.Application.Services
             if (book == null)
                 throw new BookNotFoundException(bookId);
 
-            // Find active loan
+            // Find active loan for this specific user and book
             var activeLoan = await _loanRepository.GetActiveLoanAsync(bookId, userId);
+            
             if (activeLoan == null)
                 throw new InvalidOperationException($"No active loan found for book {bookId} and user {userId}");
 
@@ -283,11 +299,297 @@ namespace LibraryApp.Application.Services
             _loanRepository.Update(activeLoan);
             
             await _bookRepository.SaveChangesAsync();
+            await _loanRepository.SaveChangesAsync();
+
+            // Business logic logging
+            _loggingService.LogBookAction(userId, "RETURN", bookId, book.Title, new { 
+                BorrowDate = activeLoan.LoanDate, 
+                DueDate = activeLoan.DueDate,
+                ReturnDate = DateTime.UtcNow 
+            });
         }
 
         public async Task<bool> BookExistsAsync(int id)
         {
             return await _bookRepository.ExistsAsync(id);
+        }
+
+        public async Task<bool> IsBookBorrowedByUserAsync(int bookId, int userId)
+        {
+            if (bookId <= 0)
+                throw new ArgumentException("Book ID must be greater than zero.", nameof(bookId));
+
+            if (userId <= 0)
+                throw new ArgumentException("User ID must be greater than zero.", nameof(userId));
+
+            var activeLoan = await _loanRepository.GetActiveLoanAsync(bookId, userId);
+            return activeLoan != null;
+        }
+
+        public async Task<IEnumerable<BookDto>> GetBooksByAuthorIdAsync(int authorId)
+        {
+            var authorExists = await _authorRepository.ExistsAsync(authorId);
+            if (!authorExists)
+            {
+                throw new AuthorNotFoundException(authorId);
+            }
+
+            var books = await _bookRepository.GetAllAsync(includeNavigationProperties: true);
+            var filteredBooks = books.Where(b => b.AuthorId == authorId);
+            var dtos = _mapper.Map<IEnumerable<BookDto>>(filteredBooks);
+            foreach (var dto in dtos)
+                dto.BorrowCount = 0;
+            return dtos;
+        }
+
+        public async Task<IEnumerable<BookDto>> GetBooksByPublisherIdAsync(int publisherId)
+        {
+            var publisherExists = await _publisherRepository.ExistsAsync(publisherId);
+            if (!publisherExists)
+            {
+                throw new PublisherNotFoundException(publisherId);
+            }
+
+            var books = await _bookRepository.GetAllAsync(includeNavigationProperties: true);
+            var filteredBooks = books.Where(b => b.PublisherId == publisherId);
+            var dtos = _mapper.Map<IEnumerable<BookDto>>(filteredBooks);
+            foreach (var dto in dtos)
+                dto.BorrowCount = 0;
+            return dtos;
+        }
+
+
+
+
+
+        // Favorite books methods
+        public async Task<int> GetFavoriteCountAsync(int bookId)
+        {
+            if (bookId <= 0)
+                throw new ArgumentException("Book ID must be greater than zero.", nameof(bookId));
+
+            var book = await _bookRepository.GetByIdAsync(bookId, includeNavigationProperties: true);
+            if (book == null)
+                throw new BookNotFoundException(bookId);
+
+            return book.GetFavoriteCount();
+        }
+
+        public async Task<bool> IsBookFavoritedByUserAsync(int bookId, int userId)
+        {
+            if (bookId <= 0)
+                throw new ArgumentException("Book ID must be greater than zero.", nameof(bookId));
+
+            if (userId <= 0)
+                throw new ArgumentException("User ID must be greater than zero.", nameof(userId));
+
+            var book = await _bookRepository.GetByIdAsync(bookId, includeNavigationProperties: true);
+            if (book == null)
+                throw new BookNotFoundException(bookId);
+
+            return book.IsFavoritedByUser(userId);
+        }
+
+        public async Task<IEnumerable<UserDto>> GetUsersWhoFavoritedAsync(int bookId)
+        {
+            if (bookId <= 0)
+                throw new ArgumentException("Book ID must be greater than zero.", nameof(bookId));
+
+            var book = await _bookRepository.GetByIdAsync(bookId, includeNavigationProperties: true);
+            if (book == null)
+                throw new BookNotFoundException(bookId);
+
+            var users = await _userRepository.GetUsersWhoFavoritedAsync(bookId);
+            
+            return _mapper.Map<IEnumerable<UserDto>>(users);
+        }
+
+        /// <summary>
+        /// Processes and sets the cover image for a book
+        /// </summary>
+        /// <param name="book">The book to set the cover image for</param>
+        /// <param name="imageFile">The image file to process</param>
+        private async Task ProcessCoverImageAsync(Book book, IFormFile imageFile)
+        {
+            // Validate file
+            if (imageFile == null || imageFile.Length == 0)
+            {
+                throw new ValidationException("CoverImage", "Image file is required");
+            }
+
+            // Validate file size (max 5MB)
+            if (imageFile.Length > 5 * 1024 * 1024)
+            {
+                throw new ValidationException("CoverImage", "Image file size must be less than 5MB");
+            }
+
+            // Validate file type
+            var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif" };
+            if (!allowedTypes.Contains(imageFile.ContentType.ToLower()))
+            {
+                throw new ValidationException("CoverImage", "Only JPEG, PNG, and GIF images are allowed");
+            }
+
+            // Read file into byte array
+            using var memoryStream = new MemoryStream();
+            await imageFile.CopyToAsync(memoryStream);
+            var imageBytes = memoryStream.ToArray();
+
+            // Set the cover image
+            book.SetCoverImage(imageBytes, imageFile.ContentType, imageFile.FileName);
+        }
+
+        /// <summary>
+        /// Gets the cover image for a book
+        /// </summary>
+        /// <param name="bookId">The book ID</param>
+        /// <returns>Tuple containing image bytes, content type, and file name</returns>
+        public async Task<(byte[] ImageBytes, string ContentType, string FileName)?> GetCoverImageAsync(int bookId)
+        {
+            var book = await _bookRepository.GetByIdAsync(bookId);
+            if (book == null || !book.HasCoverImage())
+            {
+                return null;
+            }
+
+            return (book.CoverImage!, book.ImageContentType!, book.ImageFileName!);
+        }
+
+        /// <summary>
+        /// Removes the cover image from a book
+        /// </summary>
+        /// <param name="bookId">The book ID</param>
+        public async Task RemoveCoverImageAsync(int bookId)
+        {
+            var book = await _bookRepository.GetByIdAsync(bookId);
+            if (book == null)
+            {
+                throw new BookNotFoundException(bookId);
+            }
+
+            book.RemoveCoverImage();
+            await _bookRepository.SaveChangesAsync();
+        }
+
+        // Interface'de tanımlanan eksik metodlar
+        public async Task<bool> AuthorExistsAsync(int authorId)
+        {
+            return await _authorRepository.ExistsAsync(authorId);
+        }
+
+        public async Task<bool> PublisherExistsAsync(int publisherId)
+        {
+            return await _publisherRepository.ExistsAsync(publisherId);
+        }
+
+        public async Task<IEnumerable<BookDto>> GetAuthorBooksAsync(int authorId)
+        {
+            return await GetBooksByAuthorIdAsync(authorId);
+        }
+
+        public async Task<IEnumerable<BookDto>> GetPublisherBooksAsync(int publisherId)
+        {
+            return await GetBooksByPublisherIdAsync(publisherId);
+        }
+
+        public async Task<object> GetBookBorrowedByUserAsync(int bookId, int userId)
+        {
+            var loan = await _loanRepository.GetActiveLoanAsync(bookId, userId);
+            if (loan == null)
+                return new { isBorrowed = false };
+
+            return new
+            {
+                isBorrowed = true,
+                loanId = loan.LoanId,
+                loanDate = loan.LoanDate,
+                dueDate = loan.DueDate,
+                isOverdue = loan.IsOverdue()
+            };
+        }
+
+        public async Task<object> GetBookStatusForUserAsync(int bookId, int userId)
+        {
+            var book = await _bookRepository.GetByIdAsync(bookId);
+            if (book == null)
+                throw new BookNotFoundException(bookId);
+
+            var loan = await _loanRepository.GetActiveLoanAsync(bookId, userId);
+            var isFavorited = await IsBookFavoritedByUserAsync(bookId, userId);
+
+            return new
+            {
+                bookId = bookId,
+                isAvailable = book.IsAvailable,
+                isBorrowedByUser = loan != null,
+                isFavoritedByUser = isFavorited,
+                loanInfo = loan != null ? new
+                {
+                    loanId = loan.LoanId,
+                    loanDate = loan.LoanDate,
+                    dueDate = loan.DueDate,
+                    isOverdue = loan.IsOverdue()
+                } : null
+            };
+        }
+
+        public async Task<Dictionary<int, object>> GetBookStatusForUserBatchAsync(int[] bookIds, int userId)
+        {
+            var result = new Dictionary<int, object>();
+            
+            foreach (var bookId in bookIds)
+            {
+                try
+                {
+                    var status = await GetBookStatusForUserAsync(bookId, userId);
+                    result[bookId] = status;
+                }
+                catch (BookNotFoundException)
+                {
+                    // Kitap bulunamadıysa null olarak ekle
+                    result[bookId] = null;
+                }
+            }
+            
+            return result;
+        }
+
+        public async Task<int> GetBookFavoriteCountAsync(int bookId)
+        {
+            return await GetFavoriteCountAsync(bookId);
+        }
+
+        public async Task<IEnumerable<UserDto>> GetUsersWhoFavoritedBookAsync(int bookId)
+        {
+            return await GetUsersWhoFavoritedAsync(bookId);
+        }
+
+        public async Task<(byte[]? content, string contentType, string fileName)> GetBookCoverAsync(int bookId)
+        {
+            var result = await GetCoverImageAsync(bookId);
+            if (result == null)
+                return (null, "", "");
+
+            return (result.Value.ImageBytes, result.Value.ContentType, result.Value.FileName);
+        }
+
+        public async Task DeleteBookCoverAsync(int bookId)
+        {
+            await RemoveCoverImageAsync(bookId);
+        }
+
+        // Interface'de tanımlanan eksik metod
+        public async Task BorrowBookAsync(int bookId, int userId)
+        {
+            var dto = new BorrowBookDto
+            {
+                BookId = bookId,
+                UserId = userId,
+                BorrowDate = DateTime.UtcNow,
+                DueDate = DateTime.UtcNow.AddDays(14) // 2 hafta
+            };
+
+            await BorrowBookAsync(dto);
         }
     }
 }

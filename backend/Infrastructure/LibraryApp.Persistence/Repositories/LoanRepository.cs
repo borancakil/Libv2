@@ -1,24 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using LibraryApp.Domain.Entities;
+﻿using LibraryApp.Domain.Entities;
 using LibraryApp.Domain.Interfaces;
 using LibraryApp.Persistence.Data;
 using Microsoft.EntityFrameworkCore;
+using LibraryApp.Application.Interfaces;
 
 namespace LibraryApp.Persistence.Repositories
 {
-    /// <summary>
-    /// Repository implementation for Loan entity using Entity Framework Core
-    /// </summary>
     public class LoanRepository : ILoanRepository
     {
         private readonly LibraryDbContext _context;
+        private readonly ILoggingService _loggingService;
 
-        public LoanRepository(LibraryDbContext context)
+        public LoanRepository(LibraryDbContext context, ILoggingService loggingService)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
+            _loggingService = loggingService ?? throw new ArgumentNullException(nameof(loggingService));
         }
 
         public async Task AddAsync(Loan loan)
@@ -27,7 +23,8 @@ namespace LibraryApp.Persistence.Repositories
                 throw new ArgumentNullException(nameof(loan));
 
             await _context.Loans.AddAsync(loan);
-            // Note: SaveChangesAsync() should be called by the service layer
+
+            _loggingService.LogDataOperation("INSERT", "Loans", loan.LoanId, new { UserId = loan.UserId, BookId = loan.BookId });
         }
 
         public async Task<Loan?> GetByIdAsync(int id, bool includeNavigationProperties = false)
@@ -84,8 +81,6 @@ namespace LibraryApp.Persistence.Repositories
                 return null;
 
             return await _context.Loans
-                .Include(l => l.Book)
-                .Include(l => l.User)
                 .FirstOrDefaultAsync(l => l.BookId == bookId && 
                                          l.UserId == userId && 
                                          l.ReturnDate == null);
@@ -124,7 +119,8 @@ namespace LibraryApp.Persistence.Repositories
                 throw new ArgumentNullException(nameof(loan));
 
             _context.Loans.Update(loan);
-            // Note: SaveChangesAsync() should be called by the service layer
+
+            _loggingService.LogDataOperation("UPDATE", "Loans", loan.LoanId, new { UserId = loan.UserId, BookId = loan.BookId });
         }
 
         public void Delete(Loan loan)
@@ -133,7 +129,14 @@ namespace LibraryApp.Persistence.Repositories
                 throw new ArgumentNullException(nameof(loan));
 
             _context.Loans.Remove(loan);
-            // Note: SaveChangesAsync() should be called by the service layer
+
+            _loggingService.LogDataOperation("DELETE", "Loans", loan.LoanId, new
+            {
+                UserId = loan.UserId,
+                BookId = loan.BookId,
+                LoanDate = loan.LoanDate,
+                DueDate = loan.DueDate
+            });
         }
 
         public async Task<int> SaveChangesAsync()

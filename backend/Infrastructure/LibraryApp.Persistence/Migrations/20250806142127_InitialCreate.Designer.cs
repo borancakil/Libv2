@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LibraryApp.Persistence.Migrations
 {
     [DbContext(typeof(LibraryDbContext))]
-    [Migration("20250722092205_AddAuthorPublisherCrud")]
-    partial class AddAuthorPublisherCrud
+    [Migration("20250806142127_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -40,6 +40,12 @@ namespace LibraryApp.Persistence.Migrations
                     b.Property<DateTime?>("BirthDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("ImageContentType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImageFileName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -48,6 +54,9 @@ namespace LibraryApp.Persistence.Migrations
                     b.Property<string>("Nationality")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<byte[]>("ProfileImage")
+                        .HasColumnType("varbinary(max)");
 
                     b.HasKey("AuthorId");
 
@@ -65,6 +74,20 @@ namespace LibraryApp.Persistence.Migrations
                     b.Property<int>("AuthorId")
                         .HasColumnType("int");
 
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("CoverImage")
+                        .HasColumnType("VARBINARY(MAX)");
+
+                    b.Property<string>("ImageContentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ImageFileName")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
                     b.Property<bool>("IsAvailable")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -76,6 +99,11 @@ namespace LibraryApp.Persistence.Migrations
                     b.Property<int>("PublisherId")
                         .HasColumnType("int");
 
+                    b.Property<decimal>("Rating")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("DECIMAL(3,2)")
+                        .HasDefaultValue(0m);
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -85,9 +113,95 @@ namespace LibraryApp.Persistence.Migrations
 
                     b.HasIndex("AuthorId");
 
+                    b.HasIndex("CategoryId");
+
                     b.HasIndex("PublisherId");
 
                     b.ToTable("Books", (string)null);
+                });
+
+            modelBuilder.Entity("LibraryApp.Domain.Entities.Category", b =>
+                {
+                    b.Property<int>("CategoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CategoryId"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("CategoryId");
+
+                    b.ToTable("Categories", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            CategoryId = 1,
+                            Description = "Fictional literature including novels, short stories, and poetry",
+                            Name = "Fiction"
+                        },
+                        new
+                        {
+                            CategoryId = 2,
+                            Description = "Factual literature including biographies, history, and science",
+                            Name = "Non-Fiction"
+                        },
+                        new
+                        {
+                            CategoryId = 3,
+                            Description = "Educational materials including textbooks and reference books",
+                            Name = "Educational"
+                        },
+                        new
+                        {
+                            CategoryId = 4,
+                            Description = "Speculative fiction with scientific and technological themes",
+                            Name = "Science Fiction"
+                        },
+                        new
+                        {
+                            CategoryId = 5,
+                            Description = "Detective and crime fiction",
+                            Name = "Mystery"
+                        },
+                        new
+                        {
+                            CategoryId = 6,
+                            Description = "Love stories and romantic fiction",
+                            Name = "Romance"
+                        },
+                        new
+                        {
+                            CategoryId = 7,
+                            Description = "Imaginative fiction with magical and supernatural elements",
+                            Name = "Fantasy"
+                        },
+                        new
+                        {
+                            CategoryId = 8,
+                            Description = "Life stories of real people",
+                            Name = "Biography"
+                        },
+                        new
+                        {
+                            CategoryId = 9,
+                            Description = "Historical accounts and analysis",
+                            Name = "History"
+                        },
+                        new
+                        {
+                            CategoryId = 10,
+                            Description = "Scientific literature and research",
+                            Name = "Science"
+                        });
                 });
 
             modelBuilder.Entity("LibraryApp.Domain.Entities.Loan", b =>
@@ -140,6 +254,15 @@ namespace LibraryApp.Persistence.Migrations
 
                     b.Property<DateTime?>("EstablishedDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("ImageContentType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImageFileName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("LogoImage")
+                        .HasColumnType("varbinary(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -195,11 +318,35 @@ namespace LibraryApp.Persistence.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("LibraryApp.Domain.Entities.UserFavoriteBook", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("AddedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("UserId", "BookId");
+
+                    b.HasIndex("BookId");
+
+                    b.ToTable("UserFavoriteBooks", (string)null);
+                });
+
             modelBuilder.Entity("LibraryApp.Domain.Entities.Book", b =>
                 {
                     b.HasOne("LibraryApp.Domain.Entities.Author", "Author")
                         .WithMany("Books")
                         .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LibraryApp.Domain.Entities.Category", "Category")
+                        .WithMany("Books")
+                        .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -210,6 +357,8 @@ namespace LibraryApp.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Author");
+
+                    b.Navigation("Category");
 
                     b.Navigation("Publisher");
                 });
@@ -233,6 +382,25 @@ namespace LibraryApp.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("LibraryApp.Domain.Entities.UserFavoriteBook", b =>
+                {
+                    b.HasOne("LibraryApp.Domain.Entities.Book", "Book")
+                        .WithMany("FavoritedByUsers")
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LibraryApp.Domain.Entities.User", "User")
+                        .WithMany("FavoriteBooks")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Book");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("LibraryApp.Domain.Entities.Author", b =>
                 {
                     b.Navigation("Books");
@@ -241,6 +409,13 @@ namespace LibraryApp.Persistence.Migrations
             modelBuilder.Entity("LibraryApp.Domain.Entities.Book", b =>
                 {
                     b.Navigation("BorrowedBooks");
+
+                    b.Navigation("FavoritedByUsers");
+                });
+
+            modelBuilder.Entity("LibraryApp.Domain.Entities.Category", b =>
+                {
+                    b.Navigation("Books");
                 });
 
             modelBuilder.Entity("LibraryApp.Domain.Entities.Publisher", b =>
@@ -251,6 +426,8 @@ namespace LibraryApp.Persistence.Migrations
             modelBuilder.Entity("LibraryApp.Domain.Entities.User", b =>
                 {
                     b.Navigation("BorrowedBooks");
+
+                    b.Navigation("FavoriteBooks");
                 });
 #pragma warning restore 612, 618
         }

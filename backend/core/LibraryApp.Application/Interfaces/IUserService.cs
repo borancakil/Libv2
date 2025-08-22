@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using LibraryApp.Application.DTOs.User;
+using LibraryApp.Application.DTOs.Book;
+using LibraryApp.Domain.Entities;
 
 namespace LibraryApp.Application.Interfaces
 {
@@ -53,7 +55,7 @@ namespace LibraryApp.Application.Interfaces
         /// <param name="email">User email</param>
         /// <param name="password">User password</param>
         /// <returns>JWT token</returns>
-        Task<string> LoginAsync(string email, string password);
+        Task<UserDto> LoginAsync(string email, string password);
         
         /// <summary>
         /// Updates user password
@@ -93,5 +95,35 @@ namespace LibraryApp.Application.Interfaces
         /// <param name="email">Email address</param>
         /// <returns>True if email exists</returns>
         Task<bool> EmailExistsAsync(string email);
+
+        /// <summary>
+        /// Gets user's borrowed books
+        /// </summary>
+        /// <param name="userId">User ID</param>
+        /// <returns>Collection of borrowed books</returns>
+        Task<IEnumerable<BookDto>> GetBorrowedBooksAsync(int userId);
+
+        /// <summary>
+        /// Gets user's favorite books
+        /// </summary>
+        /// <param name="userId">User ID</param>
+        /// <returns>Collection of favorite books</returns>
+        Task<IEnumerable<BookDto>> GetFavoriteBooksAsync(int userId);
+
+        /// <summary>
+        /// Adds a book to user's favorites
+        /// </summary>
+        /// <param name="userId">User ID</param>
+        /// <param name="bookId">Book ID</param>
+        Task AddToFavoritesAsync(int userId, int bookId);
+
+                /// <returns>True if removed, false if not in favorites</returns>
+        Task<bool> RemoveFromFavoritesAsync(int userId, int bookId);
+
+        /// <summary>
+        /// Gets all loans for debugging purposes
+        /// </summary>
+        /// <returns>Collection of all loans</returns>
+        Task<IEnumerable<Loan>> GetAllLoansAsync();
     }
 }

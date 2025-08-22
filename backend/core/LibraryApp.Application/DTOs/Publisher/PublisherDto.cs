@@ -7,7 +7,8 @@ namespace LibraryApp.Application.DTOs.Publisher
         public string? Address { get; set; }
         public string? Website { get; set; }
         public string? ContactEmail { get; set; }
+        public DateTime? EstablishedDate { get; set; }
+        public bool HasLogoImage { get; set; }
         public int BookCount { get; set; }
-        public int AvailableBookCount { get; set; }
     }
 } 
