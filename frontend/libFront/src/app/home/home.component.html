@@ -86,13 +86,7 @@
         <div *ngFor="let book of popularBooks" class="book-card">
           <!-- Book Cover -->
           <div class="book-cover">
-            <div class="cover-image" *ngIf="book.hasCoverImage">
-              <img [src]="getBookCoverUrl(book.bookId)"
-                   [alt]="book.title"
-                   class="book-cover-img"
-                   (error)="hideImage($event)">
-            </div>
-            <div class="cover-placeholder" *ngIf="!book.hasCoverImage">
+            <div class="cover-placeholder">
               <span>📚</span>
             </div>
           </div>
@@ -104,11 +98,11 @@
                 {{ book.title }}
               </h3>
               <div class="book-meta">
-                <span class="author" *ngIf="book.author?.name">{{ book.author?.name }}</span>
-                <span class="separator" *ngIf="book.author?.name && book.publicationYear">•</span>
+                <span class="author" *ngIf="book.authorName">{{ book.authorName }}</span>
+                <span class="separator" *ngIf="book.authorName && book.publicationYear">•</span>
                 <span class="year" *ngIf="book.publicationYear">{{ book.publicationYear }}</span>
-                <span class="separator" *ngIf="book.publisher?.name">•</span>
-                <span class="publisher" *ngIf="book.publisher?.name">{{ book.publisher?.name }}</span>
+                <span class="separator" *ngIf="book.publisherName">•</span>
+                <span class="publisher" *ngIf="book.publisherName">{{ book.publisherName }}</span>
               </div>
             </div>
 
@@ -123,9 +117,6 @@
           <div class="book-actions">
             <button class="view-button" (click)="viewBookDetails(book.bookId)">
               {{ 'VIEW_DETAILS' | translate }}
-            </button>
-            <button class="borrow-button" (click)="borrowBook(book.bookId)" *ngIf="book.isAvailable">
-              {{ 'BORROW' | translate }}
             </button>
           </div>
         </div>

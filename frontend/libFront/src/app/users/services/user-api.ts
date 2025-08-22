@@ -5,10 +5,11 @@ import { User } from '../models/user.model';
 import { Book } from '../../books/models/book.model';
 import { map, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class UserApiService {
-  private baseUrl = 'https://localhost:7209/api/Users';
+  private baseUrl = `${environment.apiUrl}/Users`;
 
   constructor(private http: HttpClient) {}
 
@@ -17,13 +18,17 @@ export class UserApiService {
     return this.http.post(`${this.baseUrl}/login`, credentials);
   }
 
+  logout(): Observable<any> {
+    return this.http.post(`${this.baseUrl}/logout`, {});
+  }
+
   register(user: User): Observable<any> {
     return this.http.post(`${this.baseUrl}/register`, user);
   }
 
   // Get current user info
   getCurrentUserInfo(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/me`);
+    return this.http.get(`${this.baseUrl}/current-user`);
   }
 
   // User management (Admin)

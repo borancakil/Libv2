@@ -6,6 +6,7 @@ export interface Author {
   deathDate?: string;
   books?: Book[];
   hasProfileImage?: boolean;
+  bookCount?: number; // Add book count property
 }
 
 export interface CreateAuthorDto {

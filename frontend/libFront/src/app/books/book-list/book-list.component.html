@@ -94,13 +94,7 @@
         <div class="book-card" *ngFor="let book of filteredBooks" [class.book-animation]="true">
           <!-- Book Cover -->
           <div class="book-cover">
-            <div *ngIf="book.hasCoverImage" class="cover-image">
-              <img [src]="'https://localhost:7209/api/Books/' + book.bookId + '/cover'" 
-                   [alt]="book.title" 
-                   class="book-cover-img"
-                   (error)="hideImage($event)">
-            </div>
-            <div *ngIf="!book.hasCoverImage" class="cover-placeholder">
+            <div class="cover-placeholder">
               <div class="placeholder-icon">📚</div>
             </div>
             
@@ -125,7 +119,7 @@
               </h3>
               <div class="book-call-number">
                 <span class="call-number-label">Call No:</span>
-                <span class="call-number">{{ book.bookId.toString().padStart(6, '0') }}</span>
+                <span class="call-number">{{ book.callNo }}</span>
               </div>
             </div>
             
@@ -137,16 +131,12 @@
               
               <div class="meta-item" *ngIf="book.authorName">
                 <span class="meta-icon">👤</span>
-                <a class="author-link" (click)="goToAuthorDetail(book.authorId); $event.stopPropagation()">
-                  {{ book.authorName }}
-                </a>
+                <span class="author-name">{{ book.authorName }}</span>
               </div>
               
               <div class="meta-item" *ngIf="book.publisherName">
                 <span class="meta-icon">🏢</span>
-                <a class="publisher-link" (click)="goToPublisherDetail(book.publisherId); $event.stopPropagation()">
-                  {{ book.publisherName }}
-                </a>
+                <span class="publisher-name">{{ book.publisherName }}</span>
               </div>
             </div>
 
@@ -154,24 +144,6 @@
             <div class="book-actions">
               <button class="view-button" (click)="goToBookDetail(book.bookId)">
                 <span>{{ 'VIEW_DETAILS' | translate }}</span>
-              </button>
-              
-              <button 
-                *ngIf="getBookStatus(book.bookId)?.canBorrow && book.isAvailable"
-                class="borrow-button" 
-                (click)="borrowBook(book.bookId); $event.stopPropagation()"
-                [disabled]="isBorrowing(book.bookId)"
-              >
-                <span>{{ 'BORROW' | translate }}</span>
-              </button>
-              
-              <button 
-                *ngIf="getBookStatus(book.bookId)?.canReturn"
-                class="return-button" 
-                (click)="returnBook(book.bookId); $event.stopPropagation()"
-                [disabled]="isReturning(book.bookId)"
-              >
-                <span>{{ 'RETURN' | translate }}</span>
               </button>
             </div>
           </div>

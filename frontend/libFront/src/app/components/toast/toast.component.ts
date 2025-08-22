@@ -3,11 +3,32 @@ import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { ToastService, Toast } from '../../services/toast.service';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 
 @Component({
   selector: 'app-toast',
   standalone: true,
   imports: [CommonModule, TranslateModule],
+  animations: [
+    trigger('toastAnimation', [
+      state('void', style({
+        opacity: 0,
+        transform: 'translateY(-100%)'
+      })),
+      transition(':enter', [
+        animate('300ms ease-out', style({
+          opacity: 1,
+          transform: 'translateY(0)'
+        }))
+      ]),
+      transition(':leave', [
+        animate('200ms ease-in', style({
+          opacity: 0,
+          transform: 'translateY(-100%)'
+        }))
+      ])
+    ])
+  ],
   template: `
     <div class="toast-container">
       <div 

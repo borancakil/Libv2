@@ -4,11 +4,12 @@ import { Router, RouterModule } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { Book, BookStatusForUser, BookCategory, BookFilterDto } from '../models/book.model';
+import { Book, BookListDto, BookStatusForUser, BookCategory, BookFilterDto } from '../models/book.model';
 import { BookApiService } from '../services/book-api';
 import { AuthorApiService } from '../services/author-api';
 import { PublisherApiService } from '../services/publisher-api';
 import { UserApiService } from '../../users/services/user-api';
+import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 
 @Component({
@@ -20,8 +21,8 @@ import { ToastService } from '../../services/toast.service';
 })
 export class BookListComponent implements OnInit, OnDestroy {
   filter: string = '';
-  books: Book[] = [];
-  filteredBooks: Book[] = [];
+  books: BookListDto[] = [];
+  filteredBooks: BookListDto[] = [];
   isLoading = true;
   error: string | null = null;
   private isBrowser: boolean;
@@ -65,6 +66,7 @@ export class BookListComponent implements OnInit, OnDestroy {
     private publisherApi: PublisherApiService,
     private userApi: UserApiService,
     public translate: TranslateService,
+    private auth: AuthService,
     private toastService: ToastService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
@@ -90,7 +92,6 @@ export class BookListComponent implements OnInit, OnDestroy {
         this.books = books;
         this.filteredBooks = books; // Initialize filtered books
         this.isLoading = false;
-        this.loadBookStatuses();
       },
       error: (err) => {
         console.error('Error loading books:', err);
@@ -195,7 +196,18 @@ export class BookListComponent implements OnInit, OnDestroy {
 
     const subscription = this.bookApi.filterBooks(cleanFilter).subscribe({
       next: (books) => {
-        this.filteredBooks = books;
+        // Convert Book[] to BookListDto[] for compatibility
+        this.filteredBooks = books.map(book => ({
+          bookId: book.bookId,
+          title: book.title,
+          publicationYear: book.publicationYear,
+          authorName: book.authorName || '',
+          publisherName: book.publisherName || '',
+          categoryName: book.categories?.[0]?.toString() || '',
+          callNo: book.bookId.toString().padStart(6, '0'),
+          isAvailable: book.isAvailable,
+          rating: 0
+        }));
         this.isLoading = false;
       },
       error: (err) => {
@@ -374,27 +386,7 @@ export class BookListComponent implements OnInit, OnDestroy {
     this.filteredBooks = filtered;
   }
 
-  private loadBookStatuses(): void {
-    if (!this.checkIfUserLoggedIn()) {
-      return;
-    }
 
-    const userId = this.getCurrentUserId();
-
-    this.books.forEach((book) => {
-      const subscription = this.bookApi
-        .getBookStatusForUser(book.bookId, userId)
-        .subscribe({
-          next: (status) => {
-            this.bookStatuses.set(book.bookId, status);
-          },
-          error: (err) => {
-            console.error(`Error loading status for book ${book.bookId}:`, err);
-          },
-        });
-      this.subscriptions.push(subscription);
-    });
-  }
 
   private prepareDropdownData(): void {
     // Extract unique authors and publishers from books
@@ -402,11 +394,11 @@ export class BookListComponent implements OnInit, OnDestroy {
     const publishers = new Set<string>();
 
     this.books.forEach((book) => {
-      if (book.author && book.author.name) {
-        authors.add(book.author.name);
+      if (book.authorName) {
+        authors.add(book.authorName);
       }
-      if (book.publisher && book.publisher.name) {
-        publishers.add(book.publisher.name);
+      if (book.publisherName) {
+        publishers.add(book.publisherName);
       }
     });
 
@@ -415,14 +407,8 @@ export class BookListComponent implements OnInit, OnDestroy {
   }
 
   private checkIfUserLoggedIn(): boolean {
-    if (!this.isBrowser) {
-      return false;
-    }
-
-    const token = localStorage.getItem('authToken');
-    const user = localStorage.getItem('user');
-
-    return !!(token && user);
+    if (!this.isBrowser) return false;
+    return this.auth.isLoggedIn();
   }
 
   private getCurrentUserId(): number {
@@ -484,69 +470,7 @@ export class BookListComponent implements OnInit, OnDestroy {
     return this.books.filter((book) => book.isAvailable).length;
   }
 
-  borrowBook(bookId: number): void {
-    if (!this.checkIfUserLoggedIn()) {
-      const lang = this.translate.currentLang || 'tr';
-      this.router.navigate(['/', lang, 'login']);
-      return;
-    }
 
-    const userId = this.getCurrentUserId();
-    const borrowDto = {
-      bookId: bookId,
-      userId: userId,
-      borrowDate: new Date().toISOString(),
-      returnDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-    };
-
-    const subscription = this.bookApi.borrow(bookId, borrowDto).subscribe({
-      next: (response) => {
-        this.translate.get('BORROW_SUCCESS').subscribe((msg: string) => {
-          this.toastService.success(msg);
-        });
-        this.loadBookStatuses();
-      },
-      error: (err) => {
-        this.translate.get('BORROW_ERROR').subscribe((msg: string) => {
-          this.toastService.error(msg);
-        });
-      },
-    });
-    this.subscriptions.push(subscription);
-  }
-
-  returnBook(bookId: number): void {
-    if (!this.checkIfUserLoggedIn()) {
-      const lang = this.translate.currentLang || 'tr';
-      this.router.navigate(['/', lang, 'login']);
-      return;
-    }
-
-    const userId = this.getCurrentUserId();
-
-    const subscription = this.bookApi.return(bookId, userId).subscribe({
-      next: (response) => {
-        this.translate.get('RETURN_SUCCESS').subscribe((msg: string) => {
-          this.toastService.success(msg);
-        });
-        this.loadBookStatuses();
-      },
-      error: (err) => {
-        this.translate.get('RETURN_ERROR').subscribe((msg: string) => {
-          this.toastService.error(msg);
-        });
-      },
-    });
-    this.subscriptions.push(subscription);
-  }
-
-  isBorrowing(bookId: number): boolean {
-    return false; // TODO: Implement loading state tracking
-  }
-
-  isReturning(bookId: number): boolean {
-    return false; // TODO: Implement loading state tracking
-  }
 
   ngOnDestroy(): void {
     this.subscriptions.forEach((sub) => sub.unsubscribe());

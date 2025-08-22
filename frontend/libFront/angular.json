@@ -62,7 +62,8 @@
               "buildTarget": "libFront:build:production"
             },
             "development": {
-              "buildTarget": "libFront:build:development"
+              "buildTarget": "libFront:build:development",
+              "port": 4200
             }
           },
           "defaultConfiguration": "development"

@@ -108,8 +108,19 @@
 
         <!-- Book Actions -->
         <div class="book-actions">
+          <!-- Giriş yapmamış kullanıcılar için borrow butonu -->
           <button 
-            *ngIf="bookStatus?.canBorrow"
+            *ngIf="!checkIfUserLoggedIn() && book.isAvailable"
+            class="borrow-button" 
+            (click)="borrowBook()"
+          >
+            <span>📖</span>
+            <span>{{ 'BOOK_DETAIL_BORROW' | translate }}</span>
+          </button>
+          
+          <!-- Giriş yapmış kullanıcılar için borrow/return butonları -->
+          <button 
+            *ngIf="checkIfUserLoggedIn() && book.isAvailable && bookStatus && !bookStatus.isBorrowedByUser"
             class="borrow-button" 
             [disabled]="isBorrowing"
             (click)="borrowBook()"
@@ -120,7 +131,7 @@
           </button>
           
           <button 
-            *ngIf="bookStatus?.canReturn"
+            *ngIf="checkIfUserLoggedIn() && bookStatus && bookStatus.isBorrowedByUser"
             class="return-button" 
             [disabled]="isBorrowing"
             (click)="returnBook()"
@@ -153,7 +164,7 @@
       <div class="book-details">
         <div class="detail-card">
           <div class="detail-header">
-            <h3>📋 {{ 'BOOK_DETAIL_ABOUT' | translate }}</h3>
+            <h3>📋 {{ 'BOOK_DETAIL_ ' | translate }}</h3>
           </div>
           <div class="detail-content">
             <div class="detail-grid">

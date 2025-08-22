@@ -2,23 +2,24 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
-import { Book, CreateBookDto, UpdateBookDto, BorrowBookDto, BookStatusForUser, FavoriteStatus, FavoriteCount, BookFilterDto } from '../models/book.model';
+import { Book, BookListDto, CreateBookDto, UpdateBookDto, BorrowBookDto, BookStatusForUser, FavoriteStatus, FavoriteCount, BookFilterDto } from '../models/book.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class BookApiService {
-  private baseUrl = 'https://localhost:7209/api/Books';
+  private baseUrl = `${environment.apiUrl}/Books`;
 
   constructor(private http: HttpClient) {}
 
   getAll(
     filter: string = '',
     includeUnavailable: boolean = true
-  ): Observable<Book[]> {
+  ): Observable<BookListDto[]> {
     const filterParam = filter
       ? `&filter=${encodeURIComponent(filter.trim())}`
       : '';
-    return this.http.get<Book[]>(
-      `${this.baseUrl}?includeUnavailable=${includeUnavailable}${filterParam}`
+    return this.http.get<BookListDto[]>(
+      `${this.baseUrl}/list?includeUnavailable=${includeUnavailable}${filterParam}`
     );
   }
 
@@ -84,14 +85,13 @@ export class BookApiService {
   }
 
   // Book status and borrowing checks
-  getBookStatusForUser(
-    bookId: number,
-    userId: number
-  ): Observable<BookStatusForUser> {
+  getBookStatusForUser(bookId: number): Observable<BookStatusForUser> {
     return this.http.get<BookStatusForUser>(
-      `${this.baseUrl}/${bookId}/status-for-user/${userId}`
+      `${this.baseUrl}/${bookId}/status-for-user`
     );
   }
+
+
 
   isBorrowedByUser(bookId: number, userId: number): Observable<any> {
     return this.http.get<any>(

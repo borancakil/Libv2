@@ -214,7 +214,8 @@ export class PublisherDetailComponent implements OnInit, OnDestroy {
   }
 
   goToBookDetail(bookId: number): void {
-    this.router.navigate(['/books', bookId]);
+    const lang = this.translate.currentLang || 'tr';
+    this.router.navigate(['/', lang, 'book', bookId]);
   }
 
   goBack(): void {

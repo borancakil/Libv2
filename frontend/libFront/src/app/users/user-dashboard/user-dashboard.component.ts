@@ -5,6 +5,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { Book } from '../../books/models/book.model';
 import { UserApiService } from '../services/user-api';
+import { AuthService } from '../../services/auth.service';
 import { BookApiService } from '../../books/services/book-api';
 import { ToastService } from '../../services/toast.service';
 
@@ -23,12 +24,15 @@ export class UserDashboardComponent implements OnInit, OnDestroy {
   error: string | null = null;
   private isBrowser: boolean;
   private subscriptions: Subscription[] = [];
+  private retryCount = 0;
+  private maxRetries = 3;
 
   constructor(
     public router: Router,
     private userApi: UserApiService,
     private bookApi: BookApiService,
     public translate: TranslateService,
+    private auth: AuthService,
     private toastService: ToastService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
@@ -40,33 +44,89 @@ export class UserDashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.loadData();
+    // Authentication durumunu kontrol et
+    if (!this.checkIfUserLoggedIn()) {
+      const lang = this.translate.currentLang || 'tr';
+      this.router.navigate(['/', lang, 'login']);
+      return;
+    }
+
+    // Cookie'lerin set edilmesi için kısa bir delay ekle
+    setTimeout(() => {
+      this.loadData();
+    }, 200);
+
+    // Authentication state değişikliklerini dinle
+    window.addEventListener('authStateChanged', this.handleAuthStateChange);
   }
 
   private loadData(): void {
+    // Authentication durumunu tekrar kontrol et
+    if (!this.checkIfUserLoggedIn()) {
+      const lang = this.translate.currentLang || 'tr';
+      this.router.navigate(['/', lang, 'login']);
+      return;
+    }
+
+    // Cookie'lerin hazır olması için biraz daha bekle
+    if (!this.auth.isLoggedIn()) {
+      if (this.retryCount < this.maxRetries) {
+        this.retryCount++;
+        console.log(`Authentication not ready, retrying ${this.retryCount}/${this.maxRetries} in 500ms...`);
+        setTimeout(() => {
+          this.loadData();
+        }, 500);
+        return;
+      } else {
+        console.log('Max retries reached, redirecting to login');
+        const lang = this.translate.currentLang || 'tr';
+        this.router.navigate(['/', lang, 'login']);
+        return;
+      }
+    }
+
+    // Reset retry count on successful authentication check
+    this.retryCount = 0;
+
     this.isLoading = true;
     this.error = null;
+
+    console.log('Loading favorites and borrowed books...');
 
     // Load both favorites and borrowed books
     const favoritesSub = this.userApi.getMyFavoriteBooks().subscribe({
       next: (books) => {
+        console.log('Favorites loaded:', books.length);
         this.favoriteBooks = books;
         this.isLoading = false;
       },
       error: (err) => {
         console.error('Error loading favorites:', err);
-        this.handleError('FAVORITES_LOAD_ERROR');
+        if (err.status === 401) {
+          // Unauthorized - kullanıcıyı login'e yönlendir
+          const lang = this.translate.currentLang || 'tr';
+          this.router.navigate(['/', lang, 'login']);
+        } else {
+          this.handleError('FAVORITES_LOAD_ERROR');
+        }
       }
     });
 
     const borrowedSub = this.userApi.getMyBorrowedBooks().subscribe({
       next: (books) => {
+        console.log('Borrowed books loaded:', books.length);
         this.borrowedBooks = books;
         this.isLoading = false;
       },
       error: (err) => {
         console.error('Error loading borrowed books:', err);
-        this.handleError('BORROWED_BOOKS_LOAD_ERROR');
+        if (err.status === 401) {
+          // Unauthorized - kullanıcıyı login'e yönlendir
+          const lang = this.translate.currentLang || 'tr';
+          this.router.navigate(['/', lang, 'login']);
+        } else {
+          this.handleError('BORROWED_BOOKS_LOAD_ERROR');
+        }
       }
     });
 
@@ -146,14 +206,8 @@ export class UserDashboardComponent implements OnInit, OnDestroy {
   }
 
   private checkIfUserLoggedIn(): boolean {
-    if (!this.isBrowser) {
-      return false;
-    }
-
-    const token = localStorage.getItem('authToken');
-    const user = localStorage.getItem('user');
-
-    return !!(token && user);
+    if (!this.isBrowser) return false;
+    return this.auth.isLoggedIn();
   }
 
   private getCurrentUserId(): number {
@@ -175,7 +229,7 @@ export class UserDashboardComponent implements OnInit, OnDestroy {
   }
 
   getBookCoverUrl(bookId: number): string {
-    return `http://localhost:7209/api/Books/${bookId}/cover`;
+    return `https://localhost:7209/api/Books/${bookId}/cover`;
   }
 
   getRemainingDays(returnDate: string): number {
@@ -196,6 +250,15 @@ export class UserDashboardComponent implements OnInit, OnDestroy {
   }
 
   retry(): void {
+    // Authentication durumunu tekrar kontrol et
+    if (!this.checkIfUserLoggedIn()) {
+      const lang = this.translate.currentLang || 'tr';
+      this.router.navigate(['/', lang, 'login']);
+      return;
+    }
+    
+    // Reset retry count and load data
+    this.retryCount = 0;
     this.loadData();
   }
 
@@ -213,5 +276,17 @@ export class UserDashboardComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscriptions.forEach((sub) => sub.unsubscribe());
+    
+    // Event listener'ı temizle
+    if (this.isBrowser) {
+      window.removeEventListener('authStateChanged', this.handleAuthStateChange);
+    }
   }
+
+  private handleAuthStateChange = (event: any) => {
+    if (!event.detail.isLoggedIn) {
+      const lang = this.translate.currentLang || 'tr';
+      this.router.navigate(['/', lang, 'login']);
+    }
+  };
 } 

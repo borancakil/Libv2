@@ -6,6 +6,7 @@ import { Subscription } from 'rxjs';
 import { Book, BookStatusForUser, FavoriteStatus } from '../models/book.model';
 import { BookApiService } from '../services/book-api';
 import { UserApiService } from '../../users/services/user-api';
+import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 
 @Component({
@@ -22,7 +23,6 @@ export class BookDetailComponent implements OnInit, OnDestroy {
   isBorrowing = false;
   isAddingToFavorites = false;
   isInFavorites = false;
-  isBorrowedByUser = false;
   coverImageUrl: string | null = null;
   showImageModal = false;
   error: string | null = null;
@@ -35,6 +35,7 @@ export class BookDetailComponent implements OnInit, OnDestroy {
     private bookApi: BookApiService,
     private userApi: UserApiService,
     public translate: TranslateService,
+    private auth: AuthService,
     private toastService: ToastService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
@@ -70,7 +71,6 @@ export class BookDetailComponent implements OnInit, OnDestroy {
 
     const subscription = this.bookApi.getById(id).subscribe({
       next: (book) => {
-        console.log('Kitap detayı:', book);
         this.book = book;
         this.isLoading = false;
       },
@@ -90,23 +90,42 @@ export class BookDetailComponent implements OnInit, OnDestroy {
   }
 
   private loadBookStatus(bookId: number): void {
+    // Kullanıcı giriş yapmamışsa bookStatus null kalacak
     if (!this.checkIfUserLoggedIn()) {
+      this.bookStatus = null;
       return;
     }
 
-    const userId = this.getCurrentUserId();
+    // LocalStorage'dan user bilgisini al
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      this.bookStatus = null;
+      return;
+    }
     
-    const subscription = this.bookApi.getBookStatusForUser(bookId, userId).subscribe({
-      next: (status) => {
-        this.bookStatus = status;
-        this.isBorrowedByUser = status.isBorrowedByUser;
-      },
-      error: (err) => {
-        console.error('Error loading book status:', err);
+    try {
+      const user = JSON.parse(userStr);
+      const userId = user.userId;
+      
+      if (!userId) {
+        this.bookStatus = null;
+        return;
       }
-    });
+      
+      // Book status'u yükle
+      const subscription = this.bookApi.getBookStatusForUser(bookId).subscribe({
+        next: (status) => {
+          this.bookStatus = status;
+        },
+              error: (err) => {
+        this.bookStatus = null;
+      }
+      });
 
-    this.subscriptions.push(subscription);
+      this.subscriptions.push(subscription);
+    } catch (error) {
+      this.bookStatus = null;
+    }
   }
 
   private loadCoverImage(bookId: number): void {
@@ -134,7 +153,6 @@ export class BookDetailComponent implements OnInit, OnDestroy {
         this.isInFavorites = isFavorited;
       },
       error: (err) => {
-        console.error('Error checking favorites:', err);
         this.isInFavorites = false;
       }
     });
@@ -188,34 +206,86 @@ export class BookDetailComponent implements OnInit, OnDestroy {
     }
 
     this.isBorrowing = true;
-    console.log('Ödünç alma işlemi başlatılıyor...');
+    
+    // LocalStorage'dan user bilgisini al
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      this.isBorrowing = false;
+      const lang = this.translate.currentLang || 'tr';
+      this.router.navigate(['/', lang, 'login']);
+      return;
+    }
+    
+    try {
+      const user = JSON.parse(userStr);
+      const userId = user.userId;
+      
+      if (!userId) {
+        this.isBorrowing = false;
+        this.translate.get('USER_ID_NOT_FOUND').subscribe((msg: string) => {
+          this.toastService.error(msg);
+        });
+        return;
+      }
+      
+      const borrowDto = {
+        bookId: this.book!.bookId,
+        userId: userId,
+        borrowDate: new Date(),
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+      };
+      
+      // Borrow işlemini yap
+      this.executeBorrow(borrowDto);
+    } catch (error) {
+      this.isBorrowing = false;
+      this.translate.get('USER_INFO_LOAD_ERROR').subscribe((msg: string) => {
+        this.toastService.error(msg);
+      });
+    }
+  }
 
-    const borrowDto = {
-      bookId: this.book.bookId,
-      userId: this.getCurrentUserId(),
-      borrowDate: new Date().toISOString(),
-      returnDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
-    };
-
-    console.log('Borrow DTO:', borrowDto);
+  // Borrow işlemini gerçekleştir
+  private executeBorrow(borrowDto: any): void {
+    if (!this.book) {
+      console.error('Book bilgisi bulunamadı');
+      this.isBorrowing = false;
+      return;
+    }
 
     const subscription = this.bookApi.borrow(this.book.bookId, borrowDto).subscribe({
       next: (response) => {
-        console.log('Kitap başarıyla ödünç alındı:', response);
         this.isBorrowing = false;
-        this.isBorrowedByUser = true;
+        
+        // State'i hemen güncelle
+        if (this.book) {
+          this.book.isAvailable = false;
+        }
+        if (this.bookStatus) {
+          this.bookStatus.isBorrowedByUser = true;
+          this.bookStatus.isAvailable = false;
+        }
+        
+        // Backend'den güncel veriyi al
         this.loadBook(this.book!.bookId);
         this.loadBookStatus(this.book!.bookId);
+        
         this.translate.get('BORROW_SUCCESS').subscribe((msg: string) => {
           this.toastService.success(msg);
         });
       },
       error: (err) => {
-        console.error('Ödünç alma hatası:', err);
         this.isBorrowing = false;
         if (err.status === 401) {
           const lang = this.translate.currentLang || 'tr';
           this.router.navigate(['/', lang, 'login']);
+        } else if (err.status === 409) {
+          // Kitap zaten ödünç alınmış
+          this.translate.get('BOOK_ALREADY_BORROWED').subscribe((msg: string) => {
+            this.toastService.warning(msg);
+          });
+          // Book status'u yenile
+          this.loadBookStatus(this.book!.bookId);
         } else {
           this.handleError('BORROW_ERROR');
         }
@@ -239,21 +309,68 @@ export class BookDetailComponent implements OnInit, OnDestroy {
     }
 
     this.isBorrowing = true;
-    const userId = this.getCurrentUserId();
+    
+    // LocalStorage'dan user bilgisini al
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      this.isBorrowing = false;
+      const lang = this.translate.currentLang || 'tr';
+      this.router.navigate(['/', lang, 'login']);
+      return;
+    }
+    
+    try {
+      const user = JSON.parse(userStr);
+      const userId = user.userId;
+      
+      if (!userId) {
+        this.isBorrowing = false;
+        this.translate.get('USER_ID_NOT_FOUND').subscribe((msg: string) => {
+          this.toastService.error(msg);
+        });
+        return;
+      }
+      
+      // Return işlemini yap
+      this.executeReturn(userId);
+    } catch (error) {
+      this.isBorrowing = false;
+      this.translate.get('USER_INFO_LOAD_ERROR').subscribe((msg: string) => {
+        this.toastService.error(msg);
+      });
+    }
+  }
+
+  // Return işlemini gerçekleştir
+  private executeReturn(userId: number): void {
+    if (!this.book) {
+      console.error('Book bilgisi bulunamadı');
+      this.isBorrowing = false;
+      return;
+    }
 
     const subscription = this.bookApi.return(this.book.bookId, userId).subscribe({
       next: (response) => {
-        console.log('Kitap başarıyla iade edildi:', response);
         this.isBorrowing = false;
-        this.isBorrowedByUser = false;
+        
+        // State'i hemen güncelle
+        if (this.book) {
+          this.book.isAvailable = true;
+        }
+        if (this.bookStatus) {
+          this.bookStatus.isBorrowedByUser = false;
+          this.bookStatus.isAvailable = true;
+        }
+        
+        // Backend'den güncel veriyi al
         this.loadBook(this.book!.bookId);
         this.loadBookStatus(this.book!.bookId);
+        
         this.translate.get('RETURN_SUCCESS').subscribe((msg: string) => {
           this.toastService.success(msg);
         });
       },
       error: (err) => {
-        console.error('İade etme hatası:', err);
         this.isBorrowing = false;
         if (err.status === 401) {
           const lang = this.translate.currentLang || 'tr';
@@ -294,7 +411,6 @@ export class BookDetailComponent implements OnInit, OnDestroy {
           });
         },
         error: (err) => {
-          console.error('Favorilerden kaldırma hatası:', err);
           this.isAddingToFavorites = false;
           this.handleError('REMOVE_FAVORITE_ERROR');
         }
@@ -312,7 +428,6 @@ export class BookDetailComponent implements OnInit, OnDestroy {
           });
         },
         error: (err) => {
-          console.error('Favorilere ekleme hatası:', err);
           this.isAddingToFavorites = false;
           this.handleError('ADD_FAVORITE_ERROR');
         }
@@ -321,37 +436,9 @@ export class BookDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  private checkIfUserLoggedIn(): boolean {
-    // SSR sırasında localStorage mevcut değil
-    if (!this.isBrowser) {
-      return false;
-    }
-    
-    // Local storage'dan token kontrolü
-    const token = localStorage.getItem('authToken');
-    const user = localStorage.getItem('user');
-    const sessionExpiry = localStorage.getItem('sessionExpiry');
-    
-    // Token, user ve session expiry kontrolü
-    if (token && user && sessionExpiry) {
-      try {
-        const userObj = JSON.parse(user);
-        const expiryTime = parseInt(sessionExpiry, 10);
-        const currentTime = Date.now();
-        
-        // Session süresi dolmuş mu kontrol et
-        if (currentTime > expiryTime) {
-          return false;
-        }
-        
-        if (userObj && userObj.userId) {
-          return true;
-        }
-      } catch (e) {
-        return false;
-      }
-    }
-    return false;
+  checkIfUserLoggedIn(): boolean {
+    if (!this.isBrowser) return false;
+    return this.auth.isLoggedIn();
   }
 
   private getCurrentUserId(): number {
@@ -360,18 +447,12 @@ export class BookDetailComponent implements OnInit, OnDestroy {
       return 1;
     }
     
-    // Local storage'dan user ID'yi al
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        return user.userId || 1; // Varsayılan olarak 1
-      } catch (e) {
-        console.error('Error parsing user data:', e);
-        return 1;
-      }
-    }
-    return 1; // Varsayılan kullanıcı ID
+    // Cookie tabanlı auth kullanıyoruz, localStorage'da user ID tutmuyoruz
+    // Backend'den direkt user ID'yi al
+    
+    // Bu metod artık async olmalı, ama şimdilik borrow işlemini engelleyelim
+    // User ID bulunamadığında borrow işlemini yapma
+    return -1; // Geçersiz user ID
   }
 
   retry(): void {

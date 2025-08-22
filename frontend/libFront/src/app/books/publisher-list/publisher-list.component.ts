@@ -3,8 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { Subscription, forkJoin } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { Publisher } from '../models/publisher.model';
 import { PublisherApiService } from '../services/publisher-api';
 
@@ -23,6 +22,7 @@ export class PublisherListComponent implements OnInit, OnDestroy {
   error: string | null = null;
   private isBrowser: boolean;
   private subscriptions: Subscription[] = [];
+  private isInitialized = false;
 
   // Search and filter properties
   searchTerm = '';
@@ -34,9 +34,6 @@ export class PublisherListComponent implements OnInit, OnDestroy {
   filters: any = {
     name: '',
     description: '',
-    status: '',
-    minBooks: undefined,
-    maxBooks: undefined,
     foundedYear: undefined,
     location: '',
     sortBy: 'name'
@@ -45,28 +42,21 @@ export class PublisherListComponent implements OnInit, OnDestroy {
   // Filter expansion state
   isFilterExpanded = false;
 
-  // Photo properties
-  publisherPhotos: { [key: number]: SafeUrl } = {};
-  loadingPhotos: { [key: number]: boolean } = {};
-
-  // Book count properties
-  publisherBookCounts: { [key: number]: number } = {};
-  totalBooks = 0;
-
   constructor(
     public router: Router,
     private publisherApi: PublisherApiService,
     public translate: TranslateService,
-    private sanitizer: DomSanitizer,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
   }
 
   ngOnInit(): void {
-    if (!this.isBrowser)
-      return; // SSR sırasında API çağrısı yapma
+    if (!this.isBrowser || this.isInitialized) {
+      return;
+    }
 
+    this.isInitialized = true;
     this.loadPublishers();
   }
 
@@ -79,8 +69,7 @@ export class PublisherListComponent implements OnInit, OnDestroy {
         this.publishers = publishers;
         this.filteredPublishers = [...publishers];
         this.isLoading = false;
-        this.loadPublisherPhotos();
-        this.loadBookCounts();
+        this.applyFilters();
       },
       error: (err) => {
         console.error('Error loading publishers:', err);
@@ -93,103 +82,24 @@ export class PublisherListComponent implements OnInit, OnDestroy {
   }
 
   onFilterButtonClick(): void {
-    this.filter = (this.filter || '').trim();
-    this.loadPublishers();
-  }
-
-  private loadPublisherPhotos(): void {
-    this.publishers.forEach(publisher => {
-      this.loadPublisherPhoto(publisher.publisherId);
-    });
-  }
-
-  private loadPublisherPhoto(publisherId: number): void {
-    this.loadingPhotos[publisherId] = true;
+    const newFilter = (this.filter || '').trim();
     
-    const subscription = this.publisherApi.getProfileImage(publisherId).subscribe({
-      next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        this.publisherPhotos[publisherId] = this.sanitizer.bypassSecurityTrustUrl(url);
-        this.loadingPhotos[publisherId] = false;
-      },
-      error: (err) => {
-        console.error(`Error loading photo for publisher ${publisherId}:`, err);
-        this.loadingPhotos[publisherId] = false;
-        // Don't show error for missing images, just skip them
-      }
-    });
-
-    this.subscriptions.push(subscription);
-  }
-
-  private loadBookCounts(): void {
-    if (this.publishers.length === 0) return;
-
-    const bookCountRequests = this.publishers.map(publisher => 
-      this.publisherApi.getBookCount(publisher.publisherId)
-    );
-
-    const subscription = forkJoin(bookCountRequests).subscribe({
-      next: (counts) => {
-        this.publishers.forEach((publisher, index) => {
-          this.publisherBookCounts[publisher.publisherId] = counts[index];
-        });
-        this.calculateTotalBooks();
-        this.applyFilters(); // Refresh filters with book counts
-      },
-      error: (err) => {
-        console.error('Error loading book counts:', err);
-        // If book count endpoint doesn't exist, try to get books for each publisher
-        this.loadBooksForPublishers();
-      }
-    });
-
-    this.subscriptions.push(subscription);
-  }
-
-  private loadBooksForPublishers(): void {
-    const bookRequests = this.publishers.map(publisher => 
-      this.publisherApi.getBooksByPublisher(publisher.publisherId)
-    );
-
-    const subscription = forkJoin(bookRequests).subscribe({
-      next: (booksArrays) => {
-        this.publishers.forEach((publisher, index) => {
-          const books = booksArrays[index];
-          this.publisherBookCounts[publisher.publisherId] = books.length;
-          publisher.books = books; // Add books to publisher object
-        });
-        this.calculateTotalBooks();
-        this.applyFilters(); // Refresh filters with book counts
-      },
-      error: (err) => {
-        console.error('Error loading books for publishers:', err);
-        // Set all book counts to 0 if both methods fail
-        this.publishers.forEach(publisher => {
-          this.publisherBookCounts[publisher.publisherId] = 0;
-        });
-        this.calculateTotalBooks();
-      }
-    });
-
-    this.subscriptions.push(subscription);
-  }
-
-  private calculateTotalBooks(): void {
-    this.totalBooks = Object.values(this.publisherBookCounts).reduce((total, count) => total + count, 0);
-  }
-
-  onImageError(event: Event, publisherId: number): void {
-    console.error(`Image error for publisher ${publisherId}:`, event);
-    delete this.publisherPhotos[publisherId];
+    if (newFilter !== this.filter) {
+      this.filter = newFilter;
+      this.loadPublishers();
+    } else {
+      this.applyLocalFilters();
+    }
   }
 
   getTotalBooks(): number {
-    return this.totalBooks;
+    // Return 0 since we don't show book counts in list
+    return 0;
   }
 
   getPublisherBookCount(publisherId: number): number {
-    return this.publisherBookCounts[publisherId] || 0;
+    // Return 0 since we don't show book counts in list
+    return 0;
   }
 
   // Search and filter methods
@@ -215,7 +125,6 @@ export class PublisherListComponent implements OnInit, OnDestroy {
 
   // New backend filtering methods
   onFilterChange(): void {
-    // Debounce filter changes
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout);
     }
@@ -233,9 +142,6 @@ export class PublisherListComponent implements OnInit, OnDestroy {
     this.filters = {
       name: '',
       description: '',
-      status: '',
-      minBooks: undefined,
-      maxBooks: undefined,
       foundedYear: undefined,
       location: '',
       sortBy: 'name'
@@ -246,9 +152,6 @@ export class PublisherListComponent implements OnInit, OnDestroy {
   hasActiveFilters(): boolean {
     return !!(this.filters.name?.trim() || 
               this.filters.description?.trim() || 
-              this.filters.status || 
-              this.filters.minBooks !== undefined || 
-              this.filters.maxBooks !== undefined ||
               this.filters.foundedYear ||
               this.filters.location?.trim());
   }
@@ -256,7 +159,6 @@ export class PublisherListComponent implements OnInit, OnDestroy {
   private applyFilters(): void {
     let filtered = [...this.publishers];
 
-    // Apply search filter
     if (this.searchTerm.trim() !== '') {
       const searchLower = this.searchTerm.toLowerCase();
       filtered = filtered.filter(publisher => 
@@ -265,29 +167,10 @@ export class PublisherListComponent implements OnInit, OnDestroy {
       );
     }
 
-    // Apply status filter
-    if (this.selectedFilter !== 'all') {
-      filtered = filtered.filter(publisher => {
-        const bookCount = this.publisherBookCounts[publisher.publisherId] || 0;
-        if (this.selectedFilter === 'hasBooks') {
-          return bookCount > 0;
-        } else if (this.selectedFilter === 'noBooks') {
-          return bookCount === 0;
-        }
-        return true;
-      });
-    }
-
-    // Apply sorting
     filtered.sort((a, b) => {
-      const bookCountA = this.publisherBookCounts[a.publisherId] || 0;
-      const bookCountB = this.publisherBookCounts[b.publisherId] || 0;
-
       switch (this.selectedSort) {
         case 'name':
           return a.name.localeCompare(b.name);
-        case 'books':
-          return bookCountB - bookCountA;
         default:
           return 0;
       }
@@ -299,7 +182,6 @@ export class PublisherListComponent implements OnInit, OnDestroy {
   private applyLocalFilters(): void {
     let filtered = [...this.publishers];
 
-    // Apply name filter
     if (this.filters.name?.trim()) {
       const nameLower = this.filters.name.toLowerCase();
       filtered = filtered.filter(publisher => 
@@ -307,7 +189,6 @@ export class PublisherListComponent implements OnInit, OnDestroy {
       );
     }
 
-    // Apply description filter
     if (this.filters.description?.trim()) {
       const descLower = this.filters.description.toLowerCase();
       filtered = filtered.filter(publisher => 
@@ -315,42 +196,12 @@ export class PublisherListComponent implements OnInit, OnDestroy {
       );
     }
 
-    // Apply status filter
-    if (this.filters.status) {
-      filtered = filtered.filter(publisher => {
-        const bookCount = this.publisherBookCounts[publisher.publisherId] || 0;
-        if (this.filters.status === 'hasBooks') {
-          return bookCount > 0;
-        } else if (this.filters.status === 'noBooks') {
-          return bookCount === 0;
-        }
-        return true;
-      });
-    }
-
-    // Apply books count filter
-    if (this.filters.minBooks !== undefined) {
-      filtered = filtered.filter(publisher => {
-        const bookCount = this.publisherBookCounts[publisher.publisherId] || 0;
-        return bookCount >= this.filters.minBooks;
-      });
-    }
-
-    if (this.filters.maxBooks !== undefined) {
-      filtered = filtered.filter(publisher => {
-        const bookCount = this.publisherBookCounts[publisher.publisherId] || 0;
-        return bookCount <= this.filters.maxBooks;
-      });
-    }
-
-    // Apply founded year filter
     if (this.filters.foundedYear) {
       filtered = filtered.filter(publisher => 
         publisher.foundedYear && publisher.foundedYear === this.filters.foundedYear
       );
     }
 
-    // Apply location filter
     if (this.filters.location?.trim()) {
       const locationLower = this.filters.location.toLowerCase();
       filtered = filtered.filter(publisher => 
@@ -358,17 +209,11 @@ export class PublisherListComponent implements OnInit, OnDestroy {
       );
     }
 
-    // Apply sorting
     if (this.filters.sortBy) {
       filtered.sort((a, b) => {
-        const bookCountA = this.publisherBookCounts[a.publisherId] || 0;
-        const bookCountB = this.publisherBookCounts[b.publisherId] || 0;
-
         switch (this.filters.sortBy) {
           case 'name':
             return a.name.localeCompare(b.name);
-          case 'books':
-            return bookCountB - bookCountA;
           case 'foundedYear':
             if (!a.foundedYear && !b.foundedYear) return 0;
             if (!a.foundedYear) return 1;
@@ -392,7 +237,9 @@ export class PublisherListComponent implements OnInit, OnDestroy {
   }
 
   retry(): void {
-    this.loadPublishers();
+    if (!this.isLoading) {
+      this.loadPublishers();
+    }
   }
 
   private handleError(errorKey: string): void {
@@ -403,12 +250,5 @@ export class PublisherListComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
-    
-    // Clean up blob URLs
-    Object.values(this.publisherPhotos).forEach(url => {
-      if (typeof url === 'string') {
-        URL.revokeObjectURL(url);
-      }
-    });
   }
 } 

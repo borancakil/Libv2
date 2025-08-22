@@ -101,21 +101,7 @@
           <div class="author-info">
             <div class="author-header">
               <div class="author-photo-section">
-                <div class="author-photo" *ngIf="author.hasProfileImage">
-                  <div class="photo-loading" *ngIf="isPhotoLoading(author.authorId)">
-                    <div class="loading-spinner">📸</div>
-                  </div>
-                  <img 
-                    *ngIf="!isPhotoLoading(author.authorId) && getAuthorPhoto(author.authorId)"
-                    [src]="getAuthorPhoto(author.authorId)" 
-                    [alt]="author.name"
-                    class="author-image"
-                    (error)="onImageError($event)">
-                  <div class="photo-placeholder" *ngIf="!isPhotoLoading(author.authorId) && !getAuthorPhoto(author.authorId)">
-                    <div class="placeholder-icon">👤</div>
-                  </div>
-                </div>
-                <div class="author-photo" *ngIf="!author.hasProfileImage">
+                <div class="author-photo">
                   <div class="photo-placeholder">
                     <div class="placeholder-icon">👤</div>
                   </div>
@@ -150,10 +136,7 @@
                 <span>{{ 'DEATH_DATE' | translate }}: {{ author.deathDate | date:'dd/MM/yyyy' }}</span>
               </div>
               
-              <div class="meta-item">
-                <span class="meta-icon">📚</span>
-                <span>{{ 'BOOKS_COUNT' | translate }}: {{ authorBookCounts.get(author.authorId) || 0 }}</span>
-              </div>
+
             </div>
 
             <div class="author-actions">

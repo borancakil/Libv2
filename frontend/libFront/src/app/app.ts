@@ -1,4 +1,4 @@
-import { Component, Inject, PLATFORM_ID, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, Inject, PLATFORM_ID, OnInit, OnDestroy, HostListener, ChangeDetectorRef } from '@angular/core';
 import { NavigationEnd } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
@@ -6,6 +6,9 @@ import { Router, RouterModule } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { filter } from 'rxjs/operators';
 import { ToastComponent } from './components/toast/toast.component';
+import { UserApiService } from './users/services/user-api';
+import { AuthService } from './services/auth.service';
+
 
 @Component({
   selector: 'app-root',
@@ -26,6 +29,9 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor(
     public translate: TranslateService, 
     private router: Router,
+    private userApi: UserApiService,
+    private auth: AuthService,
+    private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
@@ -61,12 +67,19 @@ export class AppComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     if (this.isBrowser) {
       this.lastScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      // Listen to auth state changes to update header immediately
+      window.addEventListener('authStateChanged', this.handleAuthStateChange);
+      // Initialize auth state on first load if tokens exist
+      this.updateAuthenticationState();
     }
   }
 
   ngOnDestroy(): void {
     if (this.scrollTimeout) {
       clearTimeout(this.scrollTimeout);
+    }
+    if (this.isBrowser) {
+      window.removeEventListener('authStateChanged', this.handleAuthStateChange);
     }
   }
 
@@ -159,65 +172,60 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   isLoggedIn(): boolean {
+    if (!this.isBrowser) return false;
+    return this.auth.isLoggedIn();
+  }
+
+  // Authentication durumunu daha detaylı kontrol et
+  isAuthenticated(): boolean {
     if (!this.isBrowser) {
-      return false; // SSR sırasında false döndür
+      return false;
     }
     
-    const token = localStorage.getItem('authToken');
-    const user = localStorage.getItem('user');
-    const sessionExpiry = localStorage.getItem('sessionExpiry');
+    const isLoggedIn = this.isLoggedIn();
+    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
     
-    // Token, user ve session expiry kontrolü
-    if (token && user && sessionExpiry) {
-      try {
-        const userObj = JSON.parse(user);
-        const expiryTime = parseInt(sessionExpiry, 10);
-        const currentTime = Date.now();
-        
-        // Session süresi dolmuş mu kontrol et (2 saat)
-        if (currentTime > expiryTime) {
-          console.log('Session expired, clearing auth data');
-          this.clearAuthData();
-          return false;
-        }
-        
-        if (userObj && userObj.userId) {
-          return true;
-        }
-      } catch (e) {
-        console.error('Error parsing user data:', e);
-        this.clearAuthData();
-        return false;
-      }
+    // Eğer localStorage'daki değer ile gerçek durum farklıysa güncelle
+    if (isLoggedIn !== isAuthenticated) {
+      this.updateAuthenticationState();
     }
-    return false;
+    
+    return isLoggedIn;
   }
 
   logout(): void {
-    if (!this.isBrowser) {
-      return; // SSR sırasında bir şey yapma
-    }
-    // LocalStorage'dan tüm auth bilgilerini temizle
-    this.clearAuthData();
-    console.log('Logout: Auth data cleared');
-    const lang = this.translate.currentLang || 'tr';
-    this.router.navigate([`/${lang}/login`]);
+    if (!this.isBrowser) return;
+    this.userApi.logout().subscribe({
+      next: () => {
+        this.auth.clearTokens();
+        const lang = this.translate.currentLang || 'tr';
+        this.router.navigate([`/${lang}/login`]);
+      },
+      error: () => {
+        this.auth.clearTokens();
+        const lang = this.translate.currentLang || 'tr';
+        this.router.navigate([`/${lang}/login`]);
+      }
+    });
   }
 
-  // Session yönetimi
-  setSession(token: string, user: any): void {
-    if (!this.isBrowser) {
-      return;
+  // Cookie clearing not needed; tokens are in localStorage
+
+  // Cookie-based session removed
+
+  // Authentication state'ini güncelle
+  private updateAuthenticationState(): void {
+    if (!this.isBrowser) return;
+    const isLoggedIn = this.isLoggedIn();
+    localStorage.setItem('isAuthenticated', isLoggedIn.toString());
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('authStateChanged', { detail: { isLoggedIn } }));
     }
-    
-    // 2 saatlik session (2 * 60 * 60 * 1000 = 7200000 ms)
-    const expiryTime = Date.now() + 2 * 60 * 60 * 1000;
-    
-    localStorage.setItem('authToken', token);
-    localStorage.setItem('user', JSON.stringify(user));
-    localStorage.setItem('sessionExpiry', expiryTime.toString());
-    
-    console.log('Session set with expiry:', new Date(expiryTime));
+  }
+
+  private handleAuthStateChange = (_event: any) => {
+    // Ensure header re-renders when auth state changes
+    this.cdr.detectChanges();
   }
 
   // User bilgilerini güncelle
@@ -226,24 +234,16 @@ export class AppComponent implements OnInit, OnDestroy {
       return;
     }
     
-    const token = localStorage.getItem('authToken');
-    const sessionExpiry = localStorage.getItem('sessionExpiry');
-    
-    if (token && sessionExpiry) {
-      localStorage.setItem('user', JSON.stringify(userInfo));
-      console.log('User info updated:', userInfo);
-    }
+    console.log('🔄 Updating user info in AppComponent:', userInfo);
+    localStorage.setItem('user', JSON.stringify(userInfo));
+    this.updateAuthenticationState();
   }
 
   // Tüm auth verilerini temizle
   clearAuthData(): void {
-    if (!this.isBrowser) {
-      return;
-    }
-    localStorage.removeItem('authToken');
+    if (!this.isBrowser) return;
     localStorage.removeItem('user');
-    localStorage.removeItem('sessionExpiry');
-    console.log('Auth data cleared');
+    localStorage.removeItem('isAuthenticated');
   }
 
   // Template için public metodlar

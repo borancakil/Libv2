@@ -11,6 +11,7 @@ export interface Publisher {
   location?: string;
   books?: Book[];
   hasProfileImage?: boolean;
+  bookCount?: number; // Add book count property
 }
 
 export interface CreatePublisherDto {

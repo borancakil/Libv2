@@ -31,6 +31,17 @@ export interface Book {
   isOverdue?: boolean;
 }
 
+export interface BookListDto {
+  bookId: number;
+  title: string;
+  publicationYear?: number;
+  authorName: string;
+  publisherName: string;
+  categoryName: string;
+  callNo: string;
+  isAvailable: boolean;
+}
+
 export interface Author {
   authorId: number;
   name: string;
@@ -81,8 +92,8 @@ export interface BookFilterDto {
 export interface BorrowBookDto {
   bookId: number;
   userId: number;
-  borrowDate: string;
-  returnDate: string;
+  borrowDate: Date;
+  dueDate: Date;
 }
 
 export interface BookStatusForUser {

@@ -101,25 +101,7 @@
           <div class="publisher-info">
             <div class="publisher-header">
               <div class="publisher-photo-section">
-                <div class="publisher-photo" *ngIf="publisher.hasProfileImage">
-                  <div class="photo-loading" *ngIf="loadingPhotos[publisher.publisherId]">
-                    <div class="loading-spinner">
-                      <i class="fas fa-spinner fa-spin"></i>
-                    </div>
-                  </div>
-                  <img 
-                    *ngIf="!loadingPhotos[publisher.publisherId] && publisherPhotos[publisher.publisherId]"
-                    [src]="publisherPhotos[publisher.publisherId]" 
-                    [alt]="publisher.name"
-                    class="publisher-image"
-                    (error)="onImageError($event, publisher.publisherId)">
-                  <div class="photo-placeholder" *ngIf="!loadingPhotos[publisher.publisherId] && !publisherPhotos[publisher.publisherId]">
-                    <div class="placeholder-icon">
-                      <i class="fas fa-building"></i>
-                    </div>
-                  </div>
-                </div>
-                <div class="publisher-photo" *ngIf="!publisher.hasProfileImage">
+                <div class="publisher-photo">
                   <div class="photo-placeholder">
                     <div class="placeholder-icon">
                       <i class="fas fa-building"></i>
@@ -132,13 +114,9 @@
                   {{ publisher.name }}
                 </h3>
                 <div class="publisher-status">
-                  <span class="status-badge" [class.active]="getPublisherBookCount(publisher.publisherId) > 0" [class.inactive]="getPublisherBookCount(publisher.publisherId) === 0">
-                    <i class="fas" [class.fa-check-circle]="getPublisherBookCount(publisher.publisherId) > 0" [class.fa-times-circle]="getPublisherBookCount(publisher.publisherId) === 0"></i>
-                    {{ getPublisherBookCount(publisher.publisherId) > 0 ? ('ACTIVE' | translate) : ('INACTIVE' | translate) }}
-                  </span>
-                  <span class="book-count">
-                    <i class="fas fa-book"></i>
-                    {{ getPublisherBookCount(publisher.publisherId) }} {{ 'BOOKS' | translate }}
+                  <span class="status-badge active">
+                    <i class="fas fa-building"></i>
+                    {{ 'PUBLISHER' | translate }}
                   </span>
                 </div>
               </div>
@@ -169,13 +147,7 @@
                 <span class="meta-value">{{ publisher.email }}</span>
               </div>
               
-              <div class="meta-item" *ngIf="publisher.books">
-                <span class="meta-icon">
-                  <i class="fas fa-book"></i>
-                </span>
-                <span class="meta-label">{{ 'BOOKS_COUNT' | translate }}:</span>
-                <span class="meta-value">{{ publisher.books.length }}</span>
-              </div>
+
             </div>
 
             <div class="publisher-actions">

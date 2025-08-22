@@ -5,6 +5,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { UserApiService } from '../services/user-api';
+import { AuthService } from '../../services/auth.service';
 import { User } from '../models/user.model';
 
 interface EditForm {
@@ -45,6 +46,7 @@ export class ProfileComponent implements OnInit {
     private router: Router,
     private userApi: UserApiService,
     private translate: TranslateService,
+    private auth: AuthService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
@@ -179,10 +181,7 @@ export class ProfileComponent implements OnInit {
    * Logout user
    */
   logout(): void {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-    localStorage.removeItem('sessionExpiry');
-    
+    this.auth.clearTokens();
     const lang = this.translate.currentLang || 'tr';
     this.router.navigate(['/', lang]);
   }
@@ -191,9 +190,7 @@ export class ProfileComponent implements OnInit {
    * Check if user is logged in
    */
   checkIfUserLoggedIn(): boolean {
-    const authToken = localStorage.getItem('authToken');
-    const user = localStorage.getItem('user');
-    return !!(authToken && user);
+    return this.auth.isLoggedIn();
   }
 
   /**

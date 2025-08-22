@@ -5,7 +5,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { BookApiService } from '../books/services/book-api';
-import { Book } from '../books/models/book.model';
+import { Book, BookListDto } from '../books/models/book.model';
 
 @Component({
   selector: 'app-home',
@@ -22,7 +22,7 @@ import { Book } from '../books/models/book.model';
 })
 export class HomeComponent implements OnInit {
   public searchQuery: string = '';
-  public popularBooks: Book[] = [];
+  public popularBooks: BookListDto[] = [];
   public totalBooks: number = 0;
   public isLoading: boolean = false;
   public error: string | null = null;
@@ -119,7 +119,7 @@ export class HomeComponent implements OnInit {
    * Kitap kapağı URL'sini alır
    */
   getBookCoverUrl(bookId: number): string {
-    return `http://localhost:7209/api/Books/${bookId}/cover`;
+    return `http://localhost:7208/api/Books/${bookId}/cover`;
   }
 
   /**
@@ -137,13 +137,5 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  /**
-   * Kitap ödünç alma işlemi
-   */
-  borrowBook(bookId: number): void {
-    // TODO: Implement borrow functionality
-    console.log('Borrowing book:', bookId);
-    // For now, just navigate to book details
-    this.viewBookDetails(bookId);
-  }
+
 }
