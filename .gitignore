@@ -8,5 +8,14 @@ docs/
 # GitHub actions (eğer istemiyorsan)
 .github/
 
-# Her şeyi ignore etme
-# Sadece gereksizleri ignore et
+# Keys
+/backend/Presentation/LibraryApp.API/Keys
+
+
+# SSL certs
+*.crt
+*.key
+*.pem
+*.log
+
+

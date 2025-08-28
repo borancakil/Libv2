@@ -82,42 +82,61 @@
     
     <!-- Books List -->
     <div *ngIf="!isLoading && !error && popularBooks.length > 0" class="books-section">
-      <div class="books-list">
+      <div class="books-grid">
         <div *ngFor="let book of popularBooks" class="book-card">
-          <!-- Book Cover -->
-          <div class="book-cover">
-            <div class="cover-placeholder">
-              <span>📚</span>
-            </div>
-          </div>
-
-          <!-- Book Info -->
           <div class="book-info">
-            <div class="book-title-section">
-              <h3 class="book-title" (click)="viewBookDetails(book.bookId)">
-                {{ book.title }}
-              </h3>
-              <div class="book-meta">
-                <span class="author" *ngIf="book.authorName">{{ book.authorName }}</span>
-                <span class="separator" *ngIf="book.authorName && book.publicationYear">•</span>
-                <span class="year" *ngIf="book.publicationYear">{{ book.publicationYear }}</span>
-                <span class="separator" *ngIf="book.publisherName">•</span>
-                <span class="publisher" *ngIf="book.publisherName">{{ book.publisherName }}</span>
+            <div class="book-header">
+              <div class="book-cover-section">
+                <div class="book-cover">
+                  <div class="cover-placeholder">
+                    <div class="placeholder-icon">📚</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="book-details">
+                <h3 class="book-title" (click)="viewBookDetails(book.bookId)">
+                  {{ book.title }}
+                </h3>
+                
+                <div class="book-status">
+                  <div class="book-status-badge" [class.available]="book.isAvailable" [class.unavailable]="!book.isAvailable">
+                    <i class="fas" [class.fa-check]="book.isAvailable" [class.fa-times]="!book.isAvailable"></i>
+                    <span class="status-text">{{ book.isAvailable ? ('AVAILABLE' | translate) : ('UNAVAILABLE' | translate) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="book-meta">
+              <div class="meta-item" *ngIf="book.publicationYear">
+                <i class="fas fa-calendar-alt meta-icon"></i>
+                <span>{{ book.publicationYear }}</span>
+              </div>
+              
+              <div class="meta-item" *ngIf="book.authorName">
+                <i class="fas fa-user meta-icon"></i>
+                <span class="author-name">{{ book.authorName }}</span>
+              </div>
+              
+              <div class="meta-item" *ngIf="book.publisherName">
+                <i class="fas fa-building meta-icon"></i>
+                <span class="publisher-name">{{ book.publisherName }}</span>
               </div>
             </div>
 
-            <div class="book-status">
-              <span class="status-badge" [class.available]="book.isAvailable" [class.unavailable]="!book.isAvailable">
-                {{ book.isAvailable ? ('AVAILABLE' | translate) : ('UNAVAILABLE' | translate) }}
-              </span>
+            <div class="book-call-number" *ngIf="book.callNo">
+              <span class="call-number-label">Call No:</span>
+              <span class="call-number">{{ book.callNo }}</span>
             </div>
-          </div>
 
-          <!-- Book Actions -->
-          <div class="book-actions">
-            <button class="view-button" (click)="viewBookDetails(book.bookId)">
-              {{ 'VIEW_DETAILS' | translate }}
-            </button>
+            <!-- Book Actions -->
+            <div class="book-actions">
+              <button class="view-button" (click)="viewBookDetails(book.bookId)">
+                <i class="fas fa-eye"></i>
+                <span>{{ 'VIEW_DETAILS' | translate }}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
