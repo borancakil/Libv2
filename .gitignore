@@ -1,0 +1,12 @@
+# VS
+.vs/
+
+# Docs
+Documentation/
+docs/
+
+# GitHub actions (eğer istemiyorsan)
+.github/
+
+# Her şeyi ignore etme
+# Sadece gereksizleri ignore et

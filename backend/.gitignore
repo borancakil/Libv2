@@ -1,0 +1,63 @@
+# Build outputs
+bin/
+obj/
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+
+# Configuration files
+appsettings.Development.json
+
+# Logs
+Infrastructure/LibraryApp.Infrastructure/Logs/
+*.log
+*.txt
+logs/
+Logs/
+
+# JWT Keys (CRITICAL - Never commit these!)
+Presentation/LibraryApp.API/Keys/
+*.pem
+*.key
+
+# Database files
+*.db
+*.mdf
+*.ldf
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# IDE files
+.vscode/
+.idea/
+*.sln.docstates
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# NuGet packages
+*.nupkg
+packages/
+
+# Test results
+TestResults/
+*.trx
+*.coverage
+*.coveragexml

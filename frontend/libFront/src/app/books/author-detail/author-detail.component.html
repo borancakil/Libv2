@@ -1,0 +1,242 @@
+<div class="author-detail-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <button class="back-button" (click)="goBack()">
+          ←
+          <span>{{ 'BACK' | translate }}</span>
+        </button>
+      </div>
+      <div class="header-center">
+        <h1 class="page-title">
+          👤
+          {{ 'AUTHOR_DETAIL_TITLE' | translate }}
+        </h1>
+        <p class="page-subtitle">{{ 'AUTHOR_DETAIL_DESCRIPTION' | translate }}</p>
+      </div>
+      <div class="header-right">
+        <button class="retry-button" (click)="retry()" *ngIf="error">
+          🔄
+          <span>{{ 'RETRY' | translate }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="loading-content">
+      <div class="loading-spinner">
+        👤
+      </div>
+      <h3>{{ 'LOADING_AUTHOR' | translate }}</h3>
+      <p>{{ 'PLEASE_WAIT' | translate }}</p>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-state" *ngIf="error && !isLoading">
+    <div class="error-content">
+      <div class="error-icon">
+        ⚠️
+      </div>
+      <h3>{{ 'AUTHOR_DETAIL_LOAD_ERROR' | translate }}</h3>
+      <p>{{ error }}</p>
+      <div class="error-actions">
+        <button class="retry-button" (click)="retry()">
+          🔄
+          {{ 'RETRY' | translate }}
+        </button>
+        <button class="back-button" (click)="goBack()">
+          ←
+          {{ 'BACK' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Section -->
+  <div class="content-section" *ngIf="author && !isLoading">
+    <!-- Author Profile Section -->
+    <div class="author-profile-section">
+      <div class="author-profile-card">
+        <div class="author-photo-section">
+          <div class="author-photo" *ngIf="author.hasProfileImage">
+            <div class="photo-loading" *ngIf="isPhotoLoading">
+              <div class="loading-spinner">📸</div>
+            </div>
+            <img 
+              *ngIf="!isPhotoLoading && authorPhoto"
+              [src]="authorPhoto" 
+              [alt]="author.name"
+              class="author-image"
+              (error)="onImageError($event)">
+            <div class="photo-placeholder" *ngIf="!isPhotoLoading && !authorPhoto">
+              <div class="placeholder-icon">👤</div>
+            </div>
+          </div>
+          <div class="author-photo" *ngIf="!author.hasProfileImage">
+            <div class="photo-placeholder">
+              <div class="placeholder-icon">👤</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="author-info">
+          <div class="author-header">
+            <h2 class="author-name">{{ author.name }}</h2>
+            <div class="author-status">
+              <span class="status-badge" [class.alive]="!author.deathDate" [class.deceased]="author.deathDate">
+                {{ author.deathDate ? ('DECEASED' | translate) : ('ALIVE' | translate) }}
+              </span>
+            </div>
+          </div>
+          
+          <div class="author-meta">
+            <div class="meta-item" *ngIf="author.birthDate">
+              <span class="meta-icon">🎂</span>
+              <span class="meta-label">{{ 'BIRTH_DATE' | translate }}:</span>
+              <span class="meta-value">{{ author.birthDate | date:'dd/MM/yyyy' }}</span>
+            </div>
+            
+            <div class="meta-item" *ngIf="author.deathDate">
+              <span class="meta-icon">🕯️</span>
+              <span class="meta-label">{{ 'DEATH_DATE' | translate }}:</span>
+              <span class="meta-value">{{ author.deathDate | date:'dd/MM/yyyy' }}</span>
+            </div>
+            
+            <div class="meta-item" *ngIf="books.length > 0">
+              <span class="meta-icon">📚</span>
+              <span class="meta-label">{{ 'BOOKS_COUNT' | translate }}:</span>
+              <span class="meta-value">{{ books.length }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Biography Section -->
+    <div class="biography-section" *ngIf="author.biography">
+      <div class="section-card">
+        <div class="section-header">
+          <h3 class="section-title">
+            📖
+            {{ 'BIOGRAPHY' | translate }}
+          </h3>
+        </div>
+        <div class="section-content">
+          <p class="biography-text">{{ author.biography }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Books Section -->
+    <div class="books-section">
+      <div class="section-card">
+        <div class="section-header">
+          <h3 class="section-title">
+            📚
+            {{ 'BOOKS_BY_AUTHOR' | translate }}
+          </h3>
+          <div class="section-stats" *ngIf="books.length > 0">
+            <span class="stats-item">
+              <span class="stats-icon">📖</span>
+              <span class="stats-number">{{ books.length }}</span>
+              <span class="stats-label">{{ 'TOTAL_BOOKS' | translate }}</span>
+            </span>
+            <span class="stats-item">
+              <span class="stats-icon">✅</span>
+              <span class="stats-number">{{ getAvailableBooksCount() }}</span>
+              <span class="stats-label">{{ 'AVAILABLE_BOOKS' | translate }}</span>
+            </span>
+          </div>
+        </div>
+        
+        <div class="section-content">
+          <!-- Search Section (visual only) -->
+          <div class="search-filter-section" *ngIf="!isLoadingBooks && books.length > 0">
+            <div class="search-container">
+              <div class="search-input-group">
+                <input type="text" class="search-input" placeholder="Ara...">
+                <button class="search-button"><span>Filtrele</span></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Loading Books -->
+          <div class="loading-books" *ngIf="isLoadingBooks">
+            <div class="loading-content">
+              <div class="loading-spinner">📚</div>
+              <h4>{{ 'LOADING_BOOKS' | translate }}</h4>
+              <p>{{ 'PLEASE_WAIT' | translate }}</p>
+            </div>
+          </div>
+
+          <!-- Books Grid -->
+          <div class="books-grid" *ngIf="!isLoadingBooks && filteredBooks.length > 0">
+            <div class="book-card" *ngFor="let book of filteredBooks" [class.book-animation]="true">
+              <div class="book-cover">
+                <div *ngIf="!book.hasCoverImage" class="cover-placeholder">
+                  <div class="placeholder-icon">📚</div>
+                </div>
+                <div class="book-status-badge" [class.available]="book.isAvailable" [class.unavailable]="!book.isAvailable">
+                  <span class="status-text">{{ book.isAvailable ? ('AVAILABLE' | translate) : ('UNAVAILABLE' | translate) }}</span>
+                </div>
+              </div>
+              
+              <div class="book-info">
+                <h4 class="book-title" (click)="goToBookDetail(book.bookId)">
+                  {{ book.title }}
+                </h4>
+                
+                <div class="book-meta">
+                  <div class="meta-item" *ngIf="book.publicationYear">
+                    <span class="meta-icon">📅</span>
+                    <span>{{ book.publicationYear }}</span>
+                  </div>
+                  
+                  <div class="meta-item" *ngIf="book.publisherName">
+                    <span class="meta-icon">🏢</span>
+                    <a class="publisher-link" (click)="goToPublisherDetail(book.publisherId); $event.stopPropagation()">
+                      {{ book.publisherName }}
+                    </a>
+                  </div>
+                </div>
+
+                <div class="book-actions">
+                  <button class="view-button" (click)="goToBookDetail(book.bookId)">
+                    <span>{{ 'VIEW_DETAILS' | translate }}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- No Books State -->
+          <div class="empty-state" *ngIf="!isLoadingBooks && books.length === 0">
+            <div class="empty-content">
+              <div class="empty-icon">
+                📚
+              </div>
+              <h4>{{ 'NO_BOOKS_FOUND' | translate }}</h4>
+              <p>{{ 'NO_BOOKS_DESCRIPTION' | translate }}</p>
+            </div>
+          </div>
+
+          <!-- No Filtered Books State -->
+          <div class="empty-state" *ngIf="!isLoadingBooks && books.length > 0 && filteredBooks.length === 0">
+            <div class="empty-content">
+              <div class="empty-icon">
+                🔍
+              </div>
+              <h4>{{ 'NO_FILTERED_BOOKS_FOUND' | translate }}</h4>
+              <p>{{ 'NO_FILTERED_BOOKS_DESCRIPTION' | translate }}</p>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

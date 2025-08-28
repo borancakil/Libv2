@@ -1,0 +1,218 @@
+<div class="book-list-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <button class="btn btn-back" (click)="goBack()">
+          <i class="fas fa-arrow-left"></i>
+          <span>{{ 'BACK' | translate }}</span>
+        </button>
+      </div>
+      <div class="header-center">
+        <h1 class="page-title">
+          <i class="fas fa-book-open"></i>
+          {{ 'BOOK_LIST_TITLE' | translate }}
+        </h1>
+        <p class="page-subtitle">{{ 'BOOK_LIST_DESCRIPTION' | translate }}</p>
+      </div>
+      <div class="header-right">
+        <button class="btn btn-primary" (click)="retry()" *ngIf="error">
+          <i class="fas fa-redo"></i>
+          <span>{{ 'RETRY' | translate }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="loading-content">
+      <div class="loading-spinner">
+        <i class="fas fa-book fa-pulse"></i>
+      </div>
+      <h3>{{ 'LOADING_BOOKS' | translate }}</h3>
+      <p>{{ 'PLEASE_WAIT' | translate }}</p>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-state" *ngIf="error && !isLoading">
+    <div class="error-content">
+      <div class="error-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <h3>{{ 'BOOK_LIST_LOAD_ERROR' | translate }}</h3>
+      <p>{{ error }}</p>
+      <button class="btn btn-primary" (click)="retry()">
+        <i class="fas fa-redo"></i>
+        {{ 'RETRY' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Content Section -->
+  <div class="content-section" *ngIf="!isLoading && !error">
+    <!-- Search Section -->
+    <div class="search-section">
+      <div class="search-container">
+        <div class="search-input-group">
+          <input type="text" class="search-input" placeholder="Kitap ara..." [(ngModel)]="filter" (keyup.enter)="onFilterButtonClick()">
+          <button class="search-button" (click)="onFilterButtonClick()">
+            <i class="fas fa-search"></i>
+            <span>Filtrele</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="stats-section" *ngIf="filteredBooks.length > 0">
+      <div class="stats-card">
+        <div class="stat-item">
+          <div class="stat-icon">
+            <i class="fas fa-books"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-number">{{ filteredBooks.length }}</span>
+            <span class="stat-label">{{ 'FILTERED_BOOKS' | translate }}</span>
+          </div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-number">{{ getAvailableBooksCount() }}</span>
+            <span class="stat-label">{{ 'AVAILABLE_BOOKS' | translate }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Books Grid -->
+    <div class="books-section" *ngIf="filteredBooks.length > 0">
+      <div class="books-grid">
+        <div class="book-card" *ngFor="let book of displayedBooks" [class.book-animation]="true">
+          <div class="book-info">
+            <div class="book-header">
+              <div class="book-cover-section">
+                <div class="book-cover">
+                  <div class="cover-placeholder">
+                    <div class="placeholder-icon">📚</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="book-details">
+                <h3 class="book-title" (click)="goToBookDetail(book.bookId)">
+                  {{ book.title }}
+                </h3>
+                
+                <div class="book-status">
+                  <div class="book-status-badge" [class.available]="book.isAvailable" [class.unavailable]="!book.isAvailable">
+                    <i class="fas" [class.fa-check]="book.isAvailable" [class.fa-times]="!book.isAvailable"></i>
+                    <span class="status-text">{{ book.isAvailable ? ('AVAILABLE' | translate) : ('UNAVAILABLE' | translate) }}</span>
+                  </div>
+                </div>
+
+                <div class="user-status-badge" *ngIf="getBookStatus(book.bookId)">
+                  <span *ngIf="getBookStatus(book.bookId)?.isBorrowedByUser" class="borrowed-by-me">
+                    <i class="fas fa-user"></i>
+                    {{ 'BORROWED_BY_ME' | translate }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="book-meta">
+              <div class="meta-item" *ngIf="book.publicationYear">
+                <i class="fas fa-calendar-alt meta-icon"></i>
+                <span>{{ book.publicationYear }}</span>
+              </div>
+              
+              <div class="meta-item" *ngIf="book.authorName">
+                <i class="fas fa-user meta-icon"></i>
+                <span class="author-name">{{ book.authorName }}</span>
+              </div>
+              
+              <div class="meta-item" *ngIf="book.publisherName">
+                <i class="fas fa-building meta-icon"></i>
+                <span class="publisher-name">{{ book.publisherName }}</span>
+              </div>
+            </div>
+
+            <div class="book-call-number">
+              <span class="call-number-label">Call No:</span>
+              <span class="call-number">{{ book.callNo }}</span>
+            </div>
+
+            <!-- Book Actions -->
+            <div class="book-actions">
+              <button class="view-button" (click)="goToBookDetail(book.bookId)">
+                <i class="fas fa-eye"></i>
+                <span>{{ 'VIEW_DETAILS' | translate }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination-section" *ngIf="totalPages > 1">
+        <div class="pagination-info">
+          <span class="pagination-text">
+            {{ 'SHOWING' | translate }} {{ (currentPage - 1) * pageSize + 1 }} - {{ getMath().min(currentPage * pageSize, totalBooks) }} {{ 'OF' | translate }} {{ totalBooks }} {{ 'BOOKS' | translate }}
+          </span>
+        </div>
+        
+        <div class="pagination-controls">
+          <!-- Previous Button -->
+          <button 
+            class="pagination-btn prev-btn" 
+            [disabled]="currentPage === 1"
+            (click)="previousPage()"
+            [class.disabled]="currentPage === 1">
+            <i class="fas fa-chevron-left"></i>
+            <span>{{ 'PREVIOUS' | translate }}</span>
+          </button>
+
+          <!-- Page Numbers -->
+          <div class="page-numbers">
+            <button 
+              *ngFor="let page of getPageNumbers()" 
+              class="page-btn" 
+              [class.active]="page === currentPage"
+              (click)="goToPage(page)">
+              {{ page }}
+            </button>
+          </div>
+
+          <!-- Next Button -->
+          <button 
+            class="pagination-btn next-btn" 
+            [disabled]="currentPage === totalPages"
+            (click)="nextPage()"
+            [class.disabled]="currentPage === totalPages">
+            <span>{{ 'NEXT' | translate }}</span>
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredBooks.length === 0 && (books.length > 0 || filter.trim())">
+      <div class="empty-content">
+        <div class="empty-icon">
+          <i class="fas fa-book-open"></i>
+        </div>
+        <h3>{{ 'NO_BOOKS_FOUND' | translate }}</h3>
+        <p>{{ 'NO_BOOKS_DESCRIPTION' | translate }}</p>
+        <p *ngIf="filter.trim()" class="filter-info">
+          <i class="fas fa-search"></i>
+          "{{ filter }}" araması için sonuç bulunamadı.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

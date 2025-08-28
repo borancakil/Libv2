@@ -1,0 +1,249 @@
+<!-- Profile Container -->
+<div class="profile-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <button class="btn btn-back" (click)="goBack()">
+          <i class="fas fa-arrow-left"></i>
+          <span>{{ 'BACK' | translate }}</span>
+        </button>
+      </div>
+      <div class="header-center">
+        <h1 class="page-title">
+          <i class="fas fa-user-circle"></i>
+          <span>{{ 'PROFILE_TITLE' | translate }}</span>
+        </h1>
+      </div>
+      <div class="header-right">
+        <button class="btn btn-primary" (click)="startEditing()" *ngIf="!isEditing && user">
+          <i class="fas fa-edit"></i>
+          <span>{{ 'EDIT_PROFILE' | translate }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="loading-content">
+      <div class="loading-spinner">
+        <i class="fas fa-user fa-pulse"></i>
+      </div>
+      <h3>{{ 'LOADING_PROFILE' | translate }}</h3>
+      <p>{{ 'PLEASE_WAIT' | translate }}</p>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !isLoading" class="error-state">
+    <div class="error-content">
+      <div class="error-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <h3>{{ 'ERROR_LOADING_PROFILE' | translate }}</h3>
+      <p>{{ error }}</p>
+      <button class="btn btn-primary" (click)="loadUserProfile()">
+        <i class="fas fa-redo"></i>
+        {{ 'RETRY' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Profile Content -->
+  <div *ngIf="!isLoading && !error && user" class="content-section">
+    <!-- Profile Information -->
+    <div class="profile-information">
+      <div class="profile-hero">
+        <!-- Profile Avatar -->
+        <div class="profile-avatar">
+          <div class="avatar-placeholder">
+            <i class="fas fa-user"></i>
+          </div>
+        </div>
+
+        <!-- Profile Info -->
+        <div class="profile-info">
+          <div class="profile-title-section">
+            <h2 class="profile-name">{{ user.name || 'Unknown User' }}</h2>
+            <div class="profile-meta">
+              <span class="email">{{ user.email }}</span>
+              <span class="separator" *ngIf="user.phone">•</span>
+              <span class="phone" *ngIf="user.phone">{{ user.phone }}</span>
+            </div>
+          </div>
+
+          <div class="profile-status">
+            <span class="status-badge online">
+              <i class="fas fa-circle"></i>
+              <span>{{ 'USER_STATUS_ONLINE' | translate }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Details -->
+      <div class="profile-details">
+        <div class="detail-card">
+          <div class="detail-header">
+            <h3>{{ 'PERSONAL_INFORMATION' | translate }}</h3>
+          </div>
+          <div class="detail-content">
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="detail-label">{{ 'FULL_NAME' | translate }}</span>
+                <span class="detail-value">{{ user.name || 'Not provided' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">{{ 'EMAIL' | translate }}</span>
+                <span class="detail-value">{{ user.email }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">{{ 'PHONE' | translate }}</span>
+                <span class="detail-value">{{ user.phone || 'Not provided' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">{{ 'ADDRESS' | translate }}</span>
+                <span class="detail-value">{{ user.address || 'Not provided' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <div class="section-header">
+        <h3>{{ 'QUICK_ACTIONS' | translate }}</h3>
+        <span class="section-subtitle">{{ 'QUICK_ACTIONS_DESCRIPTION' | translate }}</span>
+      </div>
+      <div class="actions-grid">
+        <div class="action-card" (click)="goToDashboard()">
+          <div class="action-icon">
+            <i class="fas fa-tachometer-alt"></i>
+          </div>
+          <div class="action-content">
+            <h4>{{ 'MY_LIBRARY' | translate }}</h4>
+            <p>{{ 'MY_LIBRARY_DESCRIPTION' | translate }}</p>
+          </div>
+          <div class="action-arrow">
+            <i class="fas fa-arrow-right"></i>
+          </div>
+        </div>
+        
+        <div class="action-card" (click)="goToFavorites()">
+          <div class="action-icon">
+            <i class="fas fa-heart"></i>
+          </div>
+          <div class="action-content">
+            <h4>{{ 'FAVORITES' | translate }}</h4>
+            <p>{{ 'FAVORITES_DESCRIPTION' | translate }}</p>
+          </div>
+          <div class="action-arrow">
+            <i class="fas fa-arrow-right"></i>
+          </div>
+        </div>
+        
+        <div class="action-card" (click)="goToBorrowedBooks()">
+          <div class="action-icon">
+            <i class="fas fa-book-reader"></i>
+          </div>
+          <div class="action-content">
+            <h4>{{ 'BORROWED_BOOKS' | translate }}</h4>
+            <p>{{ 'BORROWED_BOOKS_DESCRIPTION' | translate }}</p>
+          </div>
+          <div class="action-arrow">
+            <i class="fas fa-arrow-right"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Actions -->
+    <div class="account-actions">
+      <div class="section-header">
+        <h3>{{ 'ACCOUNT_ACTIONS' | translate }}</h3>
+        <span class="section-subtitle">{{ 'ACCOUNT_ACTIONS_DESCRIPTION' | translate }}</span>
+      </div>
+      <div class="actions-list">
+        <button class="btn btn-outline btn-full" (click)="startEditing()" *ngIf="!isEditing">
+          <i class="fas fa-edit"></i>
+          <span>{{ 'EDIT_PROFILE' | translate }}</span>
+        </button>
+        <button class="btn btn-danger btn-full" (click)="logout()">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>{{ 'USER_LOGOUT' | translate }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Profile Form -->
+  <div *ngIf="isEditing && user" class="edit-profile">
+    <div class="edit-form">
+      <div class="form-header">
+        <h3>{{ 'EDIT_PROFILE' | translate }}</h3>
+        <p>{{ 'EDIT_PROFILE_DESCRIPTION' | translate }}</p>
+      </div>
+      
+      <form (ngSubmit)="saveProfile()" class="profile-form">
+        <div class="form-group">
+          <label for="name">{{ 'FULL_NAME' | translate }}</label>
+          <input 
+            type="text" 
+            id="name"
+            [(ngModel)]="editForm.name" 
+            name="name"
+            [placeholder]="'FULL_NAME_PLACEHOLDER' | translate"
+            class="form-input">
+        </div>
+        
+        <div class="form-group">
+          <label for="email">{{ 'EMAIL' | translate }}</label>
+          <input 
+            type="email" 
+            id="email"
+            [(ngModel)]="editForm.email" 
+            name="email"
+            [placeholder]="'EMAIL_PLACEHOLDER' | translate"
+            class="form-input">
+        </div>
+        
+        <div class="form-group">
+          <label for="phone">{{ 'PHONE' | translate }}</label>
+          <input 
+            type="tel" 
+            id="phone"
+            [(ngModel)]="editForm.phone" 
+            name="phone"
+            [placeholder]="'PHONE_PLACEHOLDER' | translate"
+            class="form-input">
+        </div>
+        
+        <div class="form-group">
+          <label for="address">{{ 'ADDRESS' | translate }}</label>
+          <textarea 
+            id="address"
+            [(ngModel)]="editForm.address" 
+            name="address"
+            [placeholder]="'ADDRESS_PLACEHOLDER' | translate"
+            class="form-textarea"
+            rows="3"></textarea>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" (click)="cancelEditing()" [disabled]="isSaving">
+            <i class="fas fa-times"></i>
+            <span>{{ 'CANCEL' | translate }}</span>
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="isSaving">
+            <i class="fas fa-save" *ngIf="!isSaving"></i>
+            <i class="fas fa-spinner fa-spin" *ngIf="isSaving"></i>
+            <span>{{ isSaving ? ('SAVING' | translate) : ('SAVE_CHANGES' | translate) }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div> 

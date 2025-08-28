@@ -1,0 +1,168 @@
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-text">
+        <h1 class="hero-title">{{ 'HERO_TITLE' | translate }}</h1>
+        <p class="hero-subtitle">{{ 'HERO_SUBTITLE' | translate }}</p>
+        
+        <!-- Search Form -->
+        <form (ngSubmit)="search()" class="search-form">
+          <div class="search-container">
+            <input 
+              type="text" 
+              [(ngModel)]="searchQuery" 
+              name="searchQuery"
+              [placeholder]="'HERO_SEARCH_PLACEHOLDER' | translate"
+              class="search-input">
+            <button type="submit" class="search-button">
+              {{ 'HERO_SEARCH_BUTTON' | translate }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Statistics -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-content">
+            <span class="stat-number">{{ totalBooks }}</span>
+            <span class="stat-label">{{ 'STATS_BOOKS' | translate }}</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-content">
+            <span class="stat-number">100+</span>
+            <span class="stat-label">{{ 'STATS_USERS' | translate }}</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-content">
+            <span class="stat-number">50+</span>
+            <span class="stat-label">{{ 'STATS_CATEGORIES' | translate }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Featured Books -->
+<section class="featured-books">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-title">
+        <h2>{{ 'AVAILABLE_BOOKS_TITLE' | translate }}</h2>
+        <span class="section-subtitle">{{ 'FEATURED_BOOKS_DESCRIPTION' | translate }}</span>
+      </div>
+      <button class="view-all-button" (click)="goToBooks()">
+        {{ 'VIEW_ALL' | translate }}
+      </button>
+    </div>
+    
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-state">
+      <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <h3>{{ 'LOADING_BOOKS' | translate }}</h3>
+        <p>{{ 'PLEASE_WAIT' | translate }}</p>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !isLoading" class="error-state">
+      <div class="error-content">
+        <h3>{{ 'ERROR_LOADING_BOOKS' | translate }}</h3>
+        <p>{{ error }}</p>
+        <button class="retry-button" (click)="loadPopularBooks()">
+          {{ 'RETRY' | translate }}
+        </button>
+      </div>
+    </div>
+    
+    <!-- Books List -->
+    <div *ngIf="!isLoading && !error && popularBooks.length > 0" class="books-section">
+      <div class="books-list">
+        <div *ngFor="let book of popularBooks" class="book-card">
+          <!-- Book Cover -->
+          <div class="book-cover">
+            <div class="cover-placeholder">
+              <span>📚</span>
+            </div>
+          </div>
+
+          <!-- Book Info -->
+          <div class="book-info">
+            <div class="book-title-section">
+              <h3 class="book-title" (click)="viewBookDetails(book.bookId)">
+                {{ book.title }}
+              </h3>
+              <div class="book-meta">
+                <span class="author" *ngIf="book.authorName">{{ book.authorName }}</span>
+                <span class="separator" *ngIf="book.authorName && book.publicationYear">•</span>
+                <span class="year" *ngIf="book.publicationYear">{{ book.publicationYear }}</span>
+                <span class="separator" *ngIf="book.publisherName">•</span>
+                <span class="publisher" *ngIf="book.publisherName">{{ book.publisherName }}</span>
+              </div>
+            </div>
+
+            <div class="book-status">
+              <span class="status-badge" [class.available]="book.isAvailable" [class.unavailable]="!book.isAvailable">
+                {{ book.isAvailable ? ('AVAILABLE' | translate) : ('UNAVAILABLE' | translate) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Book Actions -->
+          <div class="book-actions">
+            <button class="view-button" (click)="viewBookDetails(book.bookId)">
+              {{ 'VIEW_DETAILS' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && !error && popularBooks.length === 0" class="empty-state">
+      <div class="empty-content">
+        <h3>{{ 'NO_BOOKS_FOUND' | translate }}</h3>
+        <p>{{ 'NO_BOOKS_DESCRIPTION' | translate }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Quick Actions -->
+<section class="quick-actions">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-title">
+        <h2>{{ 'QUICK_ACTIONS_TITLE' | translate }}</h2>
+        <span class="section-subtitle">{{ 'QUICK_ACTIONS_DESCRIPTION' | translate }}</span>
+      </div>
+    </div>
+    <div class="actions-grid">
+      <div class="action-card" (click)="goToBooks()">
+        <div class="action-content">
+          <h3>{{ 'ACTION_BROWSE_BOOKS' | translate }}</h3>
+          <p>{{ 'ACTION_BROWSE_BOOKS_DESC' | translate }}</p>
+        </div>
+      </div>
+      
+      <div class="action-card" (click)="goToAuthors()">
+        <div class="action-content">
+          <h3>{{ 'ACTION_AUTHORS' | translate }}</h3>
+          <p>{{ 'ACTION_AUTHORS_DESC' | translate }}</p>
+        </div>
+      </div>
+      
+      <div class="action-card" (click)="goToPublishers()">
+        <div class="action-content">
+          <h3>{{ 'ACTION_PUBLISHERS' | translate }}</h3>
+          <p>{{ 'ACTION_PUBLISHERS_DESC' | translate }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
