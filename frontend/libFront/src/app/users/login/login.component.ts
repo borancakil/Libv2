@@ -25,6 +25,10 @@ export class LoginComponent {
   
   private isBrowser: boolean;
 
+  get currentLang(): string {
+    return this.translate.currentLang || 'tr';
+  }
+
   constructor(
     private userApi: UserApiService,
     public translate: TranslateService,

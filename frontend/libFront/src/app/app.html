@@ -1,64 +1,38 @@
 <div class="app-container">
   <!-- Modern Navigation Header -->
-  <header
-    class="main-header"
-    [class.header-hidden]="!isHeaderVisible"
-    [class.header-scrolling]="isHeaderScrolling"
-  >
+  <header class="header">
     <div class="header-content">
       <!-- Logo / Brand -->
       <a [routerLink]="['/', currentLang]" class="logo">
-        <div class="logo-icon">
-          <img src="assets/logo.jpg" alt="LibraryApp Logo" />
-        </div>
-        <div class="logo-text">
-          <span class="logo-title">LibraryApp</span>
-          <span class="logo-subtitle">{{ "HEADER_SUBTITLE" | translate }}</span>
-        </div>
+        <span>Bookly</span>
       </a>
 
-      <!-- Mobile Menu Toggle -->
-      <button
-        class="mobile-menu-toggle"
-        (click)="toggleMobileMenu()"
-        aria-label="Toggle menu"
-      >
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
-      </button>
-
-      <!-- Main Navigation -->
-      <nav class="main-nav" [class.mobile-open]="isMobileMenuOpen">
-        <div class="nav-links">
-          <a
-            [routerLink]="['/', currentLang, 'books']"
-            class="nav-link"
-            (click)="closeMobileMenu()"
-            routerLinkActive="active"
-          >
-            <i class="fas fa-book"></i>
-            <span>{{ "NAV_BOOKS" | translate }}</span>
-          </a>
-          <a
-            [routerLink]="['/', currentLang, 'authors']"
-            class="nav-link"
-            (click)="closeMobileMenu()"
-            routerLinkActive="active"
-          >
-            <i class="fas fa-users"></i>
-            <span>{{ "NAV_AUTHORS" | translate }}</span>
-          </a>
-          <a
-            [routerLink]="['/', currentLang, 'publishers']"
-            class="nav-link"
-            (click)="closeMobileMenu()"
-            routerLinkActive="active"
-          >
-            <i class="fas fa-building"></i>
-            <span>{{ "NAV_PUBLISHERS" | translate }}</span>
-          </a>
-        </div>
+      <!-- Main Navigation - Centered -->
+      <nav class="nav">
+        <a
+          [routerLink]="['/', currentLang, 'books']"
+          class="nav-link"
+          routerLinkActive="active"
+        >
+          <i class="fas fa-book"></i>
+          <span>{{ "NAV_BOOKS" | translate }}</span>
+        </a>
+        <a
+          [routerLink]="['/', currentLang, 'authors']"
+          class="nav-link"
+          routerLinkActive="active"
+        >
+          <i class="fas fa-users"></i>
+          <span>{{ "NAV_AUTHORS" | translate }}</span>
+        </a>
+        <a
+          [routerLink]="['/', currentLang, 'publishers']"
+          class="nav-link"
+          routerLinkActive="active"
+        >
+          <i class="fas fa-building"></i>
+          <span>{{ "NAV_PUBLISHERS" | translate }}</span>
+        </a>
       </nav>
 
       <!-- Header Actions -->
@@ -66,29 +40,28 @@
         <!-- Language Selector -->
         <div class="language-selector">
           <button
-            class="lang-btn"
+            class="btn btn-secondary"
             (click)="toggleLanguageDropdown()"
             aria-label="Select language"
           >
             <i class="fas fa-globe"></i>
-            <span class="lang-text">{{ currentLang.toUpperCase() }}</span>
-            <i class="fas fa-chevron-down"></i>
+            <span>{{ currentLang.toUpperCase() }}</span>
           </button>
-          <div class="lang-dropdown" [class.show]="isLanguageDropdownOpen">
+          <div class="dropdown-menu" [class.show]="isLanguageDropdownOpen">
             <button
-              class="lang-option"
+              class="dropdown-item"
               [class.active]="currentLang === 'tr'"
               (click)="switchLanguage('tr')"
             >
-              <span class="flag">🇹🇷</span>
+              <span>🇹🇷</span>
               <span>{{ "LANG_TURKISH" | translate }}</span>
             </button>
             <button
-              class="lang-option"
+              class="dropdown-item"
               [class.active]="currentLang === 'en'"
               (click)="switchLanguage('en')"
             >
-              <span class="flag">🇺🇸</span>
+              <span>🇺🇸</span>
               <span>{{ "LANG_ENGLISH" | translate }}</span>
             </button>
           </div>
@@ -99,7 +72,7 @@
           <ng-container *ngIf="!isLoggedIn(); else loggedInBlock">
             <a
               [routerLink]="['/', currentLang, 'login']"
-              class="btn btn-outline"
+              class="btn btn-secondary"
             >
               <i class="fas fa-sign-in-alt"></i>
               <span>{{ "HEADER_LOGIN" | translate }}</span>
@@ -117,78 +90,38 @@
           <ng-template #loggedInBlock>
             <div class="user-menu">
               <button
-                class="user-menu-trigger"
+                class="user-button"
                 (click)="toggleUserMenu()"
                 aria-label="User menu"
               >
-                <div class="user-avatar">
-                  <i class="fas fa-user"></i>
-                </div>
-                <div class="user-info">
-                  <span class="user-name">{{ "USER_MENU" | translate }}</span>
-                  <span class="user-status">{{
-                    "USER_STATUS_ONLINE" | translate
-                  }}</span>
-                </div>
+                <i class="fas fa-user"></i>
+                <span>{{ getUserFullName() || "USER_MENU" | translate }}</span>
                 <i class="fas fa-chevron-down"></i>
               </button>
-              <div class="user-menu-dropdown" [class.show]="isUserMenuOpen">
-                <div class="dropdown-header">
-                  <div class="user-avatar-large">
-                    <i class="fas fa-user"></i>
-                  </div>
-                  <div class="user-details">
-                    <span class="user-name-large">{{
-                      getUserName() || "USER_MENU" | translate
-                    }}</span>
-                    <span class="user-email">{{
-                      getUserEmail() || "USER_EMAIL" | translate
-                    }}</span>
-                  </div>
-                </div>
-                <div class="dropdown-content">
-                  <a
-                    [routerLink]="['/', currentLang, 'dashboard']"
-                    class="dropdown-item"
-                    (click)="closeUserMenu()"
-                  >
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span>{{ "MY_LIBRARY" | translate }}</span>
-                  </a>
-                  <a
-                    [routerLink]="['/', currentLang, 'profile']"
-                    class="dropdown-item"
-                    (click)="closeUserMenu()"
-                  >
-                    <i class="fas fa-user"></i>
-                    <span>{{ "HEADER_MY_ACCOUNT" | translate }}</span>
-                  </a>
-                  <div class="dropdown-divider"></div>
-                  <a
-                    [routerLink]="['/', currentLang, 'favorites']"
-                    class="dropdown-item"
-                    (click)="closeUserMenu()"
-                  >
-                    <i class="fas fa-heart"></i>
-                    <span>{{ "USER_FAVORITES" | translate }}</span>
-                  </a>
-                  <a
-                    [routerLink]="['/', currentLang, 'borrowed']"
-                    class="dropdown-item"
-                    (click)="closeUserMenu()"
-                  >
-                    <i class="fas fa-book-reader"></i>
-                    <span>{{ "USER_BORROWED" | translate }}</span>
-                  </a>
-                  <div class="dropdown-divider"></div>
-                  <button
-                    (click)="logout(); closeUserMenu()"
-                    class="dropdown-item logout-btn"
-                  >
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>{{ "USER_LOGOUT" | translate }}</span>
-                  </button>
-                </div>
+              <div class="dropdown-menu" [class.show]="isUserMenuOpen">
+                <a
+                  [routerLink]="['/', currentLang, 'dashboard']"
+                  class="dropdown-item"
+                  (click)="closeUserMenu()"
+                >
+                  <i class="fas fa-book-open"></i>
+                  <span>{{ "MY_LIBRARY" | translate }}</span>
+                </a>
+                <a
+                  [routerLink]="['/', currentLang, 'profile']"
+                  class="dropdown-item"
+                  (click)="closeUserMenu()"
+                >
+                  <i class="fas fa-user-cog"></i>
+                  <span>{{ "HEADER_MY_ACCOUNT" | translate }}</span>
+                </a>
+                <button
+                  (click)="logout(); closeUserMenu()"
+                  class="dropdown-item"
+                >
+                  <i class="fas fa-sign-out-alt"></i>
+                  <span>{{ "USER_LOGOUT" | translate }}</span>
+                </button>
               </div>
             </div>
           </ng-template>
@@ -206,13 +139,10 @@
   <app-toast></app-toast>
 
   <!-- Modern Footer -->
-  <footer class="main-footer">
+  <footer class="footer">
     <div class="footer-content">
-      <!-- Footer Bottom -->
       <div class="footer-bottom">
-        <div class="footer-bottom-content">
-          <p class="copyright">{{ "FOOTER_COPYRIGHT" | translate }}</p>
-        </div>
+        <p class="copyright">{{ "FOOTER_COPYRIGHT" | translate }}</p>
       </div>
     </div>
   </footer>

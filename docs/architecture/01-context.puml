@@ -1,0 +1,19 @@
+@startuml LibraryApp System Context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+/' Assumption: LibraryApp serves both regular users and administrators '/
+/' Assumption: No external email/SMS services are currently integrated '/
+
+title System Context diagram for LibraryApp
+
+Person(libraryUser, "Library User", "A person who wants to browse, borrow, and return books")
+Person(admin, "Library Administrator", "A person who manages books, authors, publishers, and users")
+
+System(libraryApp, "LibraryApp System", "Allows users to browse books, manage borrowing, and administrators to manage library resources")
+
+Rel(libraryUser, libraryApp, "Uses", "HTTPS/JSON")
+Rel(admin, libraryApp, "Manages", "HTTPS/JSON")
+
+footer Generated on %date("yyyy-MM-dd HH:mm:ss", "Europe/Istanbul") | LibraryApp v1.0
+
+@enduml

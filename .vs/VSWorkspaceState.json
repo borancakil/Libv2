@@ -1,10 +1,7 @@
 {
   "ExpandedNodes": [
-    "",
-    "\\core",
-    "\\Infrastructure",
-    "\\Presentation",
-    "\\Presentation\\LibraryApp.API"
+    ""
   ],
+  "SelectedNode": "\\LibraryApp.sln",
   "PreviewInSolutionExplorer": false
 }

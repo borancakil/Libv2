@@ -1,0 +1,105 @@
+@startuml LibraryApp Entity Relationship
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+/' Assumption: Database uses SQL Server with proper foreign key relationships '/
+
+title Entity Relationship Diagram - LibraryApp Database
+
+enum "UserRole" as UserRole {
+    User
+    Admin
+}
+
+entity "Users" as users {
+    * UserId : int (PK)
+    --
+    * Name : nvarchar(255)
+    * Email : nvarchar(255)
+    * Password : nvarchar(255)
+    * Role : UserRole
+    * RegistrationDate : datetime
+    Age : int
+    Gender : nvarchar(50)
+    Address : nvarchar(500)
+}
+
+entity "Books" as books {
+    * BookId : int (PK)
+    --
+    * Title : nvarchar(255)
+    * PublicationYear : int
+    * IsAvailable : bit
+    * Rating : decimal
+    * AuthorId : int (FK)
+    * PublisherId : int (FK)
+    * CategoryId : int (FK)
+    CoverImage : varbinary(max)
+    ImageContentType : nvarchar(100)
+    ImageFileName : nvarchar(255)
+}
+
+entity "Authors" as authors {
+    * AuthorId : int (PK)
+    --
+    * Name : nvarchar(255)
+    Biography : ntext
+    BirthDate : date
+    Nationality : nvarchar(100)
+    ProfileImage : varbinary(max)
+    ImageContentType : nvarchar(100)
+    ImageFileName : nvarchar(255)
+}
+
+entity "Publishers" as publishers {
+    * PublisherId : int (PK)
+    --
+    * Name : nvarchar(255)
+    Address : nvarchar(500)
+    Website : nvarchar(255)
+    ContactEmail : nvarchar(255)
+    EstablishedDate : date
+    LogoImage : varbinary(max)
+    ImageContentType : nvarchar(100)
+    ImageFileName : nvarchar(255)
+}
+
+entity "Categories" as categories {
+    * CategoryId : int (PK)
+    --
+    * Name : nvarchar(100)
+    Description : nvarchar(500)
+}
+
+entity "Loans" as loans {
+    * LoanId : int (PK)
+    --
+    * BookId : int (FK)
+    * UserId : int (FK)
+    * LoanDate : datetime
+    * DueDate : datetime
+    ReturnDate : datetime
+}
+
+entity "UserFavoriteBooks" as favorites {
+    * UserId : int (PK, FK)
+    * BookId : int (PK, FK)
+    --
+    AddedDate : datetime
+}
+
+' Relationships
+users ||--o{ loans : "borrows"
+books ||--o{ loans : "borrowed_in"
+authors ||--o{ books : "writes"
+publishers ||--o{ books : "publishes"
+categories ||--o{ books : "categorized_as"
+users ||--o{ favorites : "favorites"
+books ||--o{ favorites : "favorited_by"
+
+' Indexes and constraints
+note right of users : Index on Email (unique)
+note right of books : Index on Title
+note right of loans : Index on (BookId, UserId, ReturnDate)
+note right of favorites : Unique constraint on (UserId, BookId)
+
+@enduml

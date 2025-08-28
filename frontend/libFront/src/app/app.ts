@@ -292,6 +292,34 @@ export class AppComponent implements OnInit, OnDestroy {
     return '';
   }
 
+  // Kullanıcının tam adını al (isim soyisim)
+  getUserFullName(): string {
+    if (!this.isBrowser) {
+      return '';
+    }
+    
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userObj = JSON.parse(user);
+        const firstName = userObj.firstName || userObj.name || '';
+        const lastName = userObj.lastName || '';
+        
+        if (firstName && lastName) {
+          return `${firstName} ${lastName}`;
+        } else if (firstName) {
+          return firstName;
+        } else {
+          return '';
+        }
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+        return '';
+      }
+    }
+    return '';
+  }
+
   getIsBrowser(): boolean {
     return this.isBrowser;
   }

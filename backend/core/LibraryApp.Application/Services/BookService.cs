@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using LibraryApp.Application.DTOs.Book;
 using LibraryApp.Application.DTOs.User;
 using LibraryApp.Application.Exceptions;
@@ -7,6 +7,8 @@ using LibraryApp.Domain.Entities;
 using LibraryApp.Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
 
+
+using Microsoft.EntityFrameworkCore;
 
 namespace LibraryApp.Application.Services
 {
@@ -61,7 +63,7 @@ namespace LibraryApp.Application.Services
                 throw new ValidationException("PublisherId", $"Publisher with ID {dto.PublisherId} does not exist");
             }
 
-            var book = new Book(dto.Title, dto.PublicationYear, dto.AuthorId, dto.PublisherId, dto.CategoryId, dto.Rating);
+            var book = _mapper.Map<Book>(dto);
 
             // Handle cover image if provided
             if (dto.CoverImage != null)
@@ -80,6 +82,7 @@ namespace LibraryApp.Application.Services
                 PublicationYear = dto.PublicationYear,
                 HasCoverImage = dto.CoverImage != null 
             });
+
 
             return book.BookId;
         }
@@ -106,19 +109,24 @@ namespace LibraryApp.Application.Services
         }
         public async Task<IEnumerable<BookDto>> GetAllBooksAsync(string? filter = null, bool includeUnavailable = true)
         {
-            var books = await _bookRepository.GetAllForListAsync() ?? Enumerable.Empty<Book>();
+            var books = _bookRepository.GetAllForList();
 
             if (!string.IsNullOrWhiteSpace(filter))
             {
                 var term = filter.Trim();
+                var like = $"%{term}%";
+
+                bool parsedYear = int.TryParse(term, out var year);
+
                 books = books.Where(b =>
-                    (b.Title?.Contains(term, StringComparison.CurrentCultureIgnoreCase) == true) ||
-                    (b.Author?.Name?.Contains(term, StringComparison.CurrentCultureIgnoreCase) == true) ||
-                    (b.Publisher?.Name?.Contains(term, StringComparison.CurrentCultureIgnoreCase) == true) ||
-                    (b.Category?.Name?.Contains(term, StringComparison.CurrentCultureIgnoreCase) == true) ||
-                    b.PublicationYear.ToString().Contains(term)
+                    EF.Functions.Like(b.Title ?? "", like) ||
+                    (b.Author != null && EF.Functions.Like(b.Author.Name ?? "", like)) ||
+                    (b.Publisher != null && EF.Functions.Like(b.Publisher.Name ?? "", like)) ||
+                    (b.Category != null && EF.Functions.Like(b.Category.Name ?? "", like)) ||
+                    (parsedYear && b.PublicationYear == year)
                 );
             }
+
 
             if (!includeUnavailable)
                 books = books.Where(b => b.IsAvailable);
@@ -140,30 +148,47 @@ namespace LibraryApp.Application.Services
         public async Task<IEnumerable<BookListDto>> GetAllBooksForListAsync(
             string? filter = null, bool includeUnavailable = true)
         {
-            var books = await _bookRepository.GetAllForListAsync() ?? Enumerable.Empty<Book>();
-
-            // Map
-            var bookListDtos = _mapper.Map<List<BookListDto>>(books);
-
-            // Filter
-            if (!string.IsNullOrWhiteSpace(filter))
-            {
-                var term = filter.Trim();
-                bookListDtos = bookListDtos.Where(b =>
-                    (b.Title?.Contains(term, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
-                    (b.AuthorName?.Contains(term, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
-                    (b.PublisherName?.Contains(term, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
-                    (b.CategoryName?.Contains(term, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
-                    b.PublicationYear.ToString().Contains(term)
-                ).ToList();
-            }
+            var booksQuery = _bookRepository.GetAllForList();
 
             if (!includeUnavailable)
             {
-                bookListDtos = bookListDtos.Where(b => b.IsAvailable).ToList();
+                booksQuery = booksQuery.Where(b => b.IsAvailable);
             }
 
-            return bookListDtos;
+            // Project to DTO
+            var bookListDtos = booksQuery.Select(b => new BookListDto
+            {
+                BookId = b.BookId,
+                Title = b.Title,
+                PublicationYear = b.PublicationYear,
+                IsAvailable = b.IsAvailable,
+                AuthorId = b.AuthorId,
+                AuthorName = b.Author != null ? b.Author.Name : null,
+                PublisherId = b.PublisherId,
+                PublisherName = b.Publisher != null ? b.Publisher.Name : null,
+
+                CoverImageUrl = b.ImageFileName != null ? $"/api/Books/{b.BookId}/cover" : null
+            });
+
+
+            if (!string.IsNullOrWhiteSpace(filter))
+            {
+                var term = filter.Trim();
+                var like = $"%{term}%";
+                bool parsedYear = int.TryParse(term, out var year);
+
+                bookListDtos = bookListDtos.Where(b =>
+                    EF.Functions.Like(b.Title ?? "", like) ||
+                    EF.Functions.Like(b.AuthorName ?? "", like) ||
+                    EF.Functions.Like(b.PublisherName ?? "", like) ||
+                    (parsedYear && b.PublicationYear == year)
+                );
+            }
+
+            // artık burada materialize et
+            var result = await bookListDtos.ToListAsync();
+
+            return result;
         }
 
 
@@ -245,7 +270,7 @@ namespace LibraryApp.Application.Services
 
             await _loanRepository.AddAsync(loan);
             
-            // Save all changes in one transaction
+            // Save all changes in one transaction - this ensures atomicity
             await _bookRepository.SaveChangesAsync();
             await _loanRepository.SaveChangesAsync();
 
@@ -281,9 +306,15 @@ namespace LibraryApp.Application.Services
 
         public async Task ReturnBookAsync(int bookId, int userId)
         {
+            // Get entities first
             var book = await _bookRepository.GetByIdAsync(bookId);
+            var user = await _userRepository.GetByIdAsync(userId);
+
             if (book == null)
                 throw new BookNotFoundException(bookId);
+
+            if (user == null)
+                throw new KeyNotFoundException($"User with ID {userId} not found.");
 
             // Find active loan for this specific user and book
             var activeLoan = await _loanRepository.GetActiveLoanAsync(bookId, userId);
@@ -357,8 +388,6 @@ namespace LibraryApp.Application.Services
                 dto.BorrowCount = 0;
             return dtos;
         }
-
-
 
 
 

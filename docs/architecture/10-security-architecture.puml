@@ -1,0 +1,84 @@
+@startuml LibraryApp Security Architecture
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+/' Assumption: JWT tokens use both JWS for signing and JWE for encryption '/
+/' Assumption: localStorage is used for token storage '/
+
+title Security Architecture - LibraryApp
+
+package "Client Layer" {
+    [Angular SPA] as spa
+    [User Browser] as browser
+}
+
+package "API Gateway / Load Balancer" {
+    [HTTPS/TLS Termination] as tls
+    [CORS Policy] as cors
+}
+
+package "Authentication Layer" {
+    [JWT Service] as jwtService
+    [Password Hasher] as passwordHasher
+    [Token Validator] as tokenValidator
+}
+
+package "Authorization Layer" {
+    [Role-Based Access Control] as rbac
+    [Permission Checker] as permissionChecker
+    [Admin Guard] as adminGuard
+    [User Guard] as userGuard
+}
+
+package "API Controllers" {
+    [Public Controllers] as publicControllers
+    [Protected Controllers] as protectedControllers
+    [Admin Controllers] as adminControllers
+}
+
+package "Security Middleware" {
+    [Global Exception Handler] as exceptionHandler
+    [Request Logging] as requestLogging
+}
+
+package "Data Layer" {
+    [User Repository] as userRepo
+    [Database] as db
+}
+
+' Security flows
+browser -> tls : HTTPS/TLS 1.3
+tls -> cors : CORS validation
+cors -> spa : Allowed origins
+
+' Authentication flow
+spa -> jwtService : Login request
+jwtService -> passwordHasher : Verify password
+passwordHasher -> userRepo : Get user by email
+userRepo -> db : Query user data
+jwtService -> jwtService : Generate JWS (signed)
+jwtService -> jwtService : Encrypt JWE
+jwtService -> spa : Return tokens in response body
+
+' Authorization flow
+spa -> tokenValidator : Validate JWT token
+tokenValidator -> jwtService : Decrypt and verify signature
+jwtService -> rbac : Check user role
+rbac -> permissionChecker : Validate permissions
+permissionChecker -> protectedControllers : Allow/Deny access
+
+' Security measures
+note top of tls : TLS 1.3 with strong ciphers
+note top of cors : Strict CORS policy
+note top of jwtService : JWS + JWE encryption
+note top of passwordHasher : BCrypt with salt
+note top of rbac : Role-based access control
+note top of exceptionHandler : No sensitive data in errors
+note top of requestLogging : Log security events
+
+' Token storage security
+note bottom of spa : Tokens stored in localStorage\nAccess token: 15 minutes\nRefresh token: 7 days\nManual cleanup on logout
+
+' Database security
+note bottom of db : Encrypted at rest\nConnection string encryption\nSQL injection prevention\nParameterized queries
+
+@enduml

@@ -28,12 +28,7 @@ namespace LibraryApp.Domain.Interfaces
         /// Gets all books optimized for list view (without heavy collections)
         /// </summary>
         /// <returns>Collection of book entities optimized for listing</returns>
-        Task<IEnumerable<Book>> GetAllForListAsync();
-        
-        /// <summary>
-        /// Gets all books as DTOs optimized for list view (with projection)
-        /// </summary>
-        /// <returns>Collection of objects optimized for listing</returns>
+        IQueryable<Book> GetAllForList();
         
         /// <summary>
         /// Adds a new book to the repository

@@ -16,15 +16,21 @@ import { UserApiService } from '../services/user-api';
   styleUrls: ['./register.component.css'],
 })
 export class RegisterComponent implements OnDestroy {
-  name = '';
+  firstName = '';
+  lastName = '';
   password = '';
+  confirmPassword = '';
   email = '';
   showPassword = false;
+  showConfirmPassword = false;
   isLoading = false;
-
-  public validationErrors: string[] = [];
-  public successMessage: string | null = null;
+  error: string | null = null;
+  successMessage: string | null = null;
   private isBrowser: boolean;
+
+  get currentLang(): string {
+    return this.translate.currentLang || 'tr';
+  }
 
   private apiSub: Subscription | undefined;
 
@@ -41,17 +47,45 @@ export class RegisterComponent implements OnDestroy {
     this.showPassword = !this.showPassword;
   }
 
+  toggleConfirmPassword(): void {
+    this.showConfirmPassword = !this.showConfirmPassword;
+  }
+
+  getPasswordStrength(): string {
+    if (!this.password) return '';
+    
+    const hasLetter = /[a-zA-Z]/.test(this.password);
+    const hasNumber = /\d/.test(this.password);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(this.password);
+    const length = this.password.length;
+    
+    if (length < 6) return 'weak';
+    if (length >= 8 && hasLetter && hasNumber && hasSpecial) return 'strong';
+    if (length >= 6 && hasLetter && hasNumber) return 'medium';
+    return 'weak';
+  }
+
+  getPasswordStrengthText(): string {
+    const strength = this.getPasswordStrength();
+    switch (strength) {
+      case 'weak': return 'Zayıf şifre';
+      case 'medium': return 'Orta güçlükte şifre';
+      case 'strong': return 'Güçlü şifre';
+      default: return '';
+    }
+  }
+
   register(): void {
     if (!this.isBrowser) {
       return; // SSR sırasında API çağrısı yapma
     }
 
-    this.validationErrors = [];
+    this.error = null;
     this.successMessage = null;
     this.isLoading = true;
 
     const user = {
-      name: this.name,
+      name: `${this.firstName} ${this.lastName}`,
       password: this.password,
       email: this.email,
     };
@@ -86,46 +120,47 @@ export class RegisterComponent implements OnDestroy {
           if (err.error?.errors) {
             // Validation errors
             const errorObj = err.error.errors;
-            this.validationErrors = Object.values(errorObj)
+            this.error = Object.values(errorObj)
               .flat()
-              .map((error) => String(error));
+              .map((error) => String(error))
+              .join(', ');
           } else if (err.error?.message) {
             // Backend'den gelen hata mesajı
-            this.validationErrors = [err.error.message];
+            this.error = err.error.message;
           } else {
             // Genel 400 hatası
             this.translate
               .get('REGISTER_ERROR_BAD_REQUEST')
               .subscribe((msg: string) => {
-                this.validationErrors = [msg];
+                this.error = msg;
               });
           }
-        } else if (err.status === 409) {
-          // Conflict - Email zaten kayıtlı
-          this.translate
-            .get('REGISTER_ERROR_EMAIL_EXISTS')
-            .subscribe((msg: string) => {
-              this.validationErrors = [msg];
-            });
-        } else if (err.status === 422) {
-          // Unprocessable Entity - Validation hatası
-          if (err.error?.message) {
-            this.validationErrors = [err.error.message];
-          } else {
-            this.translate
-              .get('REGISTER_ERROR_VALIDATION')
-              .subscribe((msg: string) => {
-                this.validationErrors = [msg];
-              });
-          }
-        } else {
-          // Genel hata
-          this.translate
-            .get('REGISTER_ERROR_GENERAL')
-            .subscribe((msg: string) => {
-              this.validationErrors = [msg];
-            });
-        }
+                 } else if (err.status === 409) {
+           // Conflict - Email zaten kayıtlı
+           this.translate
+             .get('REGISTER_ERROR_EMAIL_EXISTS')
+             .subscribe((msg: string) => {
+               this.error = msg;
+             });
+         } else if (err.status === 422) {
+           // Unprocessable Entity - Validation hatası
+           if (err.error?.message) {
+             this.error = err.error.message;
+           } else {
+             this.translate
+               .get('REGISTER_ERROR_VALIDATION')
+               .subscribe((msg: string) => {
+                 this.error = msg;
+               });
+           }
+         } else {
+           // Genel hata
+           this.translate
+             .get('REGISTER_ERROR_GENERAL')
+             .subscribe((msg: string) => {
+               this.error = msg;
+             });
+         }
       },
     });
   }

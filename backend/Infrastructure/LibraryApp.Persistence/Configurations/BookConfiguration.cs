@@ -23,6 +23,12 @@ namespace LibraryApp.Persistence.Configurations
                 .IsRequired()
                 .HasDefaultValue(true);
 
+            // Add unique constraint to prevent race conditions when borrowing
+            // This ensures only one user can borrow a book at a time
+            builder.HasIndex(b => new { b.BookId, b.IsAvailable })
+                .HasFilter("[IsAvailable] = 1")
+                .IsUnique();
+
             // Photo/Image properties
             builder.Property(b => b.CoverImage)
                 .HasColumnType("VARBINARY(MAX)")

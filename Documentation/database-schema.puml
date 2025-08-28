@@ -1,0 +1,96 @@
+@startuml Database Schema
+
+!define table(x) table x as "x" #FFF
+!define primary_key(x) <b>x</b>
+!define foreign_key(x) <i>x</i>
+
+skinparam linetype ortho
+
+table(Users) {
+  primary_key(UserId): int
+  --
+  Name: nvarchar(255)
+  Email: nvarchar(255)
+  Password: nvarchar(255)
+  Role: int
+  RegistrationDate: datetime
+  Age: int
+  Gender: nvarchar(50)
+  Address: nvarchar(500)
+}
+
+table(Books) {
+  primary_key(BookId): int
+  --
+  Title: nvarchar(255)
+  PublicationYear: int
+  IsAvailable: bit
+  Rating: decimal
+  foreign_key(AuthorId): int
+  foreign_key(PublisherId): int
+  foreign_key(CategoryId): int
+  CoverImage: varbinary(max)
+  ImageContentType: nvarchar(100)
+  ImageFileName: nvarchar(255)
+}
+
+table(Authors) {
+  primary_key(AuthorId): int
+  --
+  Name: nvarchar(255)
+  Biography: ntext
+  BirthDate: date
+  Nationality: nvarchar(100)
+  ProfileImage: varbinary(max)
+  ImageContentType: nvarchar(100)
+  ImageFileName: nvarchar(255)
+}
+
+table(Publishers) {
+  primary_key(PublisherId): int
+  --
+  Name: nvarchar(255)
+  Address: nvarchar(500)
+  Website: nvarchar(255)
+  ContactEmail: nvarchar(255)
+  EstablishedDate: date
+  LogoImage: varbinary(max)
+  ImageContentType: nvarchar(100)
+  ImageFileName: nvarchar(255)
+}
+
+table(Categories) {
+  primary_key(CategoryId): int
+  --
+  Name: nvarchar(100)
+  Description: nvarchar(500)
+}
+
+table(Loans) {
+  primary_key(LoanId): int
+  --
+  foreign_key(BookId): int
+  foreign_key(UserId): int
+  LoanDate: datetime
+  DueDate: datetime
+  ReturnDate: datetime
+}
+
+table(UserFavoriteBooks) {
+  primary_key(UserId): int
+  primary_key(BookId): int
+  --
+  AddedDate: datetime
+}
+
+Users }o--|| Loans
+Books }o--|| Loans
+
+Authors }o--|| Books
+Publishers }o--|| Books
+Categories }o--|| Books
+
+Users }o--|| UserFavoriteBooks
+Books }o--|| UserFavoriteBooks
+
+@enduml

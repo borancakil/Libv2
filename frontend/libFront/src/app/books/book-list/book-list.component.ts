@@ -59,6 +59,13 @@ export class BookListComponent implements OnInit, OnDestroy {
   selectedFilter = 'all';
   private searchTimeout: any;
 
+  // Pagination properties
+  currentPage = 1;
+  pageSize = 9;
+  totalBooks = 0;
+  totalPages = 0;
+  displayedBooks: BookListDto[] = [];
+
   constructor(
     public router: Router,
     private bookApi: BookApiService,
@@ -91,6 +98,9 @@ export class BookListComponent implements OnInit, OnDestroy {
       next: (books) => {
         this.books = books;
         this.filteredBooks = books; // Initialize filtered books
+        this.totalBooks = books.length;
+        this.totalPages = Math.ceil(this.totalBooks / this.pageSize);
+        this.updateDisplayedBooks();
         this.isLoading = false;
       },
       error: (err) => {
@@ -101,6 +111,64 @@ export class BookListComponent implements OnInit, OnDestroy {
     });
 
     this.subscriptions.push(subscription);
+  }
+
+  private updateDisplayedBooks(): void {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.displayedBooks = this.filteredBooks.slice(startIndex, endIndex);
+  }
+
+  // Pagination methods
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.updateDisplayedBooks();
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.goToPage(this.currentPage + 1);
+    }
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.goToPage(this.currentPage - 1);
+    }
+  }
+
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisiblePages = 5;
+    
+    if (this.totalPages <= maxVisiblePages) {
+      // Show all pages if total is small
+      for (let i = 1; i <= this.totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show pages around current page
+      let start = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+      let end = Math.min(this.totalPages, start + maxVisiblePages - 1);
+      
+      // Adjust start if we're near the end
+      if (end - start < maxVisiblePages - 1) {
+        start = Math.max(1, end - maxVisiblePages + 1);
+      }
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+    }
+    
+    return pages;
+  }
+
+  // Helper method for template
+  getMath(): any {
+    return Math;
   }
 
   onFilterButtonClick(): void {
@@ -208,6 +276,10 @@ export class BookListComponent implements OnInit, OnDestroy {
           isAvailable: book.isAvailable,
           rating: 0
         }));
+        this.totalBooks = this.filteredBooks.length;
+        this.totalPages = Math.ceil(this.totalBooks / this.pageSize);
+        this.currentPage = 1; // Reset to first page when filtering
+        this.updateDisplayedBooks();
         this.isLoading = false;
       },
       error: (err) => {

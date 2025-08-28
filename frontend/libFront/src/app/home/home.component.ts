@@ -70,8 +70,8 @@ export class HomeComponent implements OnInit {
       next: (books) => {
         // Toplam kitap sayısını kaydet
         this.totalBooks = books.length;
-        // İlk 6 kitabı alıyoruz (popüler kitaplar olarak gösterelim)
-        this.popularBooks = books.slice(0, 6);
+        // İlk 9 kitabı alıyoruz (performans için sınırlı sayıda)
+        this.popularBooks = books.slice(0, 9);
         this.isLoading = false;
       },
       error: (error) => {
@@ -119,7 +119,7 @@ export class HomeComponent implements OnInit {
    * Kitap kapağı URL'sini alır
    */
   getBookCoverUrl(bookId: number): string {
-    return `http://localhost:7208/api/Books/${bookId}/cover`;
+    return `https://localhost:7209/api/Books/${bookId}/cover`;
   }
 
   /**

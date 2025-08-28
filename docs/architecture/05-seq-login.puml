@@ -1,0 +1,55 @@
+@startuml LibraryApp Login Sequence
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+/' Assumption: JWT tokens are stored in local storage as per project requirements '/
+/' Assumption: Both access and refresh tokens are used for security '/
+
+title Login Sequence - JWT Authentication with Local Storage
+
+actor "Library User" as user
+participant "Angular SPA" as spa
+participant "Users Controller" as controller
+participant "User Service" as userService
+participant "JWT Service" as jwtService
+participant "User Repository" as userRepo
+database "SQL Database" as db
+
+== Login Process ==
+
+user -> spa: Enter credentials
+spa -> controller: POST /api/users/login\n{email, password}
+
+alt Valid Credentials
+    controller -> userService: LoginAsync(email, password)
+    userService -> userRepo: GetByEmailAsync(email)
+    userRepo -> db: SELECT * FROM Users WHERE Email = @email
+    db --> userRepo: User data
+    userRepo --> userService: User entity
+    userService -> userService: VerifyPassword(password, hashedPassword)
+    userService --> controller: UserDto
+    
+    controller -> jwtService: CreateAccessToken(userId, email, role)
+    jwtService -> jwtService: Create JWE (encrypted token with JWS inside)
+    jwtService --> controller: accessToken
+    
+    controller -> jwtService: CreateRefreshToken(userId)
+    jwtService -> jwtService: Create JWE (encrypted token with JWS inside)
+    jwtService --> controller: refreshToken
+    
+    controller --> spa: 200 OK\n{message, accessToken, refreshToken, tokenType, expiresIn}
+    spa -> spa: Store tokens in localStorage
+    spa --> user: Login successful\nRedirect to dashboard
+
+else Invalid Credentials
+    controller -> userService: LoginAsync(email, password)
+    userService -> userRepo: GetByEmailAsync(email)
+    userRepo -> db: SELECT * FROM Users WHERE Email = @email
+    db --> userRepo: No user found OR invalid password
+    userRepo --> userService: null OR user with wrong password
+    userService -> userService: Password verification fails
+    userService --> controller: throws UnauthorizedAccessException
+    controller --> spa: 401 Unauthorized\n{message: "Invalid credentials"}
+    spa --> user: Show error message
+end
+
+@enduml

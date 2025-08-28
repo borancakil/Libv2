@@ -1,0 +1,23 @@
+@startuml Return Book Activity Diagram
+
+|User|
+start
+:Selects a book to return;
+
+|System|
+:Finds the active loan for the book and user;
+
+if (Is there an active loan?) then (yes)
+  :Marks the loan as returned;
+  :Updates the book's availability;
+  :Saves changes to the database;
+  :Shows success message;
+else (no)
+  :Shows no active loan error;
+endif
+
+|User|
+:Sees confirmation or error message;
+stop
+
+@enduml

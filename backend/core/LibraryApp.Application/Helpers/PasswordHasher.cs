@@ -6,7 +6,7 @@ namespace LibraryApp.Application.Helpers
     {
         public static string Hash(string password)
         {
-            return BCrypt.Net.BCrypt.HashPassword(password);
+            return BCrypt.Net.BCrypt.HashPassword(password, workFactor: 12);
         }
 
         public static bool Verify(string enteredPassword, string hashedPassword)

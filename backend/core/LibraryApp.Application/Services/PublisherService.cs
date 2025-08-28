@@ -5,7 +5,6 @@ using LibraryApp.Application.Interfaces;
 using LibraryApp.Domain.Entities;
 using LibraryApp.Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
-using static System.Reflection.Metadata.BlobBuilder;
 using AutoMapper;
 
 namespace LibraryApp.Application.Services

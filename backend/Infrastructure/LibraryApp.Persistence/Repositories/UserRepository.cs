@@ -1,5 +1,4 @@
-﻿using LibraryApp.Application.DTOs.Book;
-using LibraryApp.Domain.Entities;
+﻿using LibraryApp.Domain.Entities;
 using LibraryApp.Domain.Interfaces;
 using LibraryApp.Persistence.Data;
 using Microsoft.EntityFrameworkCore;

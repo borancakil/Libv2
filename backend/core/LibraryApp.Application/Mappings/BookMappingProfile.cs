@@ -8,22 +8,10 @@ namespace LibraryApp.Application.Mappings
     {
         public BookMappingProfile()
         {
-            // =============== Book -> BookListDto ===============
             CreateMap<Book, BookListDto>()
-                .ForMember(d => d.BookId,
-                    o => o.MapFrom(s => s.BookId))
-                .ForMember(d => d.Title,
-                    o => o.MapFrom(s => s.Title ?? "")) 
-                .ForMember(d => d.PublicationYear,
-                    o => o.MapFrom(s => (int?)s.PublicationYear)) 
-                .ForMember(d => d.AuthorName,
-                    o => o.MapFrom(s => s.Author != null ? s.Author.Name : ""))
-                .ForMember(d => d.PublisherName,
-                    o => o.MapFrom(s => s.Publisher != null ? s.Publisher.Name : ""))
-                .ForMember(d => d.CategoryName,
-                    o => o.MapFrom(s => s.Category != null ? s.Category.Name : ""))
-                .ForMember(d => d.IsAvailable,
-                    o => o.MapFrom(s => s.IsAvailable));
+                .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.Author.Name))
+                .ForMember(dest => dest.PublisherName, opt => opt.MapFrom(src => src.Publisher.Name))
+                .ForMember(dest => dest.CoverImageUrl, opt => opt.MapFrom(src => src.ImageFileName != null ? $"/api/Books/{src.BookId}/cover" : null));
 
             // =============== Book -> BookDto (detay görünüm) ===============
             CreateMap<Book, BookDto>()
@@ -40,7 +28,8 @@ namespace LibraryApp.Application.Mappings
                         (s.ImageFileName != null && s.ImageContentType != null) || s.CoverImage != null))
                 .ForMember(d => d.BorrowCount, o => o.Ignore());
 
-
+            // =============== CreateBookDto -> Book ===============
+            CreateMap<CreateBookDto, Book>();
 
             // =============== UpdateBookDto -> Book ===============
             CreateMap<UpdateBookDto, Book>()

@@ -1,0 +1,23 @@
+@startuml Borrow Book Activity Diagram
+
+|User| 
+start
+:Selects a book to borrow;
+
+|System|
+:Gets book and user details;
+
+if (Is book available?) then (yes)
+  :Marks book as borrowed;
+  :Creates a new loan record;
+  :Saves changes to the database;
+  :Shows success message;
+else (no)
+  :Shows book not available error;
+endif
+
+|User|
+:Sees confirmation or error message;
+stop
+
+@enduml

@@ -1,0 +1,105 @@
+@startuml LibraryApp Return Book Sequence
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+/' Assumption: User is already authenticated and has valid JWT token '/
+/' Assumption: GlobalExceptionMiddleware handles exception to HTTP response mapping '/
+
+title Return Book Sequence
+
+actor "Library User" as user
+participant "Angular SPA" as spa
+participant "Books Controller" as controller
+participant "GlobalExceptionMiddleware" as middleware
+participant "Book Service" as bookService
+participant "Book Repository" as bookRepo
+participant "User Repository" as userRepo
+participant "Loan Repository" as loanRepo
+database "SQL Database" as db
+
+== Return Book Process ==
+
+user -> spa: Select book to return
+spa -> controller: POST /api/books/{bookId}/return\n{bookId, userId} (with JWT from localStorage)
+
+alt Valid Request
+    controller -> controller: GetCurrentUserId() (extract from JWT)
+    
+    controller -> bookService: ReturnBookAsync(bookId, userId)
+    bookService -> bookRepo: GetById(bookId)
+    bookRepo -> db: SELECT * FROM Books WHERE Id = @bookId
+    db --> bookRepo: Book data
+    bookRepo --> bookService: Book entity
+    
+    bookService -> userRepo: GetById(userId)
+    userRepo -> db: SELECT * FROM Users WHERE Id = @userId
+    db --> userRepo: User data
+    userRepo --> bookService: User entity
+    
+    bookService -> loanRepo: GetActiveLoanAsync(bookId, userId)
+    loanRepo -> db: SELECT * FROM Loans WHERE BookId = @bookId AND UserId = @userId AND ReturnDate IS NULL
+    db --> loanRepo: Loan data
+    loanRepo --> bookService: Loan entity
+    
+    note over bookService : Loan details: {loanId, loanDate, dueDate, isOverdue}
+    
+    alt Active loan found
+        bookService -> bookRepo: Update(book) - MarkAsReturned()
+        bookService -> loanRepo: Update(loan) - MarkAsReturned()
+        
+        note over bookService, db : Transaction begins here
+        
+        bookService -> bookRepo: SaveChangesAsync()
+        bookRepo -> db: UPDATE Books SET IsAvailable = 1 WHERE Id = @bookId
+        db --> bookRepo: Book updated
+        
+        bookService -> loanRepo: SaveChangesAsync()
+        loanRepo -> db: UPDATE Loans SET ReturnDate = GETDATE() WHERE Id = @loanId
+        db --> loanRepo: Loan updated
+        
+        note over bookService, db : Transaction committed atomically
+        
+        bookService --> controller: Success
+        controller --> spa: 200 OK\n{message: "Book returned successfully", statusCode: 200, loanInfo: {loanId, loanDate, dueDate, returnDate: DateTime.UtcNow}}
+        spa --> user: Show success message\nUpdate book availability UI\nRefresh borrowed books list\nDisplay loan return confirmation
+        
+    else No active loan found
+        bookService --> controller: throws InvalidOperationException
+        controller --> middleware: Exception bubbles up
+        middleware -> middleware: Map exception to HTTP response
+        middleware --> spa: 400 Bad Request\n{message: "No active loan found for this book", statusCode: 400}
+        spa --> user: Show error message
+    end
+    
+else Book Not Found
+    controller -> bookService: ReturnBookAsync(bookId, userId)
+    bookService -> bookRepo: GetById(bookId)
+    bookRepo -> db: SELECT * FROM Books WHERE Id = @bookId
+    db --> bookRepo: No book found
+    bookRepo --> bookService: null
+    bookService --> controller: throws BookNotFoundException
+    controller --> middleware: Exception bubbles up
+    middleware -> middleware: Map exception to HTTP response
+    middleware --> spa: 404 Not Found\n{message: "Book not found", statusCode: 404, details: {bookId}}
+    spa --> user: Show error message
+
+else User Not Found
+    controller -> bookService: ReturnBookAsync(bookId, userId)
+    bookService -> bookRepo: GetById(bookId)
+    bookRepo -> db: SELECT * FROM Books WHERE Id = @bookId
+    db --> bookRepo: Book data
+    bookRepo --> bookService: Book entity
+    
+    bookService -> userRepo: GetById(userId)
+    userRepo -> db: SELECT * FROM Users WHERE Id = @userId
+    db --> userRepo: No user found
+    userRepo --> bookService: null
+    bookService --> controller: throws KeyNotFoundException
+    controller --> middleware: Exception bubbles up
+    middleware -> middleware: Map exception to HTTP response
+    middleware --> spa: 404 Not Found\n{message: "User not found", statusCode: 404, details: {userId}}
+    spa --> user: Show error message
+end
+
+note over controller, middleware : GlobalExceptionMiddleware handles all exceptions\nand maps them to appropriate HTTP status codes
+
+@enduml

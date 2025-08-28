@@ -1,0 +1,84 @@
+@startuml LibraryApp Borrow Book Sequence
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+/' Assumption: User is already authenticated and has valid JWT token '/
+/' Assumption: Book availability is checked before creating loan record '/
+/' Assumption: Transaction management ensures atomicity of book borrowing '/
+/' Assumption: GlobalExceptionMiddleware handles exception to HTTP response mapping '/
+
+title Borrow Book Sequence
+
+actor "Library User" as user
+participant "Angular SPA" as spa
+participant "Books Controller" as controller
+participant "GlobalExceptionMiddleware" as middleware
+participant "Book Service" as bookService
+participant "Book Repository" as bookRepo
+participant "Loan Repository" as loanRepo
+participant "User Repository" as userRepo
+database "SQL Database" as db
+
+== Borrow Book Process ==
+
+user -> spa: Select book to borrow
+spa -> controller: POST /api/books/{bookId}/borrow\n{bookId, userId} (with JWT from localStorage)
+
+alt Book Available
+    controller -> controller: GetCurrentUserId() (extract from JWT)
+    controller -> userRepo: GetById(userId)
+    userRepo -> db: SELECT * FROM Users WHERE Id = @userId
+    db --> userRepo: User data
+    userRepo --> controller: User entity
+    
+    controller -> bookService: BorrowBookAsync(bookId, userId)
+    bookService -> bookRepo: GetById(bookId)
+    bookRepo -> db: SELECT * FROM Books WHERE Id = @bookId
+    db --> bookRepo: Book data
+    bookRepo --> bookService: Book entity
+    
+    bookService -> bookService: CheckAvailability(book)
+    
+    alt Book is available
+        bookService -> bookRepo: Update(book) - MarkAsBorrowed()
+        bookService -> loanRepo: AddAsync(loan)
+        
+        note over bookService, db : Transaction begins here
+        
+        bookService -> bookRepo: SaveChangesAsync()
+        bookRepo -> db: UPDATE Books SET IsAvailable = 0 WHERE Id = @bookId
+        db --> bookRepo: Book updated
+        
+        bookService -> loanRepo: SaveChangesAsync()
+        loanRepo -> db: INSERT INTO Loans (BookId, UserId, BorrowDate, DueDate)
+        db --> loanRepo: Loan created
+        
+        note over bookService, db : Transaction committed atomically
+        
+        bookService --> controller: Success
+        controller --> spa: 200 OK\n{message: "Book borrowed successfully", dueDate: "2025-01-15T00:00:00Z"}
+        spa --> user: Show success message\nUpdate book availability UI
+        
+    else Book not available
+        bookService --> controller: throws BookNotAvailableException
+        controller --> middleware: Exception bubbles up
+        middleware -> middleware: Map exception to HTTP response
+        middleware --> spa: 409 Conflict\n{message: "Book is not available", statusCode: 409, details: {bookId, bookTitle}}
+        spa --> user: Show error message
+    end
+    
+else Book Not Found
+    controller -> bookService: BorrowBookAsync(bookId, userId)
+    bookService -> bookRepo: GetById(bookId)
+    bookRepo -> db: SELECT * FROM Books WHERE Id = @bookId
+    db --> bookRepo: No book found
+    bookRepo --> bookService: null
+    bookService --> controller: throws BookNotFoundException
+    controller --> middleware: Exception bubbles up
+    middleware -> middleware: Map exception to HTTP response
+    middleware --> spa: 404 Not Found\n{message: "Book not found", statusCode: 404, details: {bookId}}
+    spa --> user: Show error message
+end
+
+note over controller, middleware : GlobalExceptionMiddleware handles all exceptions\nand maps them to appropriate HTTP status codes
+
+@enduml

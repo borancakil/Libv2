@@ -8,8 +8,6 @@ import { PublisherListComponent } from './books/publisher-list/publisher-list.co
 import { PublisherDetailComponent } from './books/publisher-detail/publisher-detail.component';
 import { LoginComponent } from './users/login/login.component';
 import { RegisterComponent } from './users/register/register.component';
-import { BorrowedBooksComponent } from './users/borrowed-books/borrowed-books.component';
-import { FavoritesComponent } from './users/favorites/favorites.component';
 import { UserDashboardComponent } from './users/user-dashboard/user-dashboard.component';
 import { ProfileComponent } from './users/profile/profile.component';
 import { authGuard } from './guards/auth.guard';
@@ -27,8 +25,6 @@ export const routes: Routes = [
       { path: 'publisher/:id', component: PublisherDetailComponent },
       { path: 'login', component: LoginComponent },
       { path: 'register', component: RegisterComponent },
-      { path: 'borrowed', component: BorrowedBooksComponent, canActivate: [authGuard] },
-      { path: 'favorites', component: FavoritesComponent, canActivate: [authGuard] },
       { path: 'dashboard', component: UserDashboardComponent, canActivate: [authGuard] },
       { path: 'profile', component: ProfileComponent, canActivate: [authGuard] },
     ],

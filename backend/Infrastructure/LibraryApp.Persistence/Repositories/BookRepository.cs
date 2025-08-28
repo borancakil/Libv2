@@ -3,7 +3,6 @@ using LibraryApp.Domain.Interfaces;
 using LibraryApp.Persistence.Data;  
 using Microsoft.EntityFrameworkCore;
 using LibraryApp.Application.Interfaces;
-using LibraryApp.Application.DTOs.Book;
 
 
 namespace LibraryApp.Persistence.Repositories
@@ -45,59 +44,12 @@ namespace LibraryApp.Persistence.Repositories
             return await query.ToListAsync();
         }
 
-        /// <summary>
-        /// Gets all books optimized for list view (without heavy collections)
-        /// </summary>
-        public async Task<IEnumerable<Book>> GetAllForListAsync()
+        public IQueryable<Book> GetAllForList()
         {
-            return await _context.Books
+            return _context.Books
                 .Include(b => b.Author)
                 .Include(b => b.Publisher)
-                .Include(b => b.Category)
-                .Select(b => new Book(b.Title)
-                {
-                    BookId = b.BookId,
-                    PublicationYear = b.PublicationYear,
-                    Rating = b.Rating,
-                    CategoryId = b.CategoryId,
-                    Category = b.Category,
-                    AuthorId = b.AuthorId,
-                    Author = b.Author,
-                    PublisherId = b.PublisherId,
-                    Publisher = b.Publisher,
-                    ImageContentType = b.ImageContentType,
-                    ImageFileName = b.ImageFileName,
-                    // CoverImage ve BorrowedBooks yüklenmeyecek
-                })
-                .ToListAsync();
-        }
-
-        /// <summary>
-        /// Gets all books as DTOs optimized for list view (with projection)
-        /// </summary>
-        public async Task<IEnumerable<object>> GetAllForListAsDtoAsync()
-        {
-            var sql = @"
-                SELECT 
-                    b.BookId,
-                    b.Title,
-                    b.PublicationYear,
-                    a.Name AS AuthorName,
-                    p.Name AS PublisherName,
-                    c.Name AS CategoryName,
-                    b.IsAvailable,
-                    '' AS CallNo
-                FROM Books b
-                INNER JOIN Authors a ON b.AuthorId = a.AuthorId
-                INNER JOIN Publishers p ON b.PublisherId = p.PublisherId
-                INNER JOIN Categories c ON b.CategoryId = c.CategoryId";
-
-            var result = await _context.Database
-                .SqlQueryRaw<BookListDto>(sql)
-                .ToListAsync();
-
-
-            return result.Cast<object>();
+                .AsNoTracking();
         }
 
         public async Task<Book?> GetByIdAsync(int id, bool includeNavigationProperties = false)
