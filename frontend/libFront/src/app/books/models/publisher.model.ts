@@ -4,32 +4,23 @@ export interface Publisher {
   publisherId: number;
   name: string;
   address?: string;
-  phone?: string;
-  email?: string;
-  description?: string;
-  foundedYear?: number;
-  location?: string;
+  contactEmail?: string;
+  establishedDate?: string;
+  bookCount?: number;
+  logoImageUrl?: string;
   books?: Book[];
-  hasProfileImage?: boolean;
-  bookCount?: number; // Add book count property
 }
 
 export interface CreatePublisherDto {
   name: string;
   address?: string;
-  phone?: string;
-  email?: string;
-  description?: string;
-  foundedYear?: number;
-  location?: string;
+  contactEmail?: string;
+  establishedDate?: string;
 }
 
 export interface UpdatePublisherDto {
-  name?: string;
+  name: string;
   address?: string;
-  phone?: string;
-  email?: string;
-  description?: string;
-  foundedYear?: number;
-  location?: string;
+  contactEmail?: string;
+  establishedDate?: string;
 } 

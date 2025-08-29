@@ -94,19 +94,15 @@ export class AuthorDetailComponent implements OnInit, OnDestroy {
   }
 
   private loadAuthorPhoto(authorId: number): void {
-    if (!this.author?.hasProfileImage) {
-      return;
-    }
-
     this.isPhotoLoading = true;
 
-    const subscription = this.authorApi.getProfileImage(authorId).subscribe({
-      next: (blob) => {
+    const subscription = this.authorApi.getAuthorProfileImage(authorId).subscribe({
+      next: (blob: Blob) => {
         const url = URL.createObjectURL(blob);
         this.authorPhoto = this.sanitizer.bypassSecurityTrustUrl(url);
         this.isPhotoLoading = false;
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error(`Error loading photo for author ${authorId}:`, err);
         this.isPhotoLoading = false;
       }

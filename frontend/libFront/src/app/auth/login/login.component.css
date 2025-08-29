@@ -1,0 +1,92 @@
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .login-container {
+        padding: 40px 20px;
+    }
+
+    .login-card {
+        max-width: 500px;
+    }
+}
+
+@media (max-width: 768px) {
+    .login-container {
+        padding: 20px 15px;
+        min-height: 100vh;
+    }
+
+    .login-card {
+        max-width: 100%;
+        padding: 30px 20px;
+    }
+
+    .login-header {
+        margin-bottom: 30px;
+    }
+
+    .login-title {
+        font-size: 2rem;
+    }
+
+    .login-subtitle {
+        font-size: 1rem;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        font-size: 0.9rem;
+    }
+
+    .form-input {
+        padding: 12px 16px;
+        font-size: 1rem;
+    }
+
+    .login-button {
+        padding: 14px 20px;
+        font-size: 1rem;
+    }
+
+    .login-footer {
+        margin-top: 25px;
+    }
+
+    .register-link {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-container {
+        padding: 15px 10px;
+    }
+
+    .login-card {
+        padding: 25px 15px;
+    }
+
+    .login-title {
+        font-size: 1.8rem;
+    }
+
+    .login-subtitle {
+        font-size: 0.9rem;
+    }
+
+    .form-input {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
+
+    .login-button {
+        padding: 12px 18px;
+        font-size: 0.9rem;
+    }
+
+    .register-link {
+        font-size: 0.8rem;
+    }
+}

@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { Publisher } from '../models/publisher.model';
 import { Book } from '../models/book.model';
 import { environment } from '../../../environments/environment';
@@ -11,12 +10,19 @@ import { environment } from '../../../environments/environment';
 })
 export class PublisherApiService {
   private apiUrl = environment.apiUrl;
-  private bookCountCache = new Map<number, number>(); // Simple cache for book counts
 
   constructor(private http: HttpClient) {}
 
   getAll(filter?: string): Observable<Publisher[]> {
-    let url = `${this.apiUrl}/Publishers`;
+    let url = `${this.apiUrl}/Publishers/list`;
+    if (filter && filter.trim()) {
+      url += `?filter=${encodeURIComponent(filter.trim())}`;
+    }
+    return this.http.get<Publisher[]>(url);
+  }
+
+  getAllForList(filter?: string): Observable<Publisher[]> {
+    let url = `${this.apiUrl}/Publishers/list`;
     if (filter && filter.trim()) {
       url += `?filter=${encodeURIComponent(filter.trim())}`;
     }
@@ -35,70 +41,39 @@ export class PublisherApiService {
     return this.http.get<Publisher>(`${this.apiUrl}/Publishers/${id}`);
   }
 
+  create(publisher: any): Observable<Publisher> {
+    return this.http.post<Publisher>(`${this.apiUrl}/Publishers`, publisher);
+  }
+
+  update(id: number, publisher: any): Observable<Publisher> {
+    return this.http.put<Publisher>(`${this.apiUrl}/Publishers/${id}`, publisher);
+  }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/Publishers/${id}`);
+  }
+
   getBooksByPublisher(publisherId: number): Observable<Book[]> {
-    return this.http.get<Book[]>(
-      `${this.apiUrl}/Publishers/${publisherId}/books`
-    );
+    return this.http.get<Book[]>(`${this.apiUrl}/Publishers/${publisherId}/books`);
   }
 
-  getBookCount(publisherId: number): Observable<number> {
-    // Check cache first
-    if (this.bookCountCache.has(publisherId)) {
-      return of(this.bookCountCache.get(publisherId)!);
-    }
-
-    return this.http.get<any>(
-      `${this.apiUrl}/Publishers/${publisherId}/book-count`
-    ).pipe(
-      map(response => {
-        let count = 0;
-        // Handle {"count":5} format
-        if (response && typeof response === 'object' && 'count' in response) {
-          count = response.count || 0;
-        }
-        // Handle direct number response
-        else if (typeof response === 'number') {
-          count = response;
-        }
-        // Handle other object formats
-        else if (response && typeof response === 'object') {
-          count = response.count || response.bookCount || response.totalBooks || response.value || 0;
-        }
-        
-        // Cache the result
-        this.bookCountCache.set(publisherId, count);
-        return count;
-      })
-    );
+  getPublisherBooks(publisherId: number): Observable<Book[]> {
+    return this.http.get<Book[]>(`${this.apiUrl}/Publishers/${publisherId}/books`);
   }
 
-  getProfileImage(publisherId: number): Observable<Blob> {
-    return this.http.get(
-      `${this.apiUrl}/Publishers/${publisherId}/profile-image`,
-      { responseType: 'blob' }
-    );
+  getPublisherBookCount(publisherId: number): Observable<number> {
+    return this.http.get<number>(`${this.apiUrl}/Publishers/${publisherId}/book-count`);
   }
 
-  removeProfileImage(publisherId: number): Observable<any> {
-    return this.http.delete(
-      `${this.apiUrl}/Publishers/${publisherId}/profile-image`
-    );
+  getPublisherLogoImage(publisherId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/Publishers/${publisherId}/logo-image`, { responseType: 'blob' });
   }
 
-  // Basic search endpoint - if it exists
-  searchByName(name: string): Observable<Publisher[]> {
-    return this.http.get<Publisher[]>(
-      `${this.apiUrl}/Publishers/search?name=${encodeURIComponent(name)}`
-    );
+  deletePublisherLogoImage(publisherId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/Publishers/${publisherId}/logo-image`);
   }
 
-  // Method to clear cache when needed
-  clearBookCountCache(): void {
-    this.bookCountCache.clear();
-  }
-
-  // Method to clear specific publisher from cache
-  clearPublisherFromCache(publisherId: number): void {
-    this.bookCountCache.delete(publisherId);
+  publisherExists(publisherId: number): Observable<boolean> {
+    return this.http.get<boolean>(`${this.apiUrl}/Publishers/${publisherId}/exists`);
   }
 } 

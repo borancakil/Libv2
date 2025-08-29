@@ -7,6 +7,8 @@ namespace LibraryApp.Application.Interfaces
     {
         Task<IEnumerable<PublisherDto>> GetAllPublishersAsync(string? filter);
         
+        Task<IEnumerable<PublisherListDto>> GetAllPublishersForListAsync(string? filter = null);
+        
         Task<PublisherDto> GetPublisherByIdAsync(int id);
         
         Task<PublisherDto> CreatePublisherAsync(CreatePublisherDto createPublisherDto);

@@ -19,6 +19,15 @@ namespace LibraryApp.Application.Mappings
                 .ForMember(d => d.HasLogoImage, o => o.MapFrom(s => s.HasLogoImage()))
                 .ForMember(d => d.BookCount, o => o.MapFrom(s => s.GetBookCount()));
 
+            CreateMap<Publisher, PublisherListDto>()
+                .ForMember(d => d.PublisherId, o => o.MapFrom(s => s.PublisherId))
+                .ForMember(d => d.Name, o => o.MapFrom(s => s.Name))
+                .ForMember(d => d.Address, o => o.MapFrom(s => s.Address))
+                .ForMember(d => d.ContactEmail, o => o.MapFrom(s => s.ContactEmail))
+                .ForMember(d => d.EstablishedDate, o => o.MapFrom(s => s.EstablishedDate))
+                .ForMember(d => d.BookCount, o => o.MapFrom(s => s.GetBookCount()))
+                .ForMember(d => d.LogoImageUrl, o => o.MapFrom(s => s.HasLogoImage() ? $"/api/Publishers/{s.PublisherId}/logo-image" : null));
+
             CreateMap<CreatePublisherDto, Publisher>()
                 .ForCtorParam("name", o => o.MapFrom(s => s.Name))
                 .ForAllMembers(o => o.Ignore());

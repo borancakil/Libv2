@@ -1,28 +1,26 @@
+import { Book } from './book.model';
+
 export interface Author {
   authorId: number;
   name: string;
   biography?: string;
+  nationality?: string;
   birthDate?: string;
-  deathDate?: string;
+  bookCount?: number;
+  profileImageUrl?: string;
   books?: Book[];
-  hasProfileImage?: boolean;
-  bookCount?: number; // Add book count property
 }
 
 export interface CreateAuthorDto {
   name: string;
   biography?: string;
+  nationality?: string;
   birthDate?: string;
-  deathDate?: string;
-  profileImage?: File;
 }
 
 export interface UpdateAuthorDto {
-  name?: string;
+  name: string;
   biography?: string;
+  nationality?: string;
   birthDate?: string;
-  deathDate?: string;
-  profileImage?: File;
-}
-
-import { Book } from './book.model'; 
+} 

@@ -44,6 +44,25 @@ namespace LibraryApp.Application.Services
             return _mapper.Map<IEnumerable<AuthorDto>>(authors);
         }
 
+        public async Task<IEnumerable<AuthorListDto>> GetAllAuthorsForListAsync(string? filter = null)
+        {
+            var authors = await _authorRepository.GetAllAsync(includeNavigationProperties: true) ?? new List<Author>();
+
+            if (!string.IsNullOrWhiteSpace(filter))
+            {
+                var term = filter.Trim().ToLower();
+
+                authors = authors.Where(a =>
+                    (a.Name?.Contains(term, StringComparison.CurrentCultureIgnoreCase) == true) ||
+                    (a.Biography?.Contains(term, StringComparison.CurrentCultureIgnoreCase) == true) ||
+                    (a.Nationality?.Contains(term, StringComparison.CurrentCultureIgnoreCase) == true) ||
+                    (a.BirthDate.HasValue && a.BirthDate.Value.ToString("yyyy").Contains(term))
+                );
+            }
+
+            return _mapper.Map<IEnumerable<AuthorListDto>>(authors);
+        }
+
 
         public async Task<AuthorDto> GetAuthorByIdAsync(int id)
         {

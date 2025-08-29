@@ -675,112 +675,134 @@
 }
 
 /* Responsive Design */
+@media (max-width: 1200px) {
+  .publisher-detail-container {
+    padding: 20px;
+  }
+
+  .publisher-content {
+    grid-template-columns: 1fr 2fr;
+    gap: 30px;
+  }
+}
+
 @media (max-width: 768px) {
   .publisher-detail-container {
-    padding: 20px 16px;
+    padding: 15px;
   }
 
   .page-header {
-    padding: 20px 16px;
+    padding: 20px 15px;
   }
 
-  .header-content {
-    flex-direction: column;
-    gap: 16px;
+  .page-title {
+    font-size: 1.8rem;
   }
 
-  .page-title h1 {
-    font-size: 1.5rem;
+  .page-subtitle {
+    font-size: 1rem;
   }
 
-  .publisher-profile-card {
-    flex-direction: column;
-    text-align: center;
+  .publisher-content {
+    grid-template-columns: 1fr;
     gap: 20px;
   }
 
-  .publisher-photo-section {
-    align-self: center;
+  .publisher-logo-section {
+    text-align: center;
   }
 
-  .publisher-photo {
-    width: 100px;
-    height: 100px;
+  .publisher-logo {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto;
+  }
+
+  .publisher-info {
+    padding: 20px;
   }
 
   .publisher-header {
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    text-align: center;
+    gap: 15px;
   }
 
   .publisher-name {
-    font-size: 1.5rem;
-    text-align: center;
+    font-size: 1.8rem;
   }
 
-  .section-stats {
+  .publisher-meta {
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
   }
 
-  .search-filters {
-    flex-direction: column;
-    align-items: stretch;
+  .meta-item {
+    justify-content: center;
   }
 
-  .filter-select,
-  .sort-select {
-    width: 100%;
-  }
-
-  .books-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .book-card {
+  .books-section {
     padding: 20px;
   }
 
-  .book-photo-section {
-    margin-bottom: 12px;
-  }
-
-  .book-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+  .books-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
   }
 }
 
 @media (max-width: 480px) {
-  .page-title h1 {
-    font-size: 1.25rem;
+  .publisher-detail-container {
+    padding: 10px;
+  }
+
+  .page-header {
+    padding: 15px 10px;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .publisher-info {
+    padding: 15px;
   }
 
   .publisher-name {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
+  }
+
+  .publisher-description {
+    font-size: 0.9rem;
+  }
+
+  .books-section {
+    padding: 15px;
+  }
+
+  .books-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
   }
 
   .book-card {
-    padding: 16px;
+    padding: 15px;
   }
 
-  .book-title {
-    font-size: 1rem;
+  .book-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
   }
 
-  .publisher-photo {
-    width: 80px;
-    height: 80px;
+  .book-actions {
+    flex-direction: column;
+    gap: 10px;
   }
 
-  .stats-item {
-    padding: 12px 16px;
-  }
-
-  .stats-number {
-    font-size: 1.125rem;
+  .view-button {
+    width: 100%;
   }
 }

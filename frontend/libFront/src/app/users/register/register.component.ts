@@ -84,15 +84,15 @@ export class RegisterComponent implements OnDestroy {
     this.successMessage = null;
     this.isLoading = true;
 
-    const user = {
+    const userData = {
       name: `${this.firstName} ${this.lastName}`,
       password: this.password,
       email: this.email,
     };
 
-    console.log('Attempting registration with:', user);
+    console.log('Attempting registration with:', userData);
 
-    this.apiSub = this.userApi.register(user).subscribe({
+    this.apiSub = this.userApi.register(userData).subscribe({
       next: (res) => {
         console.log('Registration response received:', res);
         this.isLoading = false;

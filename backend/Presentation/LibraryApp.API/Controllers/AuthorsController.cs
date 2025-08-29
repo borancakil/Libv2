@@ -32,6 +32,13 @@ namespace LibraryApp.API.Controllers
             return Ok(authors);
         }
 
+        [HttpGet("list")]
+        public async Task<IActionResult> GetAllAuthorsForList([FromQuery] string? filter = null)
+        {
+            var authors = await _authorService.GetAllAuthorsForListAsync(filter);
+            return Ok(authors);
+        }
+
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddAuthor([FromBody] CreateAuthorDto dto)

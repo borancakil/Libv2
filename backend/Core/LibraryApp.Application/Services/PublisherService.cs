@@ -42,6 +42,24 @@ namespace LibraryApp.Application.Services
             return _mapper.Map<IEnumerable<PublisherDto>>(publishers);
         }
 
+        public async Task<IEnumerable<PublisherListDto>> GetAllPublishersForListAsync(string? filter = null)
+        {
+            var publishers = await _publisherRepository.GetAllAsync(includeNavigationProperties: true) ?? new List<Publisher>();
+
+            if (!string.IsNullOrWhiteSpace(filter))
+            {
+                var term = filter.Trim().ToLower();
+
+                publishers = publishers.Where(p =>
+                    (p.Name?.Contains(term, StringComparison.CurrentCultureIgnoreCase) == true) ||
+                    (p.Address?.Contains(term, StringComparison.CurrentCultureIgnoreCase) == true) ||
+                    (p.ContactEmail?.Contains(term, StringComparison.CurrentCultureIgnoreCase) == true)
+                );
+            }
+
+            return _mapper.Map<IEnumerable<PublisherListDto>>(publishers);
+        }
+
         public async Task<PublisherDto> GetPublisherByIdAsync(int id)
         {
             var publisher = await _publisherRepository.GetByIdAsync(id, includeNavigationProperties: true);

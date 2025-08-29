@@ -8,8 +8,9 @@ docs/
 # GitHub actions (eğer istemiyorsan)
 .github/
 
-# Keys
-/backend/Presentation/LibraryApp.API/Keys
+# SSL / JWT Keys
+backend/Presentation/LibraryApp.API/Keys/
+
 
 
 # SSL certs

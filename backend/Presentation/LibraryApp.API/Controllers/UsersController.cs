@@ -68,7 +68,7 @@ namespace LibraryApp.API.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserDto dto)
         {
             if (id <= 0) return BadRequest(new { message = "Invalid user ID" });

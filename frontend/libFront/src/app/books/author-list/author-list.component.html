@@ -62,9 +62,19 @@
     <div class="search-section">
       <div class="search-container">
         <div class="search-input-group">
-          <input type="text" class="search-input" placeholder="Ara..." [(ngModel)]="filter" (keyup.enter)="onFilterButtonClick()">
+          <input 
+            type="text" 
+            class="search-input" 
+            placeholder="Yazar adı, biyografi, milliyet veya doğum yılı ara..." 
+            [(ngModel)]="filter" 
+            (keyup.enter)="onFilterButtonClick()">
           <button class="search-button" (click)="onFilterButtonClick()">
             <span>Filtrele</span>
+          </button>
+        </div>
+        <div class="filter-actions">
+          <button class="clear-filters-button" (click)="clearFilters()" *ngIf="filter.trim()">
+            <span>Temizle</span>
           </button>
         </div>
       </div>
@@ -80,15 +90,6 @@
           <div class="stat-info">
             <span class="stat-number">{{ filteredAuthors.length }}</span>
             <span class="stat-label">{{ 'FILTERED_AUTHORS' | translate }}</span>
-          </div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-icon">
-            📚
-          </div>
-          <div class="stat-info">
-            <span class="stat-number">{{ getTotalBooksCount() }}</span>
-            <span class="stat-label">{{ 'TOTAL_BOOKS' | translate }}</span>
           </div>
         </div>
       </div>
@@ -111,11 +112,6 @@
                 <h3 class="author-name" (click)="goToAuthorDetail(author.authorId)">
                   {{ author.name }}
                 </h3>
-                <div class="author-status">
-                  <span class="status-badge" [class.alive]="!author.deathDate" [class.deceased]="author.deathDate">
-                    {{ author.deathDate ? ('DECEASED' | translate) : ('ALIVE' | translate) }}
-                  </span>
-                </div>
               </div>
             </div>
             
@@ -126,17 +122,20 @@
             </div>
             
             <div class="author-meta">
+              <div class="meta-item" *ngIf="author.nationality">
+                <span class="meta-icon">🌍</span>
+                <span>{{ author.nationality }}</span>
+              </div>
+              
               <div class="meta-item" *ngIf="author.birthDate">
                 <span class="meta-icon">🎂</span>
-                <span>{{ 'BIRTH_DATE' | translate }}: {{ author.birthDate | date:'dd/MM/yyyy' }}</span>
+                <span>{{ author.birthDate | date:'dd/MM/yyyy' }}</span>
               </div>
               
-              <div class="meta-item" *ngIf="author.deathDate">
-                <span class="meta-icon">🕯️</span>
-                <span>{{ 'DEATH_DATE' | translate }}: {{ author.deathDate | date:'dd/MM/yyyy' }}</span>
+              <div class="meta-item" *ngIf="author.bookCount !== undefined">
+                <span class="meta-icon">📚</span>
+                <span>{{ author.bookCount }} kitap</span>
               </div>
-              
-
             </div>
 
             <div class="author-actions">

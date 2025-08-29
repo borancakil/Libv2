@@ -7,6 +7,8 @@ namespace LibraryApp.Application.Interfaces
     public interface IAuthorService
     {
         Task<IEnumerable<AuthorDto>> GetAllAuthorsAsync(string? filter);
+        
+        Task<IEnumerable<AuthorListDto>> GetAllAuthorsForListAsync(string? filter = null);
 
         Task<AuthorDto> GetAuthorByIdAsync(int id);
 

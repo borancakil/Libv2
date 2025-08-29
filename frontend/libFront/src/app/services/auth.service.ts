@@ -55,6 +55,10 @@ export class AuthService {
     return Date.now() < expiry;
   }
 
+  logout(): void {
+    this.clearTokens();
+  }
+
   private emitAuthState(isLoggedIn: boolean): void {
     if (typeof window === 'undefined') return;
     window.dispatchEvent(new CustomEvent('authStateChanged', { detail: { isLoggedIn } }));

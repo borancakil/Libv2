@@ -62,7 +62,7 @@
     <div class="author-profile-section">
       <div class="author-profile-card">
         <div class="author-photo-section">
-          <div class="author-photo" *ngIf="author.hasProfileImage">
+          <div class="author-photo" *ngIf="author.profileImageUrl">
             <div class="photo-loading" *ngIf="isPhotoLoading">
               <div class="loading-spinner">📸</div>
             </div>
@@ -76,7 +76,7 @@
               <div class="placeholder-icon">👤</div>
             </div>
           </div>
-          <div class="author-photo" *ngIf="!author.hasProfileImage">
+          <div class="author-photo" *ngIf="!author.profileImageUrl">
             <div class="photo-placeholder">
               <div class="placeholder-icon">👤</div>
             </div>
@@ -86,30 +86,25 @@
         <div class="author-info">
           <div class="author-header">
             <h2 class="author-name">{{ author.name }}</h2>
-            <div class="author-status">
-              <span class="status-badge" [class.alive]="!author.deathDate" [class.deceased]="author.deathDate">
-                {{ author.deathDate ? ('DECEASED' | translate) : ('ALIVE' | translate) }}
-              </span>
-            </div>
           </div>
           
           <div class="author-meta">
+            <div class="meta-item" *ngIf="author.nationality">
+              <span class="meta-icon">🌍</span>
+              <span class="meta-label">{{ 'NATIONALITY' | translate }}:</span>
+              <span class="meta-value">{{ author.nationality }}</span>
+            </div>
+            
             <div class="meta-item" *ngIf="author.birthDate">
               <span class="meta-icon">🎂</span>
               <span class="meta-label">{{ 'BIRTH_DATE' | translate }}:</span>
               <span class="meta-value">{{ author.birthDate | date:'dd/MM/yyyy' }}</span>
             </div>
             
-            <div class="meta-item" *ngIf="author.deathDate">
-              <span class="meta-icon">🕯️</span>
-              <span class="meta-label">{{ 'DEATH_DATE' | translate }}:</span>
-              <span class="meta-value">{{ author.deathDate | date:'dd/MM/yyyy' }}</span>
-            </div>
-            
-            <div class="meta-item" *ngIf="books.length > 0">
+            <div class="meta-item" *ngIf="author.bookCount !== undefined">
               <span class="meta-icon">📚</span>
               <span class="meta-label">{{ 'BOOKS_COUNT' | translate }}:</span>
-              <span class="meta-value">{{ books.length }}</span>
+              <span class="meta-value">{{ author.bookCount }}</span>
             </div>
           </div>
         </div>
@@ -181,7 +176,7 @@
                   <div class="placeholder-icon">📚</div>
                 </div>
                 <div class="book-status-badge" [class.available]="book.isAvailable" [class.unavailable]="!book.isAvailable">
-                  <span class="status-text">{{ book.isAvailable ? ('AVAILABLE' | translate) : ('UNAVAILABLE' | translate) }}</span>
+                  <i class="fas" [class.fa-check]="book.isAvailable" [class.fa-times]="!book.isAvailable"></i>
                 </div>
               </div>
               

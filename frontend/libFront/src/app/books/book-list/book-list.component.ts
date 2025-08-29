@@ -294,7 +294,8 @@ export class BookListComponent implements OnInit, OnDestroy {
     this.subscriptions.push(subscription);
   }
 
-  clearAllFilters(): void {
+  clearFilters(): void {
+    this.filter = '';
     this.filters = {
       title: '',
       author: '',
@@ -417,12 +418,6 @@ export class BookListComponent implements OnInit, OnDestroy {
   }
 
   performSearch(): void {
-    this.applyLocalFilters();
-  }
-
-  clearFilters(): void {
-    this.searchTerm = '';
-    this.selectedFilter = 'all';
     this.applyLocalFilters();
   }
 

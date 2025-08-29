@@ -32,6 +32,13 @@ namespace LibraryApp.API.Controllers
             return Ok(publishers);
         }
 
+        [HttpGet("list")]
+        public async Task<IActionResult> GetAllPublishersForList([FromQuery] string? filter = null)
+        {
+            var publishers = await _publisherService.GetAllPublishersForListAsync(filter);
+            return Ok(publishers);
+        }
+
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddPublisher([FromBody] CreatePublisherDto dto)

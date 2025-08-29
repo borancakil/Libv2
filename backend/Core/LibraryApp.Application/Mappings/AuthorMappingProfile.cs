@@ -18,6 +18,14 @@ namespace LibraryApp.Application.Mappings
                 .ForMember(d => d.HasProfileImage, o => o.MapFrom(s => s.HasProfileImage()))
                 .ForMember(d => d.BookCount, o => o.MapFrom(s => s.GetBookCount()));
 
+            CreateMap<Author, AuthorListDto>()
+                .ForMember(d => d.AuthorId, o => o.MapFrom(s => s.AuthorId))
+                .ForMember(d => d.Name, o => o.MapFrom(s => s.Name))
+                .ForMember(d => d.Nationality, o => o.MapFrom(s => s.Nationality))
+                .ForMember(d => d.BirthDate, o => o.MapFrom(s => s.BirthDate))
+                .ForMember(d => d.BookCount, o => o.MapFrom(s => s.GetBookCount()))
+                .ForMember(d => d.ProfileImageUrl, o => o.MapFrom(s => s.HasProfileImage() ? $"/api/Authors/{s.AuthorId}/profile-image" : null));
+
             CreateMap<CreateAuthorDto, Author>()
                 .ForCtorParam("name", o => o.MapFrom(s => s.Name))
                 .ForAllMembers(o => o.Ignore());

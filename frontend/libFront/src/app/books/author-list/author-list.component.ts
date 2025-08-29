@@ -22,25 +22,6 @@ export class AuthorListComponent implements OnInit, OnDestroy {
   error: string | null = null;
   private isBrowser: boolean;
   private subscriptions: Subscription[] = [];
-  private isInitialized = false;
-  
-  // Search properties
-  searchTerm = '';
-  selectedFilter = 'all';
-  private searchTimeout: any;
-
-  // Filter properties
-  filters: any = {
-    name: '',
-    biography: '',
-    status: '',
-    birthYear: undefined,
-    deathYear: undefined,
-    sortBy: 'name'
-  };
-  
-  // Filter expansion state
-  isFilterExpanded = false;
 
   constructor(
     public router: Router,
@@ -52,11 +33,9 @@ export class AuthorListComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    if (!this.isBrowser || this.isInitialized) {
+    if (!this.isBrowser) {
       return;
     }
-
-    this.isInitialized = true;
     this.loadAuthors();
   }
 
@@ -80,186 +59,71 @@ export class AuthorListComponent implements OnInit, OnDestroy {
     this.subscriptions.push(subscription);
   }
 
+  onFilterInput(): void {
+    // Anlık filtreleme kaldırıldı - sadece Enter tuşuna basıldığında filtreleme yapılacak
+  }
+
   onFilterButtonClick(): void {
-    const newFilter = (this.filter || '').trim();
-    
-    if (newFilter !== this.filter) {
-      this.filter = newFilter;
-      this.loadAuthors();
-    } else {
-      this.applyLocalFilters();
-    }
-  }
-
-  // Search methods
-  onSearchInput(): void {
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
-    }
-    
-    this.searchTimeout = setTimeout(() => {
-      this.applyFilters();
-    }, 300);
-  }
-
-  performSearch(): void {
     this.applyFilters();
   }
 
-  // Filter expansion methods
-  expandFilters(): void {
-    this.isFilterExpanded = true;
-  }
-
-  collapseFilters(): void {
-    this.isFilterExpanded = false;
-  }
-
-  // New backend filtering methods
-  onFilterChange(): void {
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
-    }
-    
-    this.searchTimeout = setTimeout(() => {
-      this.applyLocalFilters();
-    }, 500);
-  }
-
-  applyBackendFilters(): void {
-    this.applyLocalFilters();
-  }
-
-  clearAllFilters(): void {
-    this.filters = {
-      name: '',
-      biography: '',
-      status: '',
-      birthYear: undefined,
-      deathYear: undefined,
-      sortBy: 'name'
-    };
-    this.applyLocalFilters();
-  }
-
-  hasActiveFilters(): boolean {
-    return !!(this.filters.name?.trim() || 
-              this.filters.biography?.trim() || 
-              this.filters.status || 
-              this.filters.birthYear ||
-              this.filters.deathYear);
-  }
-
   private applyFilters(): void {
-    let filtered = [...this.authors];
-
-    if (this.searchTerm.trim() !== '') {
-      const searchLower = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(author => 
-        author.name.toLowerCase().includes(searchLower) ||
-        (author.biography && author.biography.toLowerCase().includes(searchLower))
-      );
+    const filterTerm = (this.filter || '').trim();
+    
+    if (!filterTerm) {
+      this.filteredAuthors = [...this.authors];
+      return;
     }
 
-    if (this.selectedFilter !== 'all') {
-      filtered = filtered.filter(author => {
-        if (this.selectedFilter === 'alive') {
-          return !author.deathDate;
-        } else if (this.selectedFilter === 'deceased') {
-          return !!author.deathDate;
-        }
+    const term = filterTerm.toLowerCase();
+    
+    this.filteredAuthors = this.authors.filter(author => {
+      // Name filter
+      if (author.name && author.name.toLowerCase().includes(term)) {
         return true;
-      });
-    }
-
-    this.filteredAuthors = filtered;
-  }
-
-  private applyLocalFilters(): void {
-    let filtered = [...this.authors];
-
-    if (this.filters.name?.trim()) {
-      const nameLower = this.filters.name.toLowerCase();
-      filtered = filtered.filter(author => 
-        author.name.toLowerCase().includes(nameLower)
-      );
-    }
-
-    if (this.filters.biography?.trim()) {
-      const bioLower = this.filters.biography.toLowerCase();
-      filtered = filtered.filter(author => 
-        author.biography && author.biography.toLowerCase().includes(bioLower)
-      );
-    }
-
-    if (this.filters.status) {
-      filtered = filtered.filter(author => {
-        if (this.filters.status === 'alive') {
-          return !author.deathDate;
-        } else if (this.filters.status === 'deceased') {
-          return !!author.deathDate;
-        }
+      }
+      
+      // Biography filter
+      if (author.biography && author.biography.toLowerCase().includes(term)) {
         return true;
-      });
-    }
-
-    if (this.filters.birthYear) {
-      filtered = filtered.filter(author => 
-        author.birthDate && new Date(author.birthDate).getFullYear() === this.filters.birthYear
-      );
-    }
-
-    if (this.filters.deathYear) {
-      filtered = filtered.filter(author => 
-        author.deathDate && new Date(author.deathDate).getFullYear() === this.filters.deathYear
-      );
-    }
-
-    if (this.filters.sortBy) {
-      filtered.sort((a, b) => {
-        switch (this.filters.sortBy) {
-          case 'name':
-            return a.name.localeCompare(b.name);
-          case 'birthDate':
-            if (!a.birthDate && !b.birthDate) return 0;
-            if (!a.birthDate) return 1;
-            if (!b.birthDate) return -1;
-            return new Date(a.birthDate).getTime() - new Date(b.birthDate).getTime();
-          default:
-            return 0;
+      }
+      
+      // Nationality filter
+      if (author.nationality && author.nationality.toLowerCase().includes(term)) {
+        return true;
+      }
+      
+      // Birth year filter
+      if (author.birthDate) {
+        const birthYear = new Date(author.birthDate).getFullYear().toString();
+        if (birthYear.includes(term)) {
+          return true;
         }
-      });
-    }
-
-    this.filteredAuthors = filtered;
-  }
-
-  getTotalBooksCount(): number {
-    // Return 0 since we don't show book counts in list
-    return 0;
-  }
-
-  goBack(): void {
-    const lang = this.translate.currentLang || 'tr';
-    this.router.navigate(['/', lang]);
-  }
-
-  private handleError(errorKey: string): void {
-    this.translate.get(errorKey).subscribe((message: string) => {
-      this.error = message;
+      }
+      
+      return false;
     });
-    this.isLoading = false;
+  }
+
+  clearFilters(): void {
+    this.filter = '';
+    this.filteredAuthors = [...this.authors];
   }
 
   goToAuthorDetail(authorId: number): void {
-    const lang = this.translate.currentLang || 'tr';
-    this.router.navigate(['/', lang, 'author', authorId]);
+    this.router.navigate(['/authors', authorId]);
+  }
+
+  goBack(): void {
+    this.router.navigate(['/books']);
   }
 
   retry(): void {
-    if (!this.isLoading) {
-      this.loadAuthors();
-    }
+    this.loadAuthors();
+  }
+
+  private handleError(errorKey: string): void {
+    this.error = this.translate.instant(errorKey);
   }
 
   ngOnDestroy(): void {

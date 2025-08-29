@@ -507,50 +507,52 @@
 }
 
 .stats-card {
-    display: flex;
-    gap: 24px;
-    background: #f8f9fa;
+    background: white;
     border: 2px solid #e9ecef;
     border-radius: 12px;
     padding: 24px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    gap: 32px;
+    justify-content: center;
 }
 
 .stat-item {
     display: flex;
     align-items: center;
     gap: 16px;
-    flex: 1;
+    text-align: center;
 }
 
 .stat-icon {
-    width: 48px;
-    height: 48px;
-    background: #ffc107;
-    border-radius: 50%;
+    font-size: 2rem;
+    width: 60px;
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #2c3e50;
-    font-size: 1.25rem;
+    background: #f8f9fa;
+    border-radius: 50%;
+    border: 2px solid #e9ecef;
+    color: #007bff;
 }
 
 .stat-info {
     display: flex;
     flex-direction: column;
+    gap: 4px;
 }
 
 .stat-number {
     font-size: 1.5rem;
     font-weight: 700;
     color: #2c3e50;
-    line-height: 1;
 }
 
 .stat-label {
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     color: #6c757d;
-    margin-top: 4px;
+    font-weight: 500;
 }
 
 /* Authors Section */
@@ -845,138 +847,123 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
     .author-list-container {
-        padding: 20px 16px;
+        padding: 20px;
     }
 
-    .header-content {
+    .authors-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .author-list-container {
+        padding: 15px;
+    }
+
+    .page-header {
+        padding: 20px 15px;
+    }
+
+    .page-title {
+        font-size: 1.8rem;
+    }
+
+    .page-subtitle {
+        font-size: 1rem;
+    }
+
+    .search-section {
+        padding: 20px 15px;
+    }
+
+    .search-input-group {
         flex-direction: column;
-        gap: 16px;
+        gap: 15px;
+    }
+
+    .search-input {
+        width: 100%;
+    }
+
+    .search-button {
+        width: 100%;
+    }
+
+    .filter-actions {
+        justify-content: center;
+    }
+
+    .authors-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .stats-section {
+        padding: 20px 15px;
+    }
+
+    .stats-card {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .author-list-container {
+        padding: 10px;
+    }
+
+    .page-header {
+        padding: 15px 10px;
     }
 
     .page-title {
         font-size: 1.5rem;
     }
 
-    .search-input-group {
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .search-button {
-        min-width: auto;
-    }
-
-    .search-filters {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-    }
-
-    .filter-select {
-        min-width: auto;
+    .search-section {
+        padding: 15px 10px;
     }
 
     .authors-grid {
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 15px;
     }
 
-    .stats-card {
-        flex-direction: column;
-        gap: 16px;
-    }
-
-    .stat-item {
-        justify-content: center;
+    .author-card {
+        padding: 15px;
     }
 
     .author-header {
         flex-direction: column;
         align-items: center;
-        gap: 16px;
         text-align: center;
-    }
-
-    .author-photo {
-        width: 100px;
-        height: 100px;
+        gap: 10px;
     }
 
     .author-actions {
         flex-direction: column;
+        gap: 10px;
     }
 
     .view-button {
-        min-width: auto;
-    }
-
-    .error-actions {
-        flex-direction: column;
-    }
-}
-
-@media (max-width: 480px) {
-    .author-list-container {
-        padding: 16px 12px;
-    }
-
-    .page-header {
-        padding: 20px 16px;
-    }
-
-    .page-title {
-        font-size: 1.25rem;
-    }
-
-    .page-subtitle {
-        font-size: 0.875rem;
-    }
-
-    .search-container {
-        padding: 16px;
-    }
-
-    .search-input {
-        font-size: 0.875rem;
-        padding: 10px 12px;
-    }
-
-    .search-button {
-        padding: 10px 16px;
-        font-size: 0.875rem;
-    }
-
-    .filter-select {
-        font-size: 0.875rem;
-        padding: 8px 10px;
-    }
-
-    .clear-filters-button {
-        padding: 6px 12px;
-        font-size: 0.75rem;
-    }
-
-    .stats-card {
-        padding: 16px;
-    }
-
-    .stat-number {
-        font-size: 1.25rem;
-    }
-
-    .author-info {
-        padding: 16px;
+        width: 100%;
     }
 
     .author-meta {
-        margin-bottom: 16px;
+        flex-direction: column;
+        gap: 8px;
     }
 
-    .author-photo {
-        width: 80px;
-        height: 80px;
+    .meta-item {
+        justify-content: center;
     }
 }
 

@@ -71,20 +71,20 @@
               <span class="meta-label">{{ 'ADDRESS' | translate }}:</span>
               <span class="meta-value">{{ publisher.address }}</span>
             </div>
-            <div class="meta-item" *ngIf="publisher.phone">
-              <span class="meta-icon">📞</span>
-              <span class="meta-label">{{ 'PHONE' | translate }}:</span>
-              <span class="meta-value">{{ publisher.phone }}</span>
-            </div>
-            <div class="meta-item" *ngIf="publisher.email">
+            <div class="meta-item" *ngIf="publisher.contactEmail">
               <span class="meta-icon">✉️</span>
               <span class="meta-label">{{ 'EMAIL' | translate }}:</span>
-              <span class="meta-value">{{ publisher.email }}</span>
+              <span class="meta-value">{{ publisher.contactEmail }}</span>
             </div>
-            <div class="meta-item">
+            <div class="meta-item" *ngIf="publisher.establishedDate">
+              <span class="meta-icon">📅</span>
+              <span class="meta-label">{{ 'ESTABLISHED_DATE' | translate }}:</span>
+              <span class="meta-value">{{ publisher.establishedDate | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="meta-item" *ngIf="publisher.bookCount !== undefined">
               <span class="meta-icon">📖</span>
               <span class="meta-label">{{ 'BOOKS_COUNT' | translate }}:</span>
-              <span class="meta-value">{{ books.length }}</span>
+              <span class="meta-value">{{ publisher.bookCount }}</span>
             </div>
           </div>
         </div>

@@ -42,7 +42,7 @@
   "HERO_SEARCH_PLACEHOLDER": "Kitap, makale veya yazar ara...",
   "HERO_SEARCH_BUTTON": "Ara",
 
-  "HERO_TITLE": "Bilgi Evrenine Hoş Geldiniz",
+  "HERO_TITLE": "İnternetteki Kütüphanenize Hoş Geldiniz",
   "HERO_SUBTITLE": "Binlerce kitap, makale ve kaynak parmaklarınızın ucunda.",
   
   "STATS_BOOKS": "Kitap",
@@ -403,6 +403,7 @@
   "FILTER_ALIVE": "Yaşayan",
   "FILTER_DECEASED": "Vefat Etmiş",
   "FILTERED_AUTHORS": "Filtrelenmiş Yazarlar",
+  "FILTERED_PUBLISHERS": "Filtrelenmiş Yayınevleri",
   "ALIVE": "Yaşayan",
   "DECEASED": "Vefat Etmiş",
   "BIRTH_DATE": "Doğum Tarihi",
@@ -860,5 +861,25 @@
   "QUANTUM_3D_PRINTING_AGE": "Kuantum 3D Baskı Çağı",
   "QUANTUM_GENE_EDITING_AGE": "Kuantum Gen Düzenleme Çağı",
   "QUANTUM_CRISPR_AGE": "Kuantum CRISPR Çağı",
-  "QUANTUM_SYNTHETIC_BIOLOGY_AGE": "Kuantum Sentetik Biyoloji Çağı"
+  "QUANTUM_SYNTHETIC_BIOLOGY_AGE": "Kuantum Sentetik Biyoloji Çağı",
+  
+  "PROFILE_INFORMATION": "Profil Bilgileri",
+  "PROFILE_INFORMATION_DESCRIPTION": "Kişisel bilgileriniz ve hesap detaylarınız",
+  "AGE": "Yaş",
+  "AGE_PLACEHOLDER": "Yaşınızı girin",
+  "GENDER": "Cinsiyet",
+  "SELECT_GENDER": "Cinsiyet seçin",
+  "MALE": "Erkek",
+  "FEMALE": "Kadın",
+  "OTHER": "Diğer",
+  "ROLE": "Rol",
+  "LOGOUT_SECTION": "Çıkış Yap",
+  "LOGOUT_SECTION_DESCRIPTION": "Hesabınızdan çıkış yapın",
+  "CONFIRM_EDIT_PROFILE": "Profilinizi düzenlemek istediğinizden emin misiniz?",
+  "CONFIRM_LOGOUT": "Çıkış yapmak istediğinizden emin misiniz?",
+  "PROFILE_UPDATED_SUCCESS": "Profil başarıyla güncellendi!",
+  "ERROR_UPDATING_PROFILE": "Profil güncellenirken hata oluştu",
+  "NATIONALITY": "Milliyet",
+  "CONTACT_EMAIL": "İletişim E-postası",
+  "ESTABLISHED_DATE": "Kuruluş Tarihi"
 }

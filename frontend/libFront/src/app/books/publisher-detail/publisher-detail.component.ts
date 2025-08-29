@@ -68,7 +68,7 @@ export class PublisherDetailComponent implements OnInit, OnDestroy {
       next: (publisher) => {
         this.publisher = publisher;
         this.isLoading = false;
-        this.loadPublisherPhoto(publisherId);
+        this.loadPhoto(publisherId);
         this.loadBooks(publisherId);
       },
       error: (err) => {
@@ -81,16 +81,16 @@ export class PublisherDetailComponent implements OnInit, OnDestroy {
     this.subscriptions.push(subscription);
   }
 
-  private loadPublisherPhoto(publisherId: number): void {
+  private loadPhoto(publisherId: number): void {
     this.isPhotoLoading = true;
-    
-    const subscription = this.publisherApi.getProfileImage(publisherId).subscribe({
-      next: (blob) => {
+
+    const subscription = this.publisherApi.getPublisherLogoImage(publisherId).subscribe({
+      next: (blob: Blob) => {
         const url = URL.createObjectURL(blob);
         this.publisherPhoto = this.sanitizer.bypassSecurityTrustUrl(url);
         this.isPhotoLoading = false;
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error(`Error loading photo for publisher ${publisherId}:`, err);
         this.isPhotoLoading = false;
       }
@@ -103,12 +103,12 @@ export class PublisherDetailComponent implements OnInit, OnDestroy {
     this.isLoadingBooks = true;
 
     const subscription = this.publisherApi.getBooksByPublisher(publisherId).subscribe({
-      next: (books) => {
+      next: (books: Book[]) => {
         this.books = books;
         this.filteredBooks = [...books];
         this.isLoadingBooks = false;
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error loading books:', err);
         this.isLoadingBooks = false;
         this.handleError('BOOKS_LOAD_ERROR');

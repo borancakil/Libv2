@@ -1,20 +1,26 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { Author, CreateAuthorDto, UpdateAuthorDto } from '../models/author.model';
+import { Observable } from 'rxjs';
+import { Author } from '../models/author.model';
 import { Book } from '../models/book.model';
-import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AuthorApiService {
   private baseUrl = `${environment.apiUrl}/Authors`;
-  private bookCountCache = new Map<number, number>(); // Simple cache for book counts
 
   constructor(private http: HttpClient) {}
 
   getAll(filter?: string): Observable<Author[]> {
-    let url = this.baseUrl;
+    let url = `${this.baseUrl}/list`;
+    if (filter && filter.trim()) {
+      url += `?filter=${encodeURIComponent(filter.trim())}`;
+    }
+    return this.http.get<Author[]>(url);
+  }
+
+  getAllForList(filter?: string): Observable<Author[]> {
+    let url = `${this.baseUrl}/list`;
     if (filter && filter.trim()) {
       url += `?filter=${encodeURIComponent(filter.trim())}`;
     }
@@ -33,70 +39,39 @@ export class AuthorApiService {
     return this.http.get<Author>(`${this.baseUrl}/${id}`);
   }
 
-  getBooksByAuthor(authorId: number): Observable<Book[]> {
-    return this.http.get<Book[]>(`${this.baseUrl}/${authorId}/books`);
-  }
-
-  getBookCount(authorId: number): Observable<number> {
-    // Check cache first
-    if (this.bookCountCache.has(authorId)) {
-      return of(this.bookCountCache.get(authorId)!);
-    }
-
-    return this.http.get<any>(`${this.baseUrl}/${authorId}/book-count`).pipe(
-      map(response => {
-        let count = 0;
-        // Handle {"count":5} format
-        if (response && typeof response === 'object' && 'count' in response) {
-          count = response.count || 0;
-        }
-        // Handle direct number response
-        else if (typeof response === 'number') {
-          count = response;
-        }
-        // Handle other object formats
-        else if (response && typeof response === 'object') {
-          count = response.count || response.bookCount || response.totalBooks || response.value || 0;
-        }
-        
-        // Cache the result
-        this.bookCountCache.set(authorId, count);
-        return count;
-      })
-    );
-  }
-
-  getProfileImage(authorId: number): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/${authorId}/profile-image`, { responseType: 'blob' });
-  }
-
-  create(author: CreateAuthorDto): Observable<Author> {
+  create(author: any): Observable<Author> {
     return this.http.post<Author>(this.baseUrl, author);
   }
 
-  update(id: number, author: UpdateAuthorDto): Observable<void> {
-    return this.http.put<void>(`${this.baseUrl}/${id}`, author);
-  }
-
-  removeProfileImage(authorId: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${authorId}/profile-image`);
+  update(id: number, author: any): Observable<Author> {
+    return this.http.put<Author>(`${this.baseUrl}/${id}`, author);
   }
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
-  exists(id: number): Observable<boolean> {
-    return this.http.get<boolean>(`${this.baseUrl}/${id}/exists`);
+  getAuthorBooks(authorId: number): Observable<Book[]> {
+    return this.http.get<Book[]>(`${this.baseUrl}/${authorId}/books`);
   }
 
-  // Method to clear cache when needed
-  clearBookCountCache(): void {
-    this.bookCountCache.clear();
+  getBooksByAuthor(authorId: number): Observable<Book[]> {
+    return this.http.get<Book[]>(`${this.baseUrl}/${authorId}/books`);
   }
 
-  // Method to clear specific author from cache
-  clearAuthorFromCache(authorId: number): void {
-    this.bookCountCache.delete(authorId);
+  getAuthorBookCount(authorId: number): Observable<number> {
+    return this.http.get<number>(`${this.baseUrl}/${authorId}/book-count`);
+  }
+
+  getAuthorProfileImage(authorId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/${authorId}/profile-image`, { responseType: 'blob' });
+  }
+
+  deleteAuthorProfileImage(authorId: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${authorId}/profile-image`);
+  }
+
+  authorExists(authorId: number): Observable<boolean> {
+    return this.http.get<boolean>(`${this.baseUrl}/${authorId}/exists`);
   }
 } 

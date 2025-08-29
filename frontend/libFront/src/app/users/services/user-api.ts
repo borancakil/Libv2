@@ -22,8 +22,8 @@ export class UserApiService {
     return this.http.post(`${this.baseUrl}/logout`, {});
   }
 
-  register(user: User): Observable<any> {
-    return this.http.post(`${this.baseUrl}/register`, user);
+  register(userData: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/register`, userData);
   }
 
   // Get current user info
