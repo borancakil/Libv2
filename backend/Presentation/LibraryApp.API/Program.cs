@@ -161,20 +161,15 @@ app.UseStaticFiles();
 // CORS middleware ekle
 app.UseCors("AllowAll");
 
+// önce public endpointleri map et
+app.MapGet("/", () => "API is running").AllowAnonymous();
+app.MapGet("/healthz", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
+
 // Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-
-// Public health check
-app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }))
-   .AllowAnonymous();
-
-// Basit root test
-app.MapGet("/", () => "API is running")
-   .AllowAnonymous();
 
 
 app.Run();
