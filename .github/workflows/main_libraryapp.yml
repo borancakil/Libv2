@@ -61,6 +61,7 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'LibraryApp'          # App Service adın buysa kalsın, DEĞİLSE gerçek adı yaz
+          app-name: 'libraryapp-cshfheb7eub2d6gc'
           slot-name: 'Production'
-          package: .                      # indirilen publish çıktısı
+          package: out                      # indirilen publish çıktısı
+
