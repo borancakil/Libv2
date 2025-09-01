@@ -149,11 +149,8 @@ var app = builder.Build();
 app.UseMiddleware<RequestLoggingMiddleware>();     // 1. Request logging (first)
 app.UseMiddleware<GlobalExceptionMiddleware>();    // 2. Exception handling
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // HTTPS redirection kaldırıldı - HTTP'ye izin ver
 // app.UseHttpsRedirection();
@@ -170,7 +167,10 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Database will be managed manually - no auto-creation
-app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
+
+
+app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }))
+   .AllowAnonymous();
+
 
 app.Run();
