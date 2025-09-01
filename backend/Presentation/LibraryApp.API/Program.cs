@@ -50,10 +50,11 @@ builder.Services.AddDbContext<LibraryDbContext>(options =>
            .ConfigureWarnings(warnings => warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.NavigationBaseIncludeIgnored))); // Ignore navigation warnings
 
 // JWT Authentication
-builder.Services.AddAuthentication("Bearer")
-    .AddScheme<AuthenticationSchemeOptions, EncryptedJwtHandler>("Bearer", options => { });
+// builder.Services.AddAuthentication("Bearer")
+//     .AddScheme<AuthenticationSchemeOptions, EncryptedJwtHandler>("Bearer", options => { });
 
-builder.Services.AddAuthorization();
+// builder.Services.AddAuthorization();
+
 
 // Add FluentValidation
 builder.Services.AddFluentValidationAutoValidation()
@@ -152,8 +153,8 @@ app.UseMiddleware<GlobalExceptionMiddleware>();    // 2. Exception handling
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// HTTPS redirection kaldırıldı - HTTP'ye izin ver
-// app.UseHttpsRedirection();
+app.UseHttpsRedirection();
+
 
 // Add static files middleware for serving uploaded files
 app.UseStaticFiles();
@@ -166,8 +167,8 @@ app.MapGet("/", () => "API is running").AllowAnonymous();
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
 
 // Authentication & Authorization
-app.UseAuthentication();
-app.UseAuthorization();
+// app.UseAuthentication();
+// app.UseAuthorization();
 
 app.MapControllers();
 
