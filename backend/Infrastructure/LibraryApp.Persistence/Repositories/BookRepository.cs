@@ -79,28 +79,12 @@ namespace LibraryApp.Persistence.Repositories
             if (id <= 0)
                 return null;
 
-            var query = _context.Books
+            return await _context.Books
                 .Include(b => b.Author)
                 .Include(b => b.Publisher)
                 .Include(b => b.Category)
-                .Select(b => new Book(b.Title)
-                {
-                    BookId = b.BookId,
-                    PublicationYear = b.PublicationYear,
-                    Rating = b.Rating,
-                    CategoryId = b.CategoryId,
-                    Category = b.Category,
-                    AuthorId = b.AuthorId,
-                    Author = b.Author,
-                    PublisherId = b.PublisherId,
-                    Publisher = b.Publisher,
-                    ImageContentType = b.ImageContentType,
-                    ImageFileName = b.ImageFileName,
-                    // CoverImage'ı yüklemeyeceğiz - sadece metadata
-                    // BorrowedBooks'u yüklemeyeceğiz - sadece sayısını alacağız
-                });
-
-            return await query.FirstOrDefaultAsync(b => b.BookId == id);
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.BookId == id);
         }
 
         /// <summary>

@@ -881,5 +881,9 @@
   "ERROR_UPDATING_PROFILE": "Profil güncellenirken hata oluştu",
   "NATIONALITY": "Milliyet",
   "CONTACT_EMAIL": "İletişim E-postası",
-  "ESTABLISHED_DATE": "Kuruluş Tarihi"
+  "ESTABLISHED_DATE": "Kuruluş Tarihi",
+  "UNAVAILABLE_MESSAGE_TITLE": "Bu kitap şu anda mevcut değil.",
+  "UNAVAILABLE_MESSAGE_BODY": "Başka bir kullanıcı tarafından ödünç alındı. Lütfen daha sonra tekrar kontrol edin.",
+  "UNAVAILABLE_MESSAGE_BORROWED_BY_YOU": "Bu kitap kütüphanenizde.",
+  "GO_TO_LIBRARY": "Kütüphaneye git"
 }

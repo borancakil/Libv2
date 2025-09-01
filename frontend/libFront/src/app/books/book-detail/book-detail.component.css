@@ -819,3 +819,18 @@
         width: 100%;
     }
 }
+
+.unavailable-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 20px;
+  border: 1px solid #f5c6cb;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.borrowed-by-you-message {
+  background-color: #f0e6d2;
+  color: #6b4f2c;
+}

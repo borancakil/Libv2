@@ -33,6 +33,18 @@
 
   <!-- Book Detail Content -->
   <div *ngIf="book && !isLoading && !error" class="book-detail-content">
+    <!-- UNAVAILABLE MESSAGE -->
+    <div *ngIf="!book.isAvailable" class="unavailable-message" [class.borrowed-by-you-message]="bookStatus?.isBorrowedByUser">
+      <div *ngIf="bookStatus?.isBorrowedByUser; else otherUserBorrowed">
+        <h2>{{ 'UNAVAILABLE_MESSAGE_BORROWED_BY_YOU' | translate }}</h2>
+        <a [routerLink]="['/', translate.currentLang, 'dashboard']">{{ 'GO_TO_LIBRARY' | translate }}</a>
+      </div>
+      <ng-template #otherUserBorrowed>
+        <h2>{{ 'UNAVAILABLE_MESSAGE_TITLE' | translate }}</h2>
+        <p>{{ 'UNAVAILABLE_MESSAGE_BODY' | translate }}</p>
+      </ng-template>
+    </div>
+
     <!-- Header Section -->
     <div class="page-header">
       <div class="header-content">

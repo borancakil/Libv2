@@ -880,5 +880,9 @@
   "ERROR_UPDATING_PROFILE": "Error updating profile",
   "NATIONALITY": "Nationality",
   "CONTACT_EMAIL": "Contact Email",
-  "ESTABLISHED_DATE": "Established Date"
+  "ESTABLISHED_DATE": "Established Date",
+  "UNAVAILABLE_MESSAGE_TITLE": "This book is currently unavailable.",
+  "UNAVAILABLE_MESSAGE_BODY": "It has been borrowed by another user. Please check back later.",
+  "UNAVAILABLE_MESSAGE_BORROWED_BY_YOU": "This book is in your library.",
+  "GO_TO_LIBRARY": "Go to library"
 }

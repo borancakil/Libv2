@@ -15,7 +15,7 @@ import { ToastService } from '../../services/toast.service';
   styleUrls: ['./user-dashboard.component.css']
 })
 export class UserDashboardComponent implements OnInit, OnDestroy {
-  activeTab: 'favorites' | 'borrowed' = 'favorites';
+  activeView: 'favorites' | 'borrowed' = 'favorites';
   viewMode: 'grid' | 'list' = 'grid';
   favoriteBooks: Book[] = [];
   borrowedBooks: Book[] = [];
@@ -72,8 +72,8 @@ export class UserDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
-  setActiveTab(tab: 'favorites' | 'borrowed'): void {
-    this.activeTab = tab;
+  setActiveView(view: 'favorites' | 'borrowed'): void {
+    this.activeView = view;
   }
 
   setViewMode(mode: 'grid' | 'list'): void {
@@ -82,7 +82,12 @@ export class UserDashboardComponent implements OnInit, OnDestroy {
 
   goToBookDetail(bookId: number): void {
     const lang = this.translate.currentLang || 'tr';
-    this.router.navigate(['/', lang, 'books', bookId]);
+    this.router.navigate(['/', lang, 'book', bookId]);
+  }
+
+  goToBooks(): void {
+    const lang = this.translate.currentLang || 'tr';
+    this.router.navigate(['/', lang, 'books']);
   }
 
   removeFromFavorites(bookId: number): void {
@@ -147,4 +152,4 @@ export class UserDashboardComponent implements OnInit, OnDestroy {
   retry(): void {
     this.loadUserData();
   }
-} 
+}
