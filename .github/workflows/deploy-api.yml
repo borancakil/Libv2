@@ -26,12 +26,11 @@ jobs:
       - name: Restore
         run: dotnet restore backend/Presentation/LibraryApp.API/LibraryApp.API.csproj
 
-      # İstersen test adımı ekleyebilirsin
-      # - name: Test
-      #   run: dotnet test backend/Presentation/LibraryApp.API/LibraryApp.API.csproj --no-build -c Release
+      - name: Build
+        run: dotnet build backend/Presentation/LibraryApp.API/LibraryApp.API.csproj -c Release --no-restore
 
       - name: Publish
-        run: dotnet publish backend/Presentation/LibraryApp.API/LibraryApp.API.csproj -c Release -o out
+        run: dotnet publish backend/Presentation/LibraryApp.API/LibraryApp.API.csproj -c Release -o out --no-build
 
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
