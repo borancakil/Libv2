@@ -168,8 +168,12 @@ app.UseAuthorization();
 app.MapControllers();
 
 
-
+// Public health check
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }))
+   .AllowAnonymous();
+
+// Basit root test
+app.MapGet("/", () => "API is running")
    .AllowAnonymous();
 
 
