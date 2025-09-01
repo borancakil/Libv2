@@ -1,0 +1,53 @@
+name: Deploy API to Azure App Service
+
+on:
+  push:
+    branches: [ main ]
+    # Sadece backend API klasörü değiştiğinde tetiklensin
+    paths:
+      - 'backend/Presentation/LibraryApp.API/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    # .csproj'un bulunduğu klasörü çalışma dizini yapıyoruz
+    defaults:
+      run:
+        working-directory: backend/Presentation/LibraryApp.API
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # (İsteğe bağlı) NuGet cache hızlandırma
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore
+
+      # (İsteğe bağlı) Unit testlerin varsa aç
+      #- name: Test
+      #  run: dotnet test --no-build --configuration Release
+
+      - name: Publish
+        run: dotnet publish -c Release -o out
+
+      - name: Deploy to Azure WebApp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: "<APP_SERVICE_ADIN>"   # Örn: libraryapp-api
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: backend/Presentation/LibraryApp.API/out
