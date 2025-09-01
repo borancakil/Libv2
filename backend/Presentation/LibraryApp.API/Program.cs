@@ -68,7 +68,6 @@ builder.Services.AddValidatorsFromAssemblyContaining<CreatePublisherDtoValidator
 // Register AutoMapper (Application katmanı profilleri)
 builder.Services.AddAutoMapper(typeof(LibraryApp.Application.Mappings.BookMappingProfile).Assembly);
 
-app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
 
 // Register repositories (Domain interfaces in Infrastructure layer)
 builder.Services.AddScoped<IBookRepository, BookRepository>();
@@ -172,5 +171,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Database will be managed manually - no auto-creation
+app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
 
 app.Run();
